@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..common import lib
+from ..common.lib import TRACE_BACK_TYPE
 from ..common import utils
 from ..symbolic import sym_engine
 from ..symbolic import sym_helper
@@ -22,7 +23,7 @@ from . import smt_helper
 from . import semantics
 
 rip = 0
-need_stop, boundary, still_tb = False, None, True
+need_stop, boundary, still_tb, func_call_point, rest = False, None, True, False, []
 
 
 def sym_bin_on_src(store, sym_names, src):
@@ -35,7 +36,7 @@ def sym_bin_on_src(store, sym_names, src):
             src_names = smt_helper.add_src_to_syms(store, sym_names, lhs)
             src_names = smt_helper.add_src_to_syms(store, src_names, rhs)
         elif src.endswith(']'):
-            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store)
+            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store, rip)
             if is_reg_bottom:
                 src_names = src_names + new_srcs
             else:
@@ -70,10 +71,20 @@ def mov(store, sym_names, dest, src):
     src_names = sym_names
     if smt_helper.check_source_is_sym(store, rip, dest, sym_names):
         if src in lib.REG_NAMES:
-            src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
+            if dest.endswith(']'):
+                addr = sym_engine.get_effective_address(store, rip, dest)
+                dest_reg = str(addr)
+            else:
+                dest_reg = smt_helper.get_root_reg(dest)
+            if dest_reg in src_names:
+                src_names.remove(dest_reg)
+            # remove_reg_from_sym_srcs(dest, src_names)
+            src_names.append(smt_helper.get_root_reg(src))
+            # return list(set(src_names))
+            # src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
         elif src.endswith(']'):
             smt_helper.remove_reg_from_sym_srcs(dest, src_names)
-            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store)
+            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store, rip)
             if is_reg_bottom:
                 src_names = src_names + new_srcs
             else:
@@ -87,7 +98,7 @@ def lea(store, sym_names, dest, src):
     src_names = sym_names
     if dest in src_names:
         src_names.remove(dest)
-        new_srcs, still_tb = smt_helper.get_bottom_source(src, store)
+        new_srcs, still_tb = smt_helper.get_bottom_source(src, store, rip)
         src_names = src_names + new_srcs
     return list(set(src_names))
 
@@ -156,22 +167,36 @@ def cmov(store, sym_names, inst, dest, src):
     return src_names
 
 
-def cmp_op(store, sym_names, dest, src):
+def cmp_op(store, sym_names, tb_type, dest, src):
     src_names = sym_names
     global need_stop, boundary, still_tb
-    if smt_helper.check_source_is_sym(store, rip, src, sym_names):
-        dest, src = src, dest
-    if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
-        sym_src = sym_engine.get_sym(store, rip, src)
-        if sym_helper.sym_is_int_or_bitvecnum(sym_src):
-            src_names = [dest]
-            need_stop = True
-            boundary = sym_helper.int_from_sym(sym_src)
+    if tb_type == TRACE_BACK_TYPE.INDIRECT:
+        if smt_helper.check_source_is_sym(store, rip, src, sym_names):
+            dest, src = src, dest
+        if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
+            sym_src = sym_engine.get_sym(store, rip, src)
+            if sym_helper.sym_is_int_or_bitvecnum(sym_src):
+                src_names = [dest]
+                need_stop = True
+                boundary = sym_helper.int_from_sym(sym_src)
+            else:
+                still_tb = False
         else:
             still_tb = False
-    else:
-        still_tb = False
     return src_names
+
+
+def jmp_op(sym_names):
+    sym_in_stack = []
+    rest = []
+    for sym in sym_names:
+        res = smt_helper.check_sym_is_stack_addr(sym)
+        if res:
+            sym_in_stack.append(sym)
+        else:
+            rest.append(sym)
+    return sym_in_stack, rest
+
 
 INSTRUCTION_SEMANTICS_MAP = {
     'mov': mov,
@@ -187,7 +212,6 @@ INSTRUCTION_SEMANTICS_MAP = {
     'sal': sym_bin_op,
     'shl': sym_bin_op,
     'xchg': xchg,
-    'cmp': cmp_op,
     'imul': imul,
     'mul': mul_op,
     'idiv': div_op,
@@ -201,8 +225,8 @@ INSTRUCTION_SEMANTICS_MAP = {
 }
 
 
-def parse_sym_src(store, curr_rip, inst, sym_names):
-    global rip, need_stop, boundary, still_tb
+def parse_sym_src(address_inst_map, address_sym_table, store, curr_rip, inst, sym_names, tb_type, func_not_stack_mem_map):
+    global rip, need_stop, boundary, still_tb, func_call_point, rest
     rip = curr_rip
     need_stop, boundary, still_tb = False, None, True
     if inst.startswith('lock '):
@@ -218,8 +242,23 @@ def parse_sym_src(store, curr_rip, inst, sym_names):
     elif inst_name.startswith('cmov'):
         inst_args = utils.parse_inst_args(inst_split)
         src_names = cmov(store, sym_names, inst, *inst_args)
+    elif inst_name == 'cmp':
+        inst_args = utils.parse_inst_args(inst_split)
+        src_names = cmp_op(store, sym_names, tb_type, *inst_args)
     elif inst_name.startswith('rep'):
         inst = inst_split[1].strip()
         src_names, need_stop, boundary, still_tb = parse_sym_src(store, curr_rip, inst, sym_names)
-    return src_names, need_stop, boundary, still_tb
+    elif utils.check_jmp_with_address(inst):
+        jump_address_str = inst.split(' ', 1)[1].strip()
+        new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
+        if new_address not in address_inst_map and new_address in address_sym_table:
+            sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
+            func_name = address_sym_table[new_address][0]
+            if len(sym_in_stack) > 0:
+                func_call_point = False
+                rest = func_not_stack_mem_map
+                rest.append((sym_not_in_stack, func_name))
+            else:
+                func_call_point = True
+    return src_names, need_stop, boundary, still_tb, func_call_point, rest
 

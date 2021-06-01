@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from enum import Enum
+
 CONDITIONAL_FLAGS = {
     'a': 'CF==0 and ZF==0',
     'ae': 'CF==0',
@@ -182,3 +184,10 @@ CONDITIONAL_MOV_INST = set(map(lambda x: 'cmov' + x, CONDITIONAL_FLAGS.keys()))
 CONDITIONAL_SET_INST = set(map(lambda x: 'set' + x, CONDITIONAL_FLAGS.keys()))
 
 INSTRUCTIONS = GENERAL_INSTRUCTIONS | JMP_INST | CONDITIONAL_MOV_INST | CONDITIONAL_SET_INST | BAP_RELATED_INST
+
+
+class TRACE_BACK_TYPE(Enum):
+    INDIRECT = 1
+    SYMBOLIC = 2
+
+    

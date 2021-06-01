@@ -81,11 +81,12 @@ def set_sym(store, rip, dest, sym):
             rest_len = utils.get_sym_length(dest_rest)
             val = get_sym(store, rip, dest_rest, rest_len)
         address = simplify(seg_reg_val + val)
-        sym_memory.set_mem_sym(store, address, sym, dest_len)
+        store[lib.MEM][address] = sym
+        # sym_memory.set_mem_sym(store, address, sym, dest_len)
     elif dest.endswith(']'):
         length = utils.get_sym_length(dest)
         address = sym_memory.get_effective_address(store, rip, dest)
-        sym_memory.set_mem_sym(store, address, sym, length)
+        return sym_memory.set_mem_sym(store, address, sym, length)
     elif ':' in dest:     # rax:rdx
         lreg, rreg = dest.split(':')
         reg_len = utils.get_sym_length(lreg)
@@ -93,6 +94,7 @@ def set_sym(store, rip, dest, sym):
         right = simplify(Extract(reg_len - 1, 0, sym))
         sym_register.set_register_sym(store, lreg, left)
         sym_register.set_register_sym(store, rreg, right)
+    return 0
     
 
 def get_effective_address(store, rip, operand):
@@ -106,6 +108,9 @@ def get_jump_table_address(store, arg, src_sym, src_val):
 def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     return sym_memory.read_memory_val(store, address, length)
 
+
+def pollute_all_mem_content(store):
+    sym_memory.pollute_all_mem_content(store)
 
 def set_mem_sym(store, address, sym, length=lib.DEFAULT_REG_LEN):
     return sym_memory.set_mem_sym(store, address, sym, length)

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# python -m src.main -l micro-benchmark -e micro-benchmark -f filename
+
 import os
 import time
 import argparse
@@ -38,7 +40,7 @@ def construct_cfg(exec_path, disasm_asm, disasm_type):
 def set_logger(disasm_path, disasm_type, verbose=False):
     for log_name in utils.LOG_NAMES:
         logger_path = disasm_path.replace('.' + disasm_type, '.' + log_name)
-        utils.setup_logger(log_name, logger_path, verbose)
+        utils.setup_logger(log_name, logger_path, verbose, logging.DEBUG)
 
 def close_logger():
     for log_name in utils.LOG_NAMES:

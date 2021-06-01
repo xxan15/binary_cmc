@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# python -m src.mc_check.neat_unreach -f basename
+
 import os
 import xlwt
 import argparse
@@ -116,6 +118,7 @@ def remove_invalid_inst(aux_path, disasm_asm):
         lines = f.readlines()
         prev_address = None
         for line in lines:
+            # print(line)
             address_str, inst = line.strip().split(':', 1)
             address = int(address_str, 16)
             inst = inst.strip()
@@ -206,38 +209,16 @@ def main_single(file_name, exec_dir, log_dir, disasm_type, verbose):
 def main_batch(exec_dir, log_dir, disasm_type):
     disasm_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(log_dir) for f in filenames if
                     f.endswith(disasm_type)]
-    # sheet = add_xlws_sheet(workbook, disasm_type)
     line_no = 1
     for disasm_path in disasm_files:
         try:
             file_name = utils.get_file_name(disasm_path)
             if not (file_name.startswith(('bench-', 'sha')) or file_name in (('sort', 'test-localcharset'))):
                 para_list = main_single(file_name, exec_dir, log_dir, disasm_type, verbose)
-                # sheet.write(line_no, 0, file_name)
-                # i = 1
-                # for para in para_list:
-                #     # sheet.write(line_no, i, para)
-                #     i += 1
                 print(file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
                 line_no += 1
         except:
             continue
-
-
-def create_statistics_xlsw():
-    workbook = xlwt.Workbook()
-    return workbook
-
-def add_xlws_sheet(workbook, disasm_type):
-    sheet = workbook.add_sheet(disasm_type)
-    sheet.write(0, 1, '# of total instructions')
-    sheet.write(0, 2, '# of white instructions')
-    sheet.write(0, 3, '# of grey instructions')
-    sheet.write(0, 4, '# of black instructions')
-    sheet.write(0, 5, 'Ratio (grey/white)')
-    sheet.write(0, 6, '# of indirects')
-    sheet.write(0, 7, 'Execution time(s)')
-    return sheet
 
 
 if __name__ == '__main__':
@@ -245,7 +226,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--disasm_type', default='objdump', type=str, help='Disassembler type')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print the starts of unreachable instruction blocks')
-    parser.add_argument('-b', '--batch', default=1, type=int, help='Run neat_unreach in batch mode')
+    parser.add_argument('-b', '--batch', default=0, type=int, help='Run neat_unreach in batch mode')
     parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Disassembled folder name')
     args = parser.parse_args()
@@ -261,14 +242,8 @@ if __name__ == '__main__':
         print(args.file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
         print(args.file_name + ' & ' + ' & '.join(list(map(lambda x: str(x), para_list))))
     elif args.batch == 1:
-        # workbook = create_statistics_xlsw()
         main_batch(exec_dir, log_dir, args.disasm_type)
-        # xls_path = os.path.join(os.path.dirname(exec_dir), 'statistics.xls')
-        # workbook.save(xls_path)
     else:
-        workbook = create_statistics_xlsw()
         for disasm_type in ['objdump', 'radare2', 'angr', 'bap', 'ghidra', 'dyninst']:
             log_dir = log_dir if 'objdump' not in log_dir else log_dir.replace('objdump', disasm_type)
-            main_batch(exec_dir, log_dir, disasm_type, workbook)
-        xls_path = os.path.join(os.path.dirname(exec_dir), 'statistics.xls')
-        workbook.save(xls_path)
+            main_batch(exec_dir, log_dir, disasm_type)

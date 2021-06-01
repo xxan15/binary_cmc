@@ -24,6 +24,7 @@ from ..semantics import semantics
 class Sym_Store:
     def __init__(self, store, rip=None, heap_addr=None, inst=None):
         self.rip = rip
+        self.need_trace_back = False
         if store:
             self.store = store.copy()
             for name in lib.STATE_NAMES:
@@ -44,7 +45,9 @@ class Sym_Store:
             self.parse_semantics(inst)
 
     def parse_semantics(self, inst):
-        semantics.parse_semantics(self.store, self.rip, inst)
+        res = semantics.parse_semantics(self.store, self.rip, inst)
+        if res == -2:
+            self.need_trace_back = True
 
     def pp_val(self, sym):
         res = ''

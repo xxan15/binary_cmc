@@ -38,7 +38,8 @@ def sym_bin_oprt(store, op, dest, src):
 def mov(store, dest, src):
     dest_len = utils.get_sym_length(dest)
     sym_src = sym_engine.get_sym(store, rip, src, dest_len)
-    sym_engine.set_sym(store, rip, dest, sym_src)
+    res = sym_engine.set_sym(store, rip, dest, sym_src)
+    return res
     
 
 def lea(store, dest, src):
@@ -341,6 +342,10 @@ def parse_semantics(store, curr_rip, inst):
         inst = inst.split(' ', 1)[1]
     inst_split = inst.strip().split(' ', 1)
     inst_name = inst_split[0]
+    if inst_name == 'mov':
+        inst_args = utils.parse_inst_args(inst_split)
+        res = mov(store, *inst_args)
+        return res
     if inst_name in INSTRUCTION_SEMANTICS_MAP:
         inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
         inst_args = utils.parse_inst_args(inst_split)
@@ -364,7 +369,6 @@ def parse_semantics(store, curr_rip, inst):
 
 
 INSTRUCTION_SEMANTICS_MAP = {
-    'mov': mov,
     'lea': lea,
     'push': push,
     'pop': pop,

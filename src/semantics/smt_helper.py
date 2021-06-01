@@ -28,7 +28,7 @@ def _set_flag_val(store, flag_name, res):
     elif res == False:
         store[lib.FLAGS][flag_name] = Bool(False)
     else:
-        store[lib.FLAGS][flag_name] = None
+        store[lib.FLAGS][flag_name] = res
 
 
 def _set_flag_neg_val(store, flag_name, res):
@@ -37,7 +37,7 @@ def _set_flag_neg_val(store, flag_name, res):
     elif res == False:
         store[lib.FLAGS][flag_name] = Bool(True)
     else:
-        store[lib.FLAGS][flag_name] = None
+        store[lib.FLAGS][flag_name] = res
 
 
 def set_mul_OF_CF_flags(store, val):
@@ -119,7 +119,10 @@ def parse_condition(store, cond):
     lhs, rhs = cond.split(logic_op)
     lhs = store[lib.FLAGS][lhs]
     rhs = bool(utils.imm_str_to_int(rhs)) if utils.imm_pat.match(rhs) else store[lib.FLAGS][rhs]
-    if lhs == None or rhs == None: return None
+    # utils.logger.info(cond)
+    # utils.logger.info(lhs)
+    # utils.logger.info(rhs)
+    # if lhs == None or rhs == None: return None
     return sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
 
 
@@ -197,7 +200,7 @@ def get_jump_address(store, rip, operand):
 # line: 'rax + rbx * 1 + 0'
 # line: 'rbp - 0x14'
 # line: 'rax'
-def get_bottom_source(line, store):
+def get_bottom_source(line, store, rip):
     line_split = re.split(r'(\W+)', line)
     res, still_tb = [], False
     for lsi in line_split:
@@ -207,6 +210,10 @@ def get_bottom_source(line, store):
             if not sym_helper.sym_is_int_or_bitvecnum(val):
                 res.append(lsi)
                 still_tb = True
+    if not still_tb:
+        addr = sym_engine.get_effective_address(store, rip, line)
+        res.append(str(addr))
+        still_tb = True
     return res, still_tb
 
 # line: 'rax + rbx * 1 + 0'
@@ -241,10 +248,37 @@ def check_source_is_sym(store, rip, src, syms):
         lhs, rhs = src.split(':')
         res = check_source_is_sym(store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
     elif src.endswith(']'):
+        # src_val = sym_engine.get_sym(store, rip, src)
+        # res = not sym_helper.is_bit_vec_num(src_val)
         addr = sym_engine.get_effective_address(store, rip, src)
         res = str(addr) in syms
     return res
 
+
+def check_source_is_sym(store, rip, src, syms):
+    res = False
+    if src in lib.REG_INFO_DICT:
+        res = lib.REG_INFO_DICT[src][0] in syms
+    elif src in lib.REG_NAMES:
+        res = src in syms
+    elif ':' in src:
+        lhs, rhs = src.split(':')
+        res = check_source_is_sym(store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
+    elif src.endswith(']'):
+        # src_val = sym_engine.get_sym(store, rip, src)
+        # res = not sym_helper.is_bit_vec_num(src_val)
+        addr = sym_engine.get_effective_address(store, rip, src)
+        res = str(addr) in syms
+    return res
+
+
+def check_sym_is_stack_addr(sym):
+    res = False
+    if re.match(r'[1-9][0-9]*', sym):
+        addr = int(sym)
+        if addr > utils.MAX_HEAP_ADDR:
+            res = True
+    return res
 
 def check_cmp_dest_is_sym(store, rip, dest, sym_names):
     res = False
@@ -252,7 +286,7 @@ def check_cmp_dest_is_sym(store, rip, dest, sym_names):
         if dest in lib.REG_NAMES:
             res = check_source_is_sym(store, rip, dest, sym_names)
         elif dest.endswith(']'):
-            new_srcs, is_reg_bottom = get_bottom_source(dest, store)
+            new_srcs, is_reg_bottom = get_bottom_source(dest, store, rip)
             if is_reg_bottom:
                 if len(new_srcs) == 1:
                     res = new_srcs[0] == sym_names[0]

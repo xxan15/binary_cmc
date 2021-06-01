@@ -115,7 +115,7 @@ def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name):
     else:
         mem_size = utils.MAX_MALLOC_SIZE
     mem_val = sym_helper.bottom(mem_size) if ext_func_name is not 'calloc' else sym_helper.bit_vec_val_sym(0, mem_size)
-    sym_engine.set_mem_sym(store, rip, mem_addr, mem_val)
+    sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
     heap_addr += mem_size
     utils.MAX_HEAP_ADDR = max(utils.MAX_HEAP_ADDR, heap_addr)
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
@@ -141,6 +141,7 @@ def ext_rand_call(store, rip):
 
 
 def ext_func_call(store, rip, ext_func_name):
+    sym_engine.pollute_all_mem_content(store)
     dests = regs_str_to_list('rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11')
     set_regs_sym(store, rip, dests)
     clear_flags(store)

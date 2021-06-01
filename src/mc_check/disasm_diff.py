@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# python -m src.mc_check.disasm_diff -f basename
+
 import os
 import argparse
 from ..common import utils

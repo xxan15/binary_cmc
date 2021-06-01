@@ -192,7 +192,7 @@ def get_file_name(path):
     return file_name
 
 
-# Extract the contents inside symmetric parentheses inside the string
+# Extract the contents inside symmetric parenthese inside the string
 # input: '(123) 45 (678(42) 235) 56', '(', ')'
 # output: ['(123)', '(678(42) 235)']
 def extract_bk_content(args:str, left = '(', right = ')')->List[str]:
@@ -503,55 +503,6 @@ def check_jmp_with_address(line):
     return inst_name in lib.JMP_INST_WITH_ADDRESS
 
 
-def gen_cjmp_idx_upperbound(inst_name, boundary):
-    res = None
-    jmp_condition = inst_name.split('j', 1)[1]
-    if jmp_condition.startswith('n'):
-        rest = jmp_condition.split('n')[1]
-        if rest in OPPOSITE_FLAG_MAP:
-            jmp_condition = OPPOSITE_FLAG_MAP[rest]
-    if jmp_condition.startswith(('g', 'a')):
-        if 'e' in jmp_condition:
-            res = boundary
-        else:
-            res = boundary + 1
-    return res
-
-
-def gen_jt_idx_upperbound(trace_list, boundary):
-    res = None
-    idx = 0
-    for idx, blk in enumerate(trace_list):
-        inst = blk.inst
-        if check_not_single_branch_inst(inst):
-            res = gen_cjmp_idx_upperbound(inst.split(' ', 1)[0], boundary)
-            break
-    return idx, res
-
-
-def _check_jt_assign_inst(inst_args):
-    res = False
-    inst_arg_s = inst_args.split(',')
-    if len(inst_arg_s) == 2:
-        inst_arg_0 = inst_arg_s[0].strip()
-        inst_arg_1 = inst_arg_s[1].strip()
-        if inst_arg_0 in lib.REG_NAMES and inst_arg_1.endswith(']') and 'rip' not in inst_arg_1:
-            res = '*' in inst_arg_1 and '+' in inst_arg_1
-    return res
-
-
-def check_jump_table_assign_inst(trace_list, idx):
-    res = False
-    n_idx = 0
-    for n_idx in range(idx+1, len(trace_list)):
-        blk = trace_list[n_idx]
-        inst = blk.inst
-        if inst.startswith('mov'):
-            res = _check_jt_assign_inst(inst.split(' ', 1)[1].strip())
-            if res: break
-    return n_idx, res
-
-
 def get_mem_sym_length(sym_name):
     res = 128
     if sym_name.startswith('qword '): res = 64
@@ -559,6 +510,7 @@ def get_mem_sym_length(sym_name):
     elif sym_name.startswith('word '): res = 16
     elif sym_name.startswith('byte '):res = 8
     return res
+
 
 def get_sym_length(sym_name, length=lib.DEFAULT_REG_LEN):
     res = length

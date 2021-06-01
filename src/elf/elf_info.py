@@ -33,6 +33,7 @@ class ELF_Info(object):
         self.address_sym_table = {}
         self.data_start_addr = sys.maxsize
         self.data_base_addr = None
+        self.data_end_addr = -sys.maxsize - 1
         self.rodata_start_addr = sys.maxsize
         self.rodata_base_addr = None
         self.rodata_end_addr = -sys.maxsize - 1
@@ -87,6 +88,7 @@ class ELF_Info(object):
     #   line: '[ 1] .interp           PROGBITS         0000000000000238  00000238'
     def _parse_section_headers(self, section_headers):
         lines = section_headers.split('\n')
+        is_data_sec = False
         is_rodata_sec = False
         for line in lines:
             line = line.strip()
@@ -104,7 +106,11 @@ class ELF_Info(object):
                     if is_rodata_sec:
                         is_rodata_sec = False
                         self.rodata_end_addr = section_address
+                    if is_data_sec:
+                        is_data_sec = False
+                        self.data_end_addr = section_address
                     if section_name == '.data':
+                        is_data_sec = True
                         self.data_start_addr = section_address
                         self.data_base_addr = section_address - section_offset
                     elif section_name == '.rodata':
