@@ -69,6 +69,6 @@ def set_register_sym(store, name, sym):
 def get_segment_reg_val(store, segment_reg):
     res = 0
     if segment_reg in lib.SEG_REGS:
-        res = store[lib.SEG][segment_reg]
+        res = store[segment_reg][segment_reg]
     return res
 

@@ -28,6 +28,7 @@ class ELF_Info(object):
         self.section_address_map = {}
         self.section_offset_map = {}
         self.sym_table = {}
+        self.function_addr_table = {}
         self.sym_type_table = {}
         self.sym_name_count = {}
         self.address_sym_table = {}
@@ -145,8 +146,12 @@ class ELF_Info(object):
                     if len(line_split) == 8:
                         sym_val = int(line_split[1], 16)
                         sym_type = line_split[3]
-                        if sym_val >= self.data_start_addr:
-                            sym_val = sym_helper.gen_spec_sym(utils.MEM_DATA_SEC_SUFFIX + hex(sym_val))
+                        sym_name = line_split[-1]
+                        # if sym_val >= self.data_start_addr:
+                        #     sym_val = sym_helper.gen_spec_sym(utils.MEM_DATA_SEC_SUFFIX + hex(sym_val))
+                        if sym_type == 'FUNC':
+                            if '@' not in sym_name and sym_name not in utils.INVALID_SECTION_LABELS:
+                                self.function_addr_table[sym_name] = sym_val
                         sym_name = self._correctify_sym_name(line_split[-1])
                         if sym_name not in self.sym_table:
                             self.sym_table[sym_name] = sym_val
@@ -193,10 +198,12 @@ class ELF_Info(object):
     # line: '000000200fe0  000300000006 R_X86_64_GLOB_DAT 0000000000000000 __libc_start_main@GLIBC_2.2.5'
     def _parse_reloc(self, line_split):
         sym_name = line_split[-1]
+        # sym_addr = int(line_split[0], 16)
         sym_addr = sym_helper.gen_spec_sym('mem@' + hex(int(line_split[0], 16)))
         if 'GLIBC' in sym_name:
-            sym_name = sym_name.split('@', 1)[0]
-        if sym_name in self.sym_table:
+            self.sym_table[sym_name] = sym_addr
+            # sym_name = sym_name.split('@', 1)[0]
+        elif sym_name in self.sym_table:
             self.sym_table[sym_name] = sym_addr
 
 

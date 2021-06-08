@@ -38,7 +38,6 @@ BYTE_LEN_REPS = {
 }
 
 # INVALID_SECTION_LABELS = {'_fini', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
-INVALID_SECTION_LABELS = {'_init', '_fini', '__libc_csu_init', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
 
 BYTE_REP_PTR_MAP = {
     'q': 'qword ptr',

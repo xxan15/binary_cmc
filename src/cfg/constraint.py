@@ -35,6 +35,17 @@ class Constraint:
     def update_predicate(self, last_predicate):
         self.predicate = last_predicate
 
+
+    def get_predicates(self):
+        res = []
+        tmp = self.parent
+        while tmp is not None and tmp.parent is not None:
+            res.append(tmp.predicate)
+            tmp = tmp.parent
+        res.append(self.predicate)
+        return res
+
+
     def get_asserts_and_query(self):
         asserts = []
         tmp = self.parent

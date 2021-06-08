@@ -47,7 +47,7 @@ class Disasm_Objdump(object):
                 if label_address_pattern.search(line):
                     address, label = self._parse_address_label(line)
                     self.address_label_map[address] = label
-                    if label in helper.INVALID_SECTION_LABELS or label.endswith(('@plt', '.plt')):
+                    if label in utils.INVALID_SECTION_LABELS or label.endswith(('@plt', '.plt')):
                         valid_section = False
                     else:
                         valid_section = True

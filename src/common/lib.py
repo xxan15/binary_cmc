@@ -119,7 +119,7 @@ REG_NAMES = REG64_NAMES | set(REG_INFO_DICT.keys())
 
 CONDITIONAL_JMP_INST = set(map(lambda x: 'j' + x, CONDITIONAL_FLAGS.keys()))
 
-RFlags = ['CF', 'ZF', 'OF', 'SF', 'PF']
+RFlags = ['CF', 'ZF', 'OF', 'SF']
 
 SEG_REGS = {'ss', 'cs', 'ds', 'es', 'fs', 'gs'}
 
@@ -135,11 +135,15 @@ C_INT_LEN = 32
 REG = 'register'
 MEM = 'memory'
 FLAGS = 'flags'
-SEG = 'segment_register'
+FS = 'fs'
+CS = 'cs'
+GS = 'gs'
 AUX_MEM = 'aux_memory'
+NEED_TRACE_BACK = 'need_trace_back'
+POINTER_RELATED_ERROR = 'pointer_related_error'
 HEAP_ADDR = 'heap_addr'
 
-STATE_NAMES = {REG, MEM, FLAGS, SEG, AUX_MEM}
+STATE_NAMES = {REG, MEM, FLAGS, FS, CS, GS, AUX_MEM}
 RECORD_STATE_NAMES = [REG, MEM]
 
 TERMINATION_FUNCTIONS = {

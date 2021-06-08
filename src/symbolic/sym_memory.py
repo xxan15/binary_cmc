@@ -32,7 +32,7 @@ def get_sym_val(str_val, store, length):
     elif utils.imm_pat.match(str_val):
         res = BitVecVal(utils.imm_str_to_int(str_val), length)
     elif str_val in lib.SEG_REGS:
-        res = store[lib.SEG][str_val]
+        res = store[str_val][str_val]
     else:
         res = BitVec(str_val, length)
     return res
@@ -161,6 +161,11 @@ def get_effective_address(store, rip, src, length=lib.DEFAULT_REG_LEN):
     return res
 
 
+def reset_mem_content_pollute():
+    global MEM_CONTENT_POLLUTED
+    MEM_CONTENT_POLLUTED = False
+
+
 def pollute_all_mem_content(store):
     global MEM_CONTENT_POLLUTED
     MEM_CONTENT_POLLUTED = True
@@ -194,23 +199,18 @@ def addr_in_data_section(int_addr):
 def addr_in_heap(int_addr):
     return utils.MIN_HEAP_ADDR <= int_addr < utils.MAX_HEAP_ADDR
 
-
-def top_stack_addr(store):
-    res = sym_helper.simplify(store[lib.REG]['rsp'])
-    if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
-        res = res.as_long()
-    return res
     
 def check_buffer_overflow(store, address, length):
     byte_len = length // 8
     int_address = address.as_long()
-    stack_top = top_stack_addr(store)
+    stack_top = sym_helper.top_stack_addr(store)
     if addr_in_data_section(int_address) or addr_in_heap(int_address):
         if address in store[lib.MEM]:
             prev_sym = store[lib.MEM][address]
             prev_len = prev_sym.size() // 8
-            if byte_len > prev_len:
-                utils.logger.error('Error: Buffer overflow at address ' + hex(int_address))
+            # if byte_len > prev_len:
+            #     utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address))
+            #     store[lib.POINTER_RELATED_ERROR] = True
         for offset in range(-7, byte_len):
             if offset != 0:
                 curr_address = simplify(address + offset)
@@ -218,9 +218,12 @@ def check_buffer_overflow(store, address, length):
                     prev_sym = store[lib.MEM][curr_address]
                     prev_len = prev_sym.size() // 8
                     if (offset < 0 and prev_len > -offset) or offset > 0:
-                        utils.logger.error('Error: Buffer overflow at address ' + hex(int_address))
+                        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address))
+                        store[lib.POINTER_RELATED_ERROR] = True
     elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        utils.logger.error('Error: Buffer overflow at address ' + hex(int_address))
+        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address))
+        store[lib.POINTER_RELATED_ERROR] = True
+        
 
 
 def set_mem_sym(store, address, sym, length=lib.DEFAULT_REG_LEN):
@@ -228,6 +231,7 @@ def set_mem_sym(store, address, sym, length=lib.DEFAULT_REG_LEN):
     if not sym_helper.sym_is_int_or_bitvecnum(address):
         pollute_all_mem_content(store)
         store[lib.MEM][address] = sym
+        utils.logger.error('Error: Potential buffer overflow with symbolic memory address\n')
         return -2
     else:
         check_buffer_overflow(store, address, length)
@@ -306,21 +310,24 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
             rodata_base_addr = global_var.elf_info.rodata_base_addr
             val = global_var.elf_content.read_bytes(int_address - rodata_base_addr, length // 8)
         elif not MEM_CONTENT_POLLUTED and addr_in_data_section(int_address):
+        # elif addr_in_data_section(int_address):
             data_base_addr = global_var.elf_info.data_base_addr
             val = global_var.elf_content.read_bytes(int_address - data_base_addr, length // 8)
         else:
             if addr_in_heap(int_address):
-                utils.logger.error('Error: Use after free at address ' + hex(int_address))
+                utils.output_logger.error('Error: Potential use after free at address ' + hex(int_address))
+                store[lib.POINTER_RELATED_ERROR] = True
             elif int_address >= utils.MAX_HEAP_ADDR:
-                utils.logger.error('Error: Null pointer dereference at address ' + hex(int_address))
+                utils.output_logger.error('Error: Potential null pointer dereference at address ' + hex(int_address))
+                store[lib.POINTER_RELATED_ERROR] = True
         if val:
             res = BitVecVal(val, length)
         else:
             res = BitVec(utils.MEM_DATA_SEC_SUFFIX + hex(int_address), length)
         store[lib.MEM][address] = res
-        pollute_mem_w_sym_address(store)
+        # pollute_mem_w_sym_address(store)
     else:
-        pollute_all_mem_content(store)
+        # pollute_all_mem_content(store)
         res = sym_helper.gen_mem_sym(length)
         store[lib.MEM][address] = res
     return res
@@ -330,5 +337,15 @@ def get_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     res = get_mem_sym(store, address, length)
     if res == None:
         res = read_memory_val(store, address, length)
+    return res
+
+
+def get_seg_memory_val(store, address, seg, length=lib.DEFAULT_REG_LEN):
+    res = None
+    if address in store[seg]:
+        res = store[seg][address]
+    else:
+        res = sym_helper.gen_mem_sym(length)
+        store[seg][address] = res
     return res
 

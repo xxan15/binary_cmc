@@ -23,12 +23,13 @@ from ..symbolic import sym_engine
 
 
 def _set_flag_val(store, flag_name, res):
-    if res == True:
-        store[lib.FLAGS][flag_name] = Bool(True)
-    elif res == False:
-        store[lib.FLAGS][flag_name] = Bool(False)
-    else:
-        store[lib.FLAGS][flag_name] = res
+    # utils.logger.info(res)
+    # if res == True:
+    #     store[lib.FLAGS][flag_name] = Bool(True)
+    # elif res == False:
+    #     store[lib.FLAGS][flag_name] = Bool(False)
+    # else:
+    store[lib.FLAGS][flag_name] = res
 
 
 def _set_flag_neg_val(store, flag_name, res):
@@ -53,13 +54,11 @@ def set_OF_flag(store, rip, dest, src, res, op='+'):
     if op == '+':
         case1 = And(sym_helper.is_neg(dest), sym_helper.is_neg(src), sym_helper.is_pos(res))
         case2 = And(sym_helper.is_pos(dest), sym_helper.is_pos(src), sym_helper.is_neg(res))
-        res = simplify(Or(case1, case2))
-        _set_flag_val(store, 'OF', res)
+        _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     elif op == '-':
         case1 = And(sym_helper.is_neg(dest), sym_helper.is_pos(src), sym_helper.is_pos(res))
         case2 = And(sym_helper.is_pos(dest), sym_helper.is_neg(src), sym_helper.is_neg(res))
-        res = simplify(Or(case1, case2))
-        _set_flag_val(store, 'OF', res)
+        _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     else:
         store[lib.FLAGS]['OF'] = Bool(False)
     
@@ -78,6 +77,11 @@ def set_flag_direct(store, flag_name, value=None):
 def get_flag_direct(store, flag_name):
     return store[lib.FLAGS][flag_name]
 
+def pp_flags(store):
+    for flag in lib.RFlags:
+        utils.logger.debug(flag + ': ' + str(store[lib.FLAGS][flag]))
+
+
 def _set_sub_CF_flag(store, rip, dest, src):
     sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
     res = sym_helper.is_less(sym_dest, sym_src)
@@ -93,7 +97,7 @@ def _set_add_CF_flag(store, rip, dest, src):
 def modify_status_flags(store, sym, dest_len):
     store[lib.FLAGS]['ZF'] = sym_helper.is_equal(sym, 0)
     store[lib.FLAGS]['SF'] = sym_helper.most_significant_bit(sym, dest_len)
-    store[lib.FLAGS]['PF'] = sym_helper.bitwiseXNOR(sym_helper.extract(7, 0, sym), 8)
+    # store[lib.FLAGS]['PF'] = sym_helper.bitwiseXNOR(sym_helper.extract(7, 0, sym), 8)
 
 
 def set_OF_CF_flags(store, val):
@@ -151,6 +155,31 @@ def parse_predicate(store, inst, val, prefix='j'):
     return expr
 
 
+def parse_direct_predicate(store, rip, inst, p_inst, val, prefix='j'):
+    cond = inst.split(' ', 1)[0].split(prefix, 1)[1]
+    p_inst_split = p_inst.strip().split(' ', 1)
+    dest, src = utils.parse_inst_args(p_inst_split)
+    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
+    expr = None
+    if cond == 'e':
+        expr = simplify(sym_dest == sym_src)
+    elif cond == 'ne':
+        expr = simplify(sym_dest != sym_src)
+    elif cond == 'g' or cond == 'a':
+        expr = simplify(sym_dest > sym_src)
+    elif cond == 'l' or cond == 'b':
+        expr = simplify(sym_dest < sym_src)
+    elif cond == 'ge' or cond == 'ae':
+        expr = simplify(sym_dest >= sym_src)
+    elif cond == 'le' or cond == 'be':
+        expr = simplify(sym_dest <= sym_src)
+    # expr = lib.CONDITIONAL_FLAGS[cond]
+    # expr = parse_pred_expr(store, expr)
+    if expr == None: return None
+    elif not val: expr = simplify(Not(expr))
+    return expr
+
+
 def top_stack(store, rip):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
     res = sym_engine.get_mem_sym(store, sym_rsp)
@@ -200,7 +229,7 @@ def get_jump_address(store, rip, operand):
 # line: 'rax + rbx * 1 + 0'
 # line: 'rbp - 0x14'
 # line: 'rax'
-def get_bottom_source(line, store, rip):
+def get_bottom_source(line, store, rip, mem_len_map):
     line_split = re.split(r'(\W+)', line)
     res, still_tb = [], False
     for lsi in line_split:
@@ -213,6 +242,8 @@ def get_bottom_source(line, store, rip):
     if not still_tb:
         addr = sym_engine.get_effective_address(store, rip, line)
         res.append(str(addr))
+        length = utils.get_sym_length(line)
+        mem_len_map[str(addr)] = length
         still_tb = True
     return res, still_tb
 
@@ -255,23 +286,6 @@ def check_source_is_sym(store, rip, src, syms):
     return res
 
 
-def check_source_is_sym(store, rip, src, syms):
-    res = False
-    if src in lib.REG_INFO_DICT:
-        res = lib.REG_INFO_DICT[src][0] in syms
-    elif src in lib.REG_NAMES:
-        res = src in syms
-    elif ':' in src:
-        lhs, rhs = src.split(':')
-        res = check_source_is_sym(store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
-    elif src.endswith(']'):
-        # src_val = sym_engine.get_sym(store, rip, src)
-        # res = not sym_helper.is_bit_vec_num(src_val)
-        addr = sym_engine.get_effective_address(store, rip, src)
-        res = str(addr) in syms
-    return res
-
-
 def check_sym_is_stack_addr(sym):
     res = False
     if re.match(r'[1-9][0-9]*', sym):
@@ -279,6 +293,7 @@ def check_sym_is_stack_addr(sym):
         if addr > utils.MAX_HEAP_ADDR:
             res = True
     return res
+
 
 def check_cmp_dest_is_sym(store, rip, dest, sym_names):
     res = False

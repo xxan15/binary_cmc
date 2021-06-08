@@ -76,12 +76,12 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
 
 def reconstruct_jt_sym_stores(blk, distinct_entries, inst_dest, src_len):
     inst = blk.inst
-    rip, store, heap_addr = blk.sym_store.rip, blk.sym_store.store, blk.sym_store.heap_addr
+    rip, store = blk.sym_store.rip, blk.sym_store.store
     dest_len = utils.get_sym_length(inst_dest)
     sym_store_list = []
     inst_name = inst.split(' ', 1)[0]
     for mem_val in distinct_entries:
-        new_sym_store = Sym_Store(store, rip, heap_addr)
+        new_sym_store = Sym_Store(store, rip)
         if inst_name == 'mov':
             sym_engine.set_sym(new_sym_store.store, rip, inst_dest, mem_val)
         elif 's' in inst_name:
@@ -114,15 +114,47 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
 
 
 def construct_print_info(parent_store, parent_rip, new_sym_store, rip, invariant_arguments):
-    print_info = ''
+    p_info = []
+    stack_addr = []
+    stack_top = sym_helper.top_stack_addr(new_sym_store.store)
     for inv_arg in invariant_arguments:
         if inv_arg in lib.REG_NAMES:
-            print_info += 'register ' + inv_arg + ' '
+            p_info.append('register ' + inv_arg)
         else:
-            print_info += 'memory address ' + inv_arg + ' '
+            p_info.append('memory address ' + inv_arg)
+            if utils.imm_start_pat.match(inv_arg):
+                mem_addr = utils.imm_str_to_int(inv_arg)
+                if mem_addr >= stack_top:
+                    stack_addr.append(inv_arg)
         prev_val = sym_engine.get_sym(parent_store, parent_rip, inv_arg)
         sym_engine.set_sym(new_sym_store.store, rip, inv_arg, prev_val)
-    return print_info
+    print_info = ', '.join(p_info)
+    return print_info, stack_addr
+
+def get_inv_arg_val(store, rip, inv_arg, length=lib.DEFAULT_REG_LEN):
+    res = None
+    if inv_arg in lib.REG_NAMES:
+        res = sym_engine.get_sym(store, rip, inv_arg, length)
+    else:
+        res = sym_engine.get_sym(store, rip, '[' + inv_arg + ']', length)
+    return res
+
+
+def substitute_inv_arg_val_direct(store, rip, inv_arg, inv_val):
+    if inv_arg in lib.REG_NAMES:
+        sym_engine.set_sym(store, rip, inv_arg, inv_val)
+    else:
+        sym_engine.set_sym(store, rip, '[' + inv_arg + ']', inv_val)
+
+def substitute_sym_arg_for_all(store, rip, sym_arg, sym_new):
+    # res = None 
+    # print(sym_arg)
+    # print(sym_new)
+    for name in lib.RECORD_STATE_NAMES:
+        s = store[name]
+        for k, v in s.items():
+            s[k] = sym_helper.substitute_sym_val(v, sym_arg, sym_new)
+    
 
 # def remove_unreachable_tb_blocks(self, blk):
 #     address_list = []

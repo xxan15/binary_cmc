@@ -22,17 +22,12 @@ from ..symbolic import sym_helper
 from ..semantics import semantics
 
 class Sym_Store:
-    def __init__(self, store, rip=None, heap_addr=None, inst=None):
+    def __init__(self, store, rip=None, inst=None):
         self.rip = rip
-        self.need_trace_back = False
         if store:
             self.store = store.copy()
             for name in lib.STATE_NAMES:
-                if name == lib.SEG:
-                    self.store[name] = store[name]
-                else:
-                    self.store[name] = store[name].copy()
-            self.heap_addr = heap_addr
+                self.store[name] = store[name].copy()
         else:
             self.store = {}
             for name in lib.STATE_NAMES:
@@ -40,14 +35,16 @@ class Sym_Store:
                     self.store[name] = set()
                 else:
                     self.store[name] = {}
-            self.heap_addr = utils.MIN_HEAP_ADDR
+            self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
+            self.store[lib.NEED_TRACE_BACK] = False
+            self.store[lib.POINTER_RELATED_ERROR] = False
         if inst and not utils.check_branch_inst_wo_call(inst):
             self.parse_semantics(inst)
 
     def parse_semantics(self, inst):
         res = semantics.parse_semantics(self.store, self.rip, inst)
         if res == -2:
-            self.need_trace_back = True
+            self.store[lib.NEED_TRACE_BACK] = True
 
     def pp_val(self, sym):
         res = ''

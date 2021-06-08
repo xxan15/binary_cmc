@@ -30,6 +30,7 @@ class Disasm_Objdump(Disasm):
         self.disasm_path = disasm_path
         self.address_inst_map = {}
         self.address_next_map = {}
+        self.address_label_map = {}
         self.valid_address_no = 0
         self.read_asm_info()
 
@@ -42,7 +43,12 @@ class Disasm_Objdump(Disasm):
         with open(self.disasm_path, 'r') as f:
             lines = f.readlines()
             for line in lines:
-                if address_inst_pattern.search(line):
+                if label_address_pattern.search(line):
+                    address, label = self._parse_address_label(line)
+                    if label not in utils.INVALID_SECTION_LABELS:
+                        label = label.split('@', 1)[0].strip()
+                        self.address_label_map[address] = [label]
+                elif address_inst_pattern.search(line):
                     address, inst, bin_len = self._parse_line(line)
                     if inst:
                         if inst.startswith('addr32 '):
@@ -75,8 +81,9 @@ class Disasm_Objdump(Disasm):
 
     def _parse_address_label(self, line):
         line_split = line.strip().split(' ', 1)
+        address = int(line_split[0].strip(), 16)
         label = line_split[1].split('<')[1].split('>')[0].strip()
-        return label
+        return address, label
 
 
     def _format_inst(self, address, inst):

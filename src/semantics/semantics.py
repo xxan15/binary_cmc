@@ -220,6 +220,8 @@ def cmp_op(store, dest, src):
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_CF_flag(store, rip, dest, src, '-')
     smt_helper.set_OF_flag(store, rip, dest, src, res, '-')
+    utils.logger.debug('cmp_op')
+    smt_helper.pp_flags(store)
     
 
 def sym_bin_op_cf(op='+'):
@@ -346,7 +348,7 @@ def parse_semantics(store, curr_rip, inst):
         inst_args = utils.parse_inst_args(inst_split)
         res = mov(store, *inst_args)
         return res
-    if inst_name in INSTRUCTION_SEMANTICS_MAP:
+    elif inst_name in INSTRUCTION_SEMANTICS_MAP:
         inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
         inst_args = utils.parse_inst_args(inst_split)
         inst_op(store, *inst_args)

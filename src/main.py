@@ -29,12 +29,19 @@ from .cfg.cfg import CFG
 
 CHECK_RESULTS = ['', '$\\times$']
 
-def construct_cfg(exec_path, disasm_asm, disasm_type):
-    start_address = global_var.elf_info.entry_address
+def construct_cfg(disasm_asm, disasm_type):
     main_address = global_var.elf_info.main_address
     address_sym_table = global_var.elf_info.address_sym_table
-    cfg = CFG(address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, disasm_type)
-    return cfg
+    address_label_map = disasm_asm.address_label_map
+    for address in address_label_map:
+        if address not in address_sym_table:
+            address_sym_table[address] = address_label_map[address]
+    function_addr_table = global_var.elf_info.function_addr_table
+    for func_name in function_addr_table:
+        if func_name != 'main':
+            start_address = function_addr_table[func_name]
+            cfg = CFG(address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_type)
+            write_results(disasm_asm, cfg)
 
 
 def set_logger(disasm_path, disasm_type, verbose=False):
@@ -47,14 +54,13 @@ def close_logger():
         utils.close_logger(log_name)
 
 
-def write_results(disasm_asm, cfg, exec_time):
+def write_results(disasm_asm, cfg):
     reachable_address_num = len(cfg.reachable_addresses())
     indirects_num = len(cfg.indirect_inst_set)
     utils.logger.info(disasm_asm.valid_address_no)
     utils.logger.info(reachable_address_num)
     utils.logger.info(indirects_num)
-    utils.logger.info(exec_time)
-
+    
 
 def dsv_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
@@ -63,9 +69,9 @@ def dsv_main(exec_path, disasm_path, disasm_type, verbose=False):
     disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
     start_time = time.time()
-    cfg = construct_cfg(exec_path, disasm_asm, disasm_type)
+    construct_cfg(disasm_asm, disasm_type)
     exec_time = time.time() - start_time
-    write_results(disasm_asm, cfg, exec_time)
+    utils.logger.info(exec_time)
     close_logger()
 
 

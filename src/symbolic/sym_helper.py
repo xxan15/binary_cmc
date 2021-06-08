@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import itertools
 from z3 import *
 from ..common import lib
 from ..common import utils
@@ -46,6 +47,31 @@ def gen_mem_sym(length=lib.DEFAULT_REG_LEN):
 def gen_seg_reg_sym(name, length=lib.DEFAULT_REG_LEN):
     res = BitVec('_' + name, length)
     return res
+
+def substitute_sym_val(arg, prev_val, new_val):
+    return substitute(arg, (prev_val, new_val))
+
+
+def models(formula, max=10):
+    solver = Solver()
+    solver.add(formula)
+    count = 0
+    while count < max or max == 0:
+        count += 1
+        if solver.check() == sat:
+            model = solver.model()
+            yield model 
+            block = []
+            for z3_decl in model:
+                arg_domains = []
+                for i in range(z3_decl.arity()):
+                    domain, arg_domain = z3_decl.domain(i), []
+                    for j in range(domain.num_constructors()):
+                        arg_domain.append( domain.constructor(j) () )
+                    arg_domains.append(arg_domain)
+                for args in itertools.product(*arg_domains):
+                    block.append(z3_decl(*args) != model.eval(z3_decl(*args)))
+            solver.add(Or(block))
 
 def gen_sym_x(length=lib.DEFAULT_REG_LEN):
     res = BitVec('x', length)
@@ -110,6 +136,10 @@ def least_significant_bit(val, dest_len):
     lsb = bit_ith(val, 0)
     return is_equal(lsb, 1)
 
+
+def bit_vec_wrap(name, length):
+    return BitVec(name, length)
+
 def check_pred_satisfiable(predicates):
     s = Solver()
     for pred in predicates:
@@ -119,6 +149,14 @@ def check_pred_satisfiable(predicates):
         return s.model()
     else:
         return False
+
+
+def top_stack_addr(store):
+    res = simplify(store[lib.REG]['rsp'])
+    if res != None and sym_is_int_or_bitvecnum(res):
+        res = res.as_long()
+    return res
+
 
 def bitwiseXNOR(sym, length):
     res = bit_ith(sym, 0)
