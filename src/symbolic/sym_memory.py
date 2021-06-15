@@ -218,10 +218,10 @@ def check_buffer_overflow(store, address, length):
                     prev_sym = store[lib.MEM][curr_address]
                     prev_len = prev_sym.size() // 8
                     if (offset < 0 and prev_len > -offset) or offset > 0:
-                        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address))
+                        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address) + '\n')
                         store[lib.POINTER_RELATED_ERROR] = True
     elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address))
+        utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address) + '\n')
         store[lib.POINTER_RELATED_ERROR] = True
         
 
@@ -315,10 +315,10 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
             val = global_var.elf_content.read_bytes(int_address - data_base_addr, length // 8)
         else:
             if addr_in_heap(int_address):
-                utils.output_logger.error('Error: Potential use after free at address ' + hex(int_address))
+                utils.output_logger.error('Error: Potential use after free at address ' + hex(int_address) + '\n')
                 store[lib.POINTER_RELATED_ERROR] = True
             elif int_address >= utils.MAX_HEAP_ADDR:
-                utils.output_logger.error('Error: Potential null pointer dereference at address ' + hex(int_address))
+                utils.output_logger.error('Error: Potential null pointer dereference at address ' + hex(int_address) + '\n')
                 store[lib.POINTER_RELATED_ERROR] = True
         if val:
             res = BitVecVal(val, length)

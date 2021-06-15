@@ -21,12 +21,13 @@ class Block(object):
 
     cnt = -1
     
-    def __init__(self, parent_no, address, inst, sym_store, constraint):
+    def __init__(self, parent_no, address, inst, sym_store, constraint, path_id):
         self.parent_no = parent_no
         self.address = address
         self.inst = inst
         self.sym_store = sym_store
         self.constraint = constraint
+        self.path_id = path_id
         self.children_blk_list = []
         self.block_no = self.__class__.cnt
         self.__class__.cnt += 1

@@ -33,20 +33,20 @@ def _set_flag_val(store, flag_name, res):
 
 
 def _set_flag_neg_val(store, flag_name, res):
-    if res == True:
-        store[lib.FLAGS][flag_name] = Bool(False)
-    elif res == False:
-        store[lib.FLAGS][flag_name] = Bool(True)
-    else:
-        store[lib.FLAGS][flag_name] = res
+    # if res == True:
+    #     store[lib.FLAGS][flag_name] = Bool(False)
+    # elif res == False:
+    #     store[lib.FLAGS][flag_name] = Bool(True)
+    # else:
+    store[lib.FLAGS][flag_name] = res
 
 
 def set_mul_OF_CF_flags(store, val):
     reset_all_flags(store)
     if val == False:
-        set_OF_CF_flags(store, Bool(True))
+        set_OF_CF_flags(store, True)
     elif val == True:
-        set_OF_CF_flags(store, Bool(False))
+        set_OF_CF_flags(store, False)
 
 
 def set_OF_flag(store, rip, dest, src, res, op='+'):
@@ -60,7 +60,7 @@ def set_OF_flag(store, rip, dest, src, res, op='+'):
         case2 = And(sym_helper.is_pos(dest), sym_helper.is_neg(src), sym_helper.is_neg(res))
         _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     else:
-        store[lib.FLAGS]['OF'] = Bool(False)
+        store[lib.FLAGS]['OF'] = False
     
 
 def set_CF_flag(store, rip, dest, src, op='+'):
@@ -69,7 +69,7 @@ def set_CF_flag(store, rip, dest, src, op='+'):
     elif op == '-':
         _set_sub_CF_flag(store, rip, dest, src)
     else:
-        store[lib.FLAGS]['CF'] = Bool(False)
+        store[lib.FLAGS]['CF'] = False
 
 def set_flag_direct(store, flag_name, value=None):
     store[lib.FLAGS][flag_name] = value
@@ -106,7 +106,7 @@ def set_OF_CF_flags(store, val):
 
 
 def set_test_OF_CF_flags(store):
-    set_OF_CF_flags(store, Bool(False))
+    set_OF_CF_flags(store, False)
 
 
 def reset_all_flags(store):

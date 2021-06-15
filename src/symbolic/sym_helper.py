@@ -121,6 +121,9 @@ LOGIC_OP_FUNC_MAP = {
     '>=': is_greater_equal
 }
 
+def sym_not(sym):
+    return Not(sym)
+
 def bit_ith(sym, idx):
     return simplify(Extract(idx, idx, sym))
 

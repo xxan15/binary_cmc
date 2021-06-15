@@ -220,8 +220,8 @@ def cmp_op(store, dest, src):
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_CF_flag(store, rip, dest, src, '-')
     smt_helper.set_OF_flag(store, rip, dest, src, res, '-')
-    utils.logger.debug('cmp_op')
-    smt_helper.pp_flags(store)
+    # utils.logger.debug('cmp_op')
+    # smt_helper.pp_flags(store)
     
 
 def sym_bin_op_cf(op='+'):
@@ -334,6 +334,12 @@ def bt(store, bit_base, bit_offset):
         bit_selected = sym_helper.bit_ith(sym_base, offset)
         res = sym_helper.is_equal(bit_selected, 1)
         smt_helper._set_flag_val(store, 'CF', res)
+    else:
+        # offset = sym_offset % offset_size
+        # bit_selected = sym_helper.bit_ith(sym_base, offset)
+        # res = sym_helper.is_equal(bit_selected, 1)
+        smt_helper._set_flag_val(store, 'CF', Bool(True))
+
 
 
 def parse_semantics(store, curr_rip, inst):

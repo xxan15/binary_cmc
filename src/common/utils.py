@@ -25,7 +25,7 @@ import subprocess
 from . import lib
 from enum import Enum
 
-MAX_VISIT_COUNT = 25
+MAX_LOOP_COUNT = 5
 
 MAX_TRACEBACK_COUNT = 20
 MAX_INST_ADDR_GAP = 25
