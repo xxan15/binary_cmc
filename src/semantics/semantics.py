@@ -429,7 +429,7 @@ def start_init(store, _start_address):
     ext_handler.set_regs_sym(store, rip, dests)
     sym_engine.set_sym(store, rip, 'rsp', sym_helper.bit_vec_val_sym(utils.INIT_STACK_FRAME_POINTER))
     ext_handler.set_segment_regs_sym(store, rip)
-    utils.logger.debug('The following registers are set to symbolic value: ' + str(dests))
+    # utils.logger.debug('The following registers are set to symbolic value: ' + str(dests))
     ext_handler.clear_flags(store)
     sym_src = sym_helper.gen_sym()
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')

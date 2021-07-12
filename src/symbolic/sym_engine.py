@@ -59,7 +59,7 @@ def get_sym(store, rip, src, length=lib.DEFAULT_REG_LEN):
 def get_register_sym(store, src):
     return sym_register.get_register_sym(store, src)
 
-def get_memory_val(store, address, length):
+def get_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     return sym_memory.get_memory_val(store, address, length)
 
 def set_sym(store, rip, dest, sym):

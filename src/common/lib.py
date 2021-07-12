@@ -112,6 +112,9 @@ AUX_REG_INFO = {
     64: ('rax', 'rdx', 'rdx:rax')
 }
 
+REG64_NAME_LIST = ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 
+    'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'rsp', 'rbp']
+
 REG64_NAMES = {'rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi', 
     'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15'}
 
@@ -139,11 +142,17 @@ FS = 'fs'
 CS = 'cs'
 GS = 'gs'
 AUX_MEM = 'aux_memory'
+STDOUT = 'stdout'
 NEED_TRACE_BACK = 'need_trace_back'
 POINTER_RELATED_ERROR = 'pointer_related_error'
+STDOUT_ADDRESS = 'stdout_address'
+STDOUT_HANDLER = 'stdout_handler'
+ASSUMPTION_FUNC_NAMES = 'assumption_func_names'
+VERIFIED_FUNC_NAME = 'verified_func_name'
+TO_BE_VERIFIED_ARGS = 'to_be_verified_args'
 HEAP_ADDR = 'heap_addr'
 
-STATE_NAMES = {REG, MEM, FLAGS, FS, CS, GS, AUX_MEM}
+STATE_NAMES = {REG, MEM, FLAGS, FS, CS, GS, AUX_MEM, STDOUT, ASSUMPTION_FUNC_NAMES, TO_BE_VERIFIED_ARGS}
 RECORD_STATE_NAMES = [REG, MEM]
 
 TERMINATION_FUNCTIONS = {

@@ -11,8 +11,8 @@ def gen_cjmp_idx_upperbound(inst_name, boundary):
     jmp_condition = inst_name.split('j', 1)[1]
     if jmp_condition.startswith('n'):
         rest = jmp_condition.split('n')[1]
-        if rest in OPPOSITE_FLAG_MAP:
-            jmp_condition = OPPOSITE_FLAG_MAP[rest]
+        if rest in utils.OPPOSITE_FLAG_MAP:
+            jmp_condition = utils.OPPOSITE_FLAG_MAP[rest]
     if jmp_condition.startswith(('g', 'a')):
         if 'e' in jmp_condition:
             res = boundary
@@ -72,6 +72,49 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
         if mem_val not in res:
             res.append(mem_val)
     return res, inst_dest, src_len
+
+
+def detect_loop(block, address, new_address, block_set):
+    exists_loop = False
+    parent_no = block.parent_no
+    prev_address = None
+    while parent_no:
+        parent_blk = block_set[parent_no]
+        p_address = parent_blk.address
+        if p_address == address:
+            if prev_address and prev_address == new_address:
+                exists_loop = True
+                break
+        parent_no = parent_blk.parent_no
+        prev_address = p_address
+    return exists_loop
+
+
+def detect_loop(block, address, new_address, block_set):
+    exists_loop = False
+    parent_no = block.parent_no
+    prev_address = None
+    while parent_no:
+        parent_blk = block_set[parent_no]
+        p_address = parent_blk.address
+        if p_address == address:
+            if prev_address and prev_address == new_address:
+                exists_loop = True
+                break
+        parent_no = parent_blk.parent_no
+        prev_address = p_address
+    return exists_loop
+
+
+def backtrack_to_start(block, address, block_set):
+    trace_list = [address]
+    parent_no = block.parent_no
+    while parent_no:
+        parent_blk = block_set[parent_no]
+        p_address = parent_blk.address
+        trace_list.append(p_address)
+        parent_no = parent_blk.parent_no
+    return trace_list
 
 
 def reconstruct_jt_sym_stores(blk, distinct_entries, inst_dest, src_len):

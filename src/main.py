@@ -31,17 +31,23 @@ CHECK_RESULTS = ['', '$\\times$']
 
 def construct_cfg(disasm_asm, disasm_type):
     main_address = global_var.elf_info.main_address
+    sym_table = global_var.elf_info.sym_table
     address_sym_table = global_var.elf_info.address_sym_table
+    # sym_mem_info_table = global_var.elf_info.sym_mem_info_table
     address_label_map = disasm_asm.address_label_map
     for address in address_label_map:
         if address not in address_sym_table:
             address_sym_table[address] = address_label_map[address]
     function_addr_table = global_var.elf_info.function_addr_table
-    for func_name in function_addr_table:
-        if func_name != 'main':
-            start_address = function_addr_table[func_name]
-            cfg = CFG(address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_type)
-            write_results(disasm_asm, cfg)
+    # print(address_sym_table)
+    # print(sym_table)
+    # print(global_var.elf_info.sym_mem_info_table)
+    # for func_name in function_addr_table:
+    #     if func_name != 'main':
+    func_name = '_start'
+    start_address = function_addr_table[func_name]
+    cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_type)
+    write_results(disasm_asm, cfg)
 
 
 def set_logger(disasm_path, disasm_type, verbose=False):

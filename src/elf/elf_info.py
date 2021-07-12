@@ -32,6 +32,7 @@ class ELF_Info(object):
         self.sym_type_table = {}
         self.sym_name_count = {}
         self.address_sym_table = {}
+        # self.sym_mem_info_table = {}
         self.data_start_addr = sys.maxsize
         self.data_base_addr = None
         self.data_end_addr = -sys.maxsize - 1
@@ -199,6 +200,7 @@ class ELF_Info(object):
     def _parse_reloc(self, line_split):
         sym_name = line_split[-1]
         # sym_addr = int(line_split[0], 16)
+        # self.sym_mem_info_table[sym_addr] = int(line_split[1], 16)
         sym_addr = sym_helper.gen_spec_sym('mem@' + hex(int(line_split[0], 16)))
         if 'GLIBC' in sym_name:
             self.sym_table[sym_name] = sym_addr

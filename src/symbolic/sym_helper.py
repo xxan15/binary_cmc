@@ -251,6 +251,19 @@ def bvnum_eq(lhs, rhs):
     return res
 
 
+def strict_bitvec_equal(left, right):
+    res = True
+    if isinstance(left, BitVecNumRef) and isinstance(right, BitVecNumRef):
+        res = bvnum_eq(left, right)
+    elif isinstance(left, BitVecNumRef):
+        res = False
+    elif isinstance(right, BitVecNumRef):
+        res = False
+    else:
+        res = bvnum_eq(left, right)
+    return res
+
+
 def bitvec_eq(v_old, v, address_inst_map):
     res = True
     if isinstance(v_old, BitVecNumRef) and isinstance(v, BitVecNumRef):

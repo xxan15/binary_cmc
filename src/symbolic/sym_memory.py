@@ -223,57 +223,73 @@ def check_buffer_overflow(store, address, length):
     elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
         utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address) + '\n')
         store[lib.POINTER_RELATED_ERROR] = True
-        
 
+
+def set_mem_sym_val(store, address, sym, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM): 
+    byte_len = length // 8
+    if address in store[store_key]:
+        prev_sym = store[store_key][address]
+        prev_len = prev_sym.size() // 8
+        if byte_len < prev_len:
+            curr_address = simplify(address + byte_len)
+            store[store_key][curr_address] = simplify(sym_helper.extract_bytes(prev_len, byte_len, prev_sym))
+    store[store_key][address] = sym
+    for offset in range(-7, byte_len):
+        if offset != 0:
+            curr_address = simplify(address + offset)
+            if curr_address in store[store_key]:
+                prev_sym = store[store_key][curr_address]
+                prev_len = prev_sym.size() // 8
+                if offset < 0 and prev_len > -offset:
+                    store[store_key][curr_address] = simplify(sym_helper.extract_bytes(-offset, 0, prev_sym))
+                elif offset > 0:
+                    sym_helper.remove_memory_content(store, curr_address)
+                    if prev_len - byte_len + offset > 0:
+                        new_address = simplify(address + byte_len)
+                        new_sym = simplify(sym_helper.extract_bytes(prev_len, byte_len - offset, prev_sym))
+                        store[store_key][new_address] = new_sym
+                        break  
+
+
+def is_mem_addr_in_stdout(store, address):
+    res = None
+    if lib.STDOUT_HANDLER in store:
+        stdout_handler = store[lib.STDOUT_HANDLER]
+        tmp = simplify(address - stdout_handler)
+        if sym_helper.is_bit_vec_num(tmp):
+            res = tmp
+    return res
 
 def set_mem_sym(store, address, sym, length=lib.DEFAULT_REG_LEN):
     # If the memory address is not concrete
     if not sym_helper.sym_is_int_or_bitvecnum(address):
-        pollute_all_mem_content(store)
-        store[lib.MEM][address] = sym
-        utils.logger.error('Error: Potential buffer overflow with symbolic memory address\n')
-        return -2
+        tmp = is_mem_addr_in_stdout(store, address)
+        if tmp is not None:
+            set_mem_sym_val(store, tmp, sym, length, lib.STDOUT)
+        else:
+            pollute_all_mem_content(store)
+            store[lib.MEM][address] = sym
+            utils.logger.error('Error: Potential buffer overflow with symbolic memory address\n')
+            return -2
     else:
         check_buffer_overflow(store, address, length)
-        byte_len = length // 8
-        if address in store[lib.MEM]:
-            prev_sym = store[lib.MEM][address]
-            prev_len = prev_sym.size() // 8
-            if byte_len < prev_len:
-                curr_address = simplify(address + byte_len)
-                store[lib.MEM][curr_address] = simplify(sym_helper.extract_bytes(prev_len, byte_len, prev_sym))
-        store[lib.MEM][address] = sym
-        for offset in range(-7, byte_len):
-            if offset != 0:
-                curr_address = simplify(address + offset)
-                if curr_address in store[lib.MEM]:
-                    prev_sym = store[lib.MEM][curr_address]
-                    prev_len = prev_sym.size() // 8
-                    if offset < 0 and prev_len > -offset:
-                        store[lib.MEM][curr_address] = simplify(sym_helper.extract_bytes(-offset, 0, prev_sym))
-                    elif offset > 0:
-                        sym_helper.remove_memory_content(store, curr_address)
-                        if prev_len - byte_len + offset > 0:
-                            new_address = simplify(address + byte_len)
-                            new_sym = simplify(sym_helper.extract_bytes(prev_len, byte_len - offset, prev_sym))
-                            store[lib.MEM][new_address] = new_sym
-                            break
+        set_mem_sym_val(store, address, sym, length)
         pollute_mem_w_sym_address(store)
     return 0
 
             
     
-def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN):
+def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM):
     byte_len = length // 8
     res = None
     start_address = None
     for offset in range(8):
         curr_address = simplify(address - offset)
-        if curr_address in store[lib.MEM]:
+        if curr_address in store[store_key]:
             start_address = curr_address
             break
     if start_address is not None:
-        sym = store[lib.MEM][start_address]
+        sym = store[store_key][start_address]
         sym_len = sym.size() // 8
         if sym_len > offset:
             right_bound = min(sym_len, byte_len + offset)
@@ -283,8 +299,8 @@ def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN):
                 tmp_len = right_bound - offset
                 while tmp_len < byte_len:
                     next_address = simplify(address + tmp_len)
-                    if next_address in store[lib.MEM]:
-                        next_sym = store[lib.MEM][next_address]
+                    if next_address in store[store_key]:
+                        next_sym = store[store_key][next_address]
                         next_len = next_sym.size() // 8
                         r_bound = min(next_len, byte_len - tmp_len)
                         curr = sym_helper.extract_bytes(r_bound, 0, next_sym)
@@ -306,6 +322,8 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     if sym_helper.is_bit_vec_num(address):
         val = None
         int_address = address.as_long()
+        # if int_address in global_var.elf_info.sym_mem_info_table:
+        #     val = global_var.elf_info.sym_mem_info_table[int_address]
         if addr_in_rodata_section(int_address):
             rodata_base_addr = global_var.elf_info.rodata_base_addr
             val = global_var.elf_content.read_bytes(int_address - rodata_base_addr, length // 8)
@@ -323,6 +341,7 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
         if val:
             res = BitVecVal(val, length)
         else:
+            # res = BitVecVal(0, length)
             res = BitVec(utils.MEM_DATA_SEC_SUFFIX + hex(int_address), length)
         store[lib.MEM][address] = res
         # pollute_mem_w_sym_address(store)
@@ -333,10 +352,23 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     return res
 
 
+def get_stdout_mem_val(store, address, length=lib.DEFAULT_REG_LEN):
+    res = None
+    tmp = is_mem_addr_in_stdout(store, address)
+    if tmp is not None:
+        res = get_mem_sym(store, tmp, length, lib.STDOUT)
+        if res is None:
+            res = sym_helper.gen_mem_sym(length)
+            store[lib.STDOUT][tmp] = res
+    return res
+
+
 def get_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
-    res = get_mem_sym(store, address, length)
-    if res == None:
-        res = read_memory_val(store, address, length)
+    res = get_stdout_mem_val(store, address, length)
+    if res is None:
+        res = get_mem_sym(store, address, length)
+        if res == None:
+            res = read_memory_val(store, address, length)
     return res
 
 

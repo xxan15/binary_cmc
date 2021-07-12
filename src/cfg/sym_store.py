@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import copy
 from ..common import utils
 from ..common import lib
 from ..symbolic import sym_engine
@@ -38,6 +37,9 @@ class Sym_Store:
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
             self.store[lib.NEED_TRACE_BACK] = False
             self.store[lib.POINTER_RELATED_ERROR] = False
+            self.store[lib.ASSUMPTION_FUNC_NAMES] = {}
+            self.store[lib.VERIFIED_FUNC_NAME] = None
+            self.store[lib.TO_BE_VERIFIED_ARGS] = {}
         if inst and not utils.check_branch_inst_wo_call(inst):
             self.parse_semantics(inst)
 
@@ -71,10 +73,16 @@ class Sym_Store:
         for k in pp_lib_names:
             v = self.store[k]
             res_str = ''
-            for ki, vi in v.items():
-                res_str += str(ki) + ': ' + self.pp_val(vi) + ',\n'
+            if k == lib.REG:
+                for ki in lib.REG64_NAME_LIST:
+                    vi = v[ki]
+                    res_str += str(ki) + ': ' + self.pp_val(vi) + ',\n'
+            else:
+                for ki, vi in v.items():
+                    res_str += str(ki) + ': ' + self.pp_val(vi) + ',\n'
             result += k + ':{\n' + res_str + '}\n'
         # result += self.pp_aux_mem()
+        # result += lib.STDOUT_ADDRESS + ':' + str(self.store[lib.STDOUT_ADDRESS])
         return result
 
 

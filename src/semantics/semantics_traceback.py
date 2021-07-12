@@ -231,7 +231,7 @@ INSTRUCTION_SEMANTICS_MAP = {
 }
 
 
-def parse_sym_src(address_inst_map, address_sym_table, store, curr_rip, inst, sym_names, tb_type, func_not_stack_mem_map):
+def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
     global rip, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
     rip = curr_rip
     need_stop, boundary, still_tb, func_call_point, mem_len_map = False, None, True, False, {}
