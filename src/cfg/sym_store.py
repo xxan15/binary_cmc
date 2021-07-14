@@ -39,6 +39,7 @@ class Sym_Store:
             self.store[lib.MEM_CONTENT_POLLUTED] = False
             self.store[lib.VERIFIED_FUNC_INFO] = None
             self.store[lib.TO_BE_VERIFIED_ARGS] = {}
+            self.store[lib.CALLEE_SAVED_REG_INFO] = {}
         if inst and not utils.check_branch_inst_wo_call(inst):
             self.parse_semantics(inst)
 
@@ -95,7 +96,7 @@ class Sym_Store:
                     s[ki] = sym_helper.merge_sym(v_old, v, address_inst_map)
 
 
-    def aux_mem_eq(self, other, address_inst_map, k=lib.AUX_MEM):
+    def aux_mem_eq(self, other, k=lib.AUX_MEM):
         v = self.store[k]
         v_mem = self.store[lib.MEM]
         other_v = other.store[lib.MEM]
@@ -103,21 +104,21 @@ class Sym_Store:
             vi = v_mem[ki]
             val = other_v.get(ki, None)
             if val is not None:
-                if not sym_helper.bitvec_eq(val, vi, address_inst_map):
+                if not sym_helper.bitvec_eq(val, vi):
                     return False
             else:
                 return False
         return True
 
 
-    def state_ith_eq(self, old, address_inst_map, k=lib.REG):
+    def state_ith_eq(self, old, k=lib.REG):
         s = self.store[k]
         s_old = old.store[k]
         for k in s:
             v = s[k]
             v_old = s_old.get(k, None)
             if v_old is not None:
-                if not sym_helper.bitvec_eq(v_old, v, address_inst_map):
+                if not sym_helper.bitvec_eq(v_old, v):
                     return False
         # for ki in other_v:
         #     val = v.get(ki, None)
@@ -126,9 +127,9 @@ class Sym_Store:
         return True
 
 
-    def state_equal(self, old, address_inst_map):
+    def state_equal(self, old):
         for k in lib.RECORD_STATE_NAMES:
-            res = self.state_ith_eq(old, address_inst_map, k)
+            res = self.state_ith_eq(old, k)
             if not res:
                 return False
         return True

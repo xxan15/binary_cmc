@@ -220,6 +220,13 @@ def print_unsound_input(m):
     return ', '.join(res)
 
 
+def cfg_init_parameter(store, sym_table):
+    if lib.STDOUT in sym_table:
+        stdout_address = sym_table[lib.STDOUT]
+        sym_address = sym_helper.bit_vec_val_sym(stdout_address)
+        store[lib.STDOUT_ADDRESS] = sym_address
+        store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address)
+
 def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
     func_name = None
     rip, store = func_call_blk.sym_store.rip, func_call_blk.sym_store.store
@@ -228,23 +235,5 @@ def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, addre
     if new_address in address_inst_map:
         func_name = address_sym_table[new_address][0]
     return func_name, new_address
-
-# def remove_unreachable_tb_blocks(self, blk):
-#     address_list = []
-#     while blk:
-#         address = blk.address
-#         address_list.append(address)
-#         utils.logger.info('tb: ' + hex(address) + ' ' + blk.inst)
-#         if blk.parent_no in self.block_set:
-#             parent_blk = self.block_set[blk.parent_no]
-#             p_address = self._get_prev_address(address)
-#             if p_address != parent_blk.address:
-#                 if utils.check_not_single_branch_inst(parent_blk.inst):
-#                     break
-#         else:
-#             break
-#         blk = parent_blk
-#     for address in address_list:
-#         self.address_block_map[address][0] = 0
 
 

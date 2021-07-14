@@ -275,7 +275,7 @@ def strict_bitvec_equal(left, right):
     return res
 
 
-def bitvec_eq(v_old, v, address_inst_map):
+def bitvec_eq(v_old, v):
     res = True
     if isinstance(v_old, BitVecNumRef) and isinstance(v, BitVecNumRef):
         res = bvnum_eq(v_old, v)

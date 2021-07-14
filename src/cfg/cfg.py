@@ -48,7 +48,6 @@ class CFG(object):
         self.disasm_type = disasm_type
         self.dummy_block = Block(None, None, '', None, None)
         self.main_address = main_address
-        self.address_except_set = set()
         self.ret_call_address_map = {}
         self.address_jt_entries_map = {}
         self.invariant_argument_map = {}
@@ -57,19 +56,10 @@ class CFG(object):
         sym_store = Sym_Store(None, None, None)
         sym_store.store[lib.VERIFIED_FUNC_INFO] = (start_address, func_name)
         constraint = None
-        self.retrieve_all_branch_inst()
         sym_helper.cnt_init()
         semantics.start_init(sym_store.store, start_address)
-        self.cfg_init_parameter(sym_store.store)
+        cfg_helper.cfg_init_parameter(sym_store.store, self.sym_table)
         self.build_cfg(start_address, sym_store, constraint)
-
-
-    def cfg_init_parameter(self, store):
-        if lib.STDOUT in self.sym_table:
-            stdout_address = self.sym_table[lib.STDOUT]
-            sym_address = sym_helper.bit_vec_val_sym(stdout_address)
-            store[lib.STDOUT_ADDRESS] = sym_address
-            store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address)
 
     
     def build_cfg(self, start_address, sym_store, constraint):
@@ -87,7 +77,7 @@ class CFG(object):
             else:
                 new_address = self._get_next_address(address)
                 if new_address != -1:
-                    self.jump_to_block(curr, address, inst, new_address, sym_store, constraint)
+                    self.jump_to_block(curr, new_address, sym_store, constraint)
             if len(self.block_stack) == 0:
                 _, verified_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
                 utils.output_logger.info('The symbolic execution has been terminated for the function ' + verified_func_name + '\n')
@@ -103,10 +93,8 @@ class CFG(object):
         res = smt_helper.parse_predicate(sym_store.store, inst, True)
         if res == False:
             next_address = self._get_next_address(address)
-            # self.jump_to_block(block, address, inst, next_address, sym_store, constraint)
             self.construct_conditional_jump_block(block, address, inst, next_address, sym_store, constraint, res)
         elif res == True:
-            # self.jump_to_block(block, address, inst, new_address, sym_store, constraint)
             self.construct_conditional_jump_block(block, address, inst, new_address, sym_store, constraint, res)
         else:
             next_address = self._get_next_address(address)
@@ -159,9 +147,9 @@ class CFG(object):
                             func_name = self.address_sym_table[new_address][0]
                             self.external_branch(func_name, block, address, inst, sym_store, constraint)
                         else:
-                            self.jump_to_block(block, address, inst, new_address, sym_store, constraint)
+                            self.jump_to_block(block, new_address, sym_store, constraint)
                     else:
-                        self.jump_to_block(block, address, inst, new_address, sym_store, constraint)
+                        self.jump_to_block(block, new_address, sym_store, constraint)
             elif new_address in self.address_sym_table:
                 ext_func_name = self.address_sym_table[new_address][0]
                 self.external_branch(ext_func_name, block, address, inst, sym_store, constraint)
@@ -211,7 +199,8 @@ class CFG(object):
             next_address = self.main_address
             utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(next_address))
             ext_handler.ext__libc_start_main(store, rip, self.main_address)
-            self.jump_to_block(block, address, inst, next_address, sym_store, constraint)
+            self.preserve_callee_saved_regs_value(sym_store, next_address)
+            self.jump_to_block(block, next_address, sym_store, constraint)
         elif ext_func_name == 'pthread_create':
             store, rip = sym_store.store, sym_store.rip
             jmp_sym_store = Sym_Store(store, rip)
@@ -221,7 +210,7 @@ class CFG(object):
                 rdi_val = sym_helper.int_from_sym(sym_rdi)
                 if rdi_val in self.address_inst_map:
                     utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(rdi_val))
-                    self.jump_to_block(block, address, inst, rdi_val, jmp_sym_store, constraint)
+                    self.jump_to_block(block, rdi_val, jmp_sym_store, constraint)
             fall_through_sym_store = Sym_Store(store, rip)
             ext_handler.ext_func_call(fall_through_sym_store.store, fall_through_sym_store.rip, ext_func_name)
             self.build_ret_branch(block, address, inst, fall_through_sym_store, constraint)
@@ -245,7 +234,14 @@ class CFG(object):
                 utils.logger.info('The symbolic execution has been terminated at the path due to the call of the function ' + ext_name + '\n')
 
 
-    def add_new_to_be_verified_functions(self):
+    def preserve_callee_saved_regs_value(self, sym_store, rip):
+        to_be_preserved_regs = lib.CALLEE_SAVED_REGS
+        for reg in to_be_preserved_regs:
+            prev_val = sym_engine.get_sym(sym_store.store, rip, reg)
+            sym_store.store[lib.CALLEE_SAVED_REG_INFO][reg] = prev_val
+        
+
+    def add_to_be_verified_functions(self):
         if len(self.invariant_argument_map) > 0:
             for func_name in self.invariant_argument_map:
                 if func_name in self.to_be_verified_func_store:
@@ -266,7 +262,7 @@ class CFG(object):
                     func_start_address = self.sym_table[func_name]
                     func_start_inst = self.address_inst_map[func_start_address]
                     semantics.start_init(new_sym_store.store, func_start_address)
-                    self.cfg_init_parameter(new_sym_store.store)
+                    cfg_helper.cfg_init_parameter(new_sym_store.store, self.sym_table)
                     new_sym_store.store[lib.VERIFIED_FUNC_INFO] = (func_start_address, func_name)
                     sym_x = sym_helper.gen_sym_x()
                     smt_helper.push_val(new_sym_store.store, func_start_address, sym_x)
@@ -279,6 +275,7 @@ class CFG(object):
                             self.mem_len_map[arg] = length
                         prev_val = sym_engine.get_sym(new_sym_store.store, func_start_address, arg, length)
                         new_sym_store.store[lib.TO_BE_VERIFIED_ARGS][arg] = prev_val
+                    self.preserve_callee_saved_regs_value(new_sym_store, func_start_address)
                     self.to_be_verified_func_store[func_name] = (func_start_address, func_start_inst, new_sym_store)
                 # sym_store = Sym_Store(new_sym_store.store, func_start_address, func_start_inst)
                 # self._add_new_block(None, func_start_address, func_start_inst, sym_store, new_constraint)
@@ -288,28 +285,43 @@ class CFG(object):
         func_list = []
         blk = block
         store = sym_store.store
-        parent_blk = self.block_set[block.parent_no]
-        parent_store = parent_blk.sym_store.store
-        while parent_blk:
+        parent_no = block.parent_no
+        while parent_no:
+            parent_blk = self.block_set[parent_no]
             parent_store = parent_blk.sym_store.store
             if parent_blk.address != start_address:
                 if blk.inst.startswith('call '):
                     parent_val = sym_engine.get_sym(parent_store, blk.address, arg, length)
                     curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, length)
-                    if not sym_helper.bitvec_eq(parent_val, curr_val, self.address_inst_map):
+                    if not sym_helper.bitvec_eq(parent_val, curr_val):
                         func_name, _ = cfg_helper.retrieve_internal_call_inst_func_name(blk, self.address_inst_map, self.address_sym_table)
                         func_list.append(func_name)
             else:
                 if blk.inst.startswith('call '):
                     parent_val = sym_engine.get_sym(parent_store, blk.address, arg, length)
                     curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, length)
-                    if not sym_helper.bitvec_eq(parent_val, curr_val, self.address_inst_map):
+                    if not sym_helper.bitvec_eq(parent_val, curr_val):
                         func_name, _ = cfg_helper.retrieve_internal_call_inst_func_name(blk, self.address_inst_map, self.address_sym_table)
                         func_list.append(func_name)
                 break
+            parent_no = parent_blk.parent_no
             blk = parent_blk
             store = parent_store
         return func_list
+
+
+    def check_called_saved_regs_convention(self, sym_store, new_address):
+        if len(sym_store.store[lib.CALLEE_SAVED_REG_INFO]) > 0:
+            res = True
+            for reg in sym_store.store[lib.CALLEE_SAVED_REG_INFO]:
+                prev_val = sym_store.store[lib.CALLEE_SAVED_REG_INFO][reg]
+                new_val = sym_engine.get_sym(sym_store.store, new_address, reg)
+                if not sym_helper.strict_bitvec_equal(prev_val, new_val):
+                    res = False
+                    utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT save the value at register ' + reg + ' at specific path.\n')
+            args = list(sym_store.store[lib.CALLEE_SAVED_REG_INFO].keys())
+            if res:
+                utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' DOES save the value at registers ' + str(args) + ' at specific path.\n')
 
 
     def compare_arg_val_w_original(self, block, sym_store, start_address, new_address):
@@ -326,15 +338,15 @@ class CFG(object):
                         res = False
                         func_list = self._check_changed_arg_val_position(block, sym_store, start_address, arg, length)
                         if func_list:
-                            utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' might preserve the value at ' + arg + ' if ' + str(func_list) + ' preserve ' + arg + '.\n')
+                            utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' might preserve the value at ' + arg + ' if ' + str(func_list) + ' preserve ' + arg + ' at specific path.\n')
                         else:
-                            utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT preserve the value at ' + arg + '.\n')
+                            utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT preserve the value at ' + arg + ' at specific path.\n')
                     else:
                         res = False
-                        utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT preserve the value at ' + arg + '.\n')
+                        utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT preserve the value at ' + arg + ' at specific path.\n')
             args = list(sym_store.store[lib.TO_BE_VERIFIED_ARGS].keys())
             if res:
-                utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' DOES preserve the value at ' + str(args) + '.\n')
+                utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' DOES preserve the value at ' + str(args) + ' at specific path.\n')
 
 
     def build_ret_branch(self, block, address, inst, sym_store, constraint):
@@ -347,7 +359,7 @@ class CFG(object):
                         call_target = self._get_prev_inst_target(new_address)
                         if call_target:
                             self.ret_call_address_map[new_address] = call_target
-                    self.jump_to_block(block, address, inst, new_address, sym_store, constraint)
+                    self.jump_to_block(block, new_address, sym_store, constraint)
                 else:
                     self.jump_to_dummy(block)
             elif sym_helper.is_term_address(new_address):
@@ -360,16 +372,18 @@ class CFG(object):
                         # utils.output_logger.info(trace_list)
                         verified_func_start_addr, verified_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
                         if res == False:
-                            self.add_new_to_be_verified_functions()
                             self.compare_arg_val_w_original(block, sym_store, verified_func_start_addr, new_address)
+                            self.check_called_saved_regs_convention(sym_store, new_address)
+                            self.add_to_be_verified_functions()
                             utils.output_logger.info('Function ' + verified_func_name + ' is verified at specific path under above-mentioned assumptions.\n')
                         else:
                             p_info = cfg_helper.print_unsound_input(res)
                             utils.output_logger.info('Function ' + verified_func_name + ' is unsound at specific path with following arguments: ' + p_info + '\n')
                     else:
                         verified_func_start_addr, verified_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
-                        self.add_new_to_be_verified_functions()
                         self.compare_arg_val_w_original(block, sym_store, verified_func_start_addr, new_address)
+                        self.check_called_saved_regs_convention(sym_store, new_address)
+                        self.add_to_be_verified_functions()
                         utils.output_logger.info('Function ' + verified_func_name + ' is verified at specific path under above-mentioned assumptions.\n')
                 # utils.output_logger.info('The symbolic execution has been terminated\n')
                 utils.logger.info('The symbolic execution has been terminated at the path\n')
@@ -532,13 +546,8 @@ class CFG(object):
         return -1, sym_names
 
 
-    def jump_to_block(self, block, address, inst, new_address, sym_store, constraint):
+    def jump_to_block(self, block, new_address, sym_store, constraint):
         new_inst = self.address_inst_map[new_address]
-        # _exist, new_sym_store = self.check_block_exist(block, address, inst, sym_store, constraint, new_address, new_inst)
-        # if not _exist:
-        #     if new_sym_store:
-        #         self._add_new_block(block, new_address, new_inst, new_sym_store, constraint)
-        #     else:
         self.add_new_block(block, new_address, new_inst, sym_store, constraint)
             
 
@@ -695,12 +704,6 @@ class CFG(object):
         return next_address
 
 
-    def retrieve_all_branch_inst(self):
-        for address, inst in self.address_inst_map.items():
-            if utils.check_branch_inst(inst) or inst.startswith('cmov'):
-                self.address_except_set.add(address)
-
-
     def _explored_func_block(self, sym_store, new_address):
         blk_list = self.address_block_map[new_address]
         cnt = len(blk_list)
@@ -712,49 +715,6 @@ class CFG(object):
         new_sym_store = Sym_Store(sym_store.store, prev_sym_store.rip, new_inst)
         res = new_sym_store.state_ith_eq(prev_sym_store, self.address_inst_map) and new_sym_store.aux_mem_eq(prev_sym_store, self.address_inst_map, lib.AUX_MEM)
         return res
-
-
-    def check_block_exist(self, block, address, inst, sym_store, constraint, new_address, new_inst):
-        if new_address not in self.address_except_set:
-            # _exist, res = self._exist_block(address, sym_store, new_address, new_inst)
-            _exist, res = False, None
-            if _exist:
-                block.add_to_children_list(res.block_no)
-                return True, None
-            else:
-                return False, res
-        elif utils.check_not_single_branch_inst(new_inst):
-            inst, sym_store = self.aff_flag_inst
-            smt_helper.add_aux_memory(sym_store.store, sym_store.rip, inst)
-        return False, None
-        
-
-    def _exist_block(self, address, sym_store, new_address, new_inst):
-        if new_address in self.address_block_map:
-            cnt, blk = self.address_block_map[new_address]
-            if cnt == 0:
-                return False, None
-            elif cnt > utils.MAX_VISIT_COUNT:
-                utils.logger.info('Instruction ' + new_inst + ' at address ' + hex(new_address) + ' is visited for ' + str(cnt) + ' times\n')
-                return True, blk
-            prev_sym_store = blk.sym_store
-            rip = prev_sym_store.rip
-            new_sym_store = Sym_Store(sym_store.store, rip, new_inst)
-            new_sym_store.merge_store(prev_sym_store, self.address_inst_map)
-            # if not new_sym_store.state_ith_eq(prev_sym_store) or not new_sym_store.aux_mem_eq(prev_sym_store, lib.AUX_MEM):
-            #     new_sym_store.merge_store(prev_sym_store, self.address_inst_map)
-            #     return False, new_sym_store
-            if new_sym_store.state_equal(prev_sym_store, self.address_inst_map): 
-                utils.logger.info('Block exists: ' + new_inst + ' at address ' + hex(new_address) + ' is visited for ' + str(cnt) + ' times\n')
-                # utils.logger.info(prev_sym_store.pp_store())
-                # utils.logger.info(sym_store.pp_store())
-                # utils.logger.info(new_sym_store.pp_store())
-                return True, blk
-            else:
-                self.address_block_map[new_address][0] = cnt + 1
-                # new_sym_store.merge_store(prev_sym_store, self.address_inst_map)
-                return False, new_sym_store
-        return False, None
 
 
     def draw_cfg(self, start_block):
