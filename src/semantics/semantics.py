@@ -211,12 +211,12 @@ def rep(store, inst_name, inst):
 def cmp_op(store, dest, src):
     sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
     res = sym_engine.sym_bin_op(store, rip, '-', dest, src)
-    if isinstance(res, BitVecNumRef):
-        if not isinstance(sym_dest, BitVecNumRef) and not isinstance(sym_src, BitVecNumRef):
-            tmp = res.as_long()
-            if tmp != 0:
-                res = sym_helper.gen_sym()
-                sym_engine.set_sym(store, rip, src, sym_helper.gen_sym())
+    # if isinstance(res, BitVecNumRef):
+    #     if not isinstance(sym_dest, BitVecNumRef) and not isinstance(sym_src, BitVecNumRef):
+    #         tmp = res.as_long()
+    #         if tmp != 0:
+    #             res = sym_helper.gen_sym()
+    #             sym_engine.set_sym(store, rip, src, sym_helper.gen_sym())
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_CF_flag(store, rip, dest, src, '-')
     smt_helper.set_OF_flag(store, rip, dest, src, res, '-')
@@ -338,7 +338,7 @@ def bt(store, bit_base, bit_offset):
         # offset = sym_offset % offset_size
         # bit_selected = sym_helper.bit_ith(sym_base, offset)
         # res = sym_helper.is_equal(bit_selected, 1)
-        smt_helper._set_flag_val(store, 'CF', Bool(True))
+        smt_helper._set_flag_val(store, 'CF', None)
 
 
 

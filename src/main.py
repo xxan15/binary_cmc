@@ -62,10 +62,8 @@ def close_logger():
 
 def write_results(disasm_asm, cfg):
     reachable_address_num = len(cfg.reachable_addresses())
-    indirects_num = len(cfg.indirect_inst_set)
     utils.logger.info(disasm_asm.valid_address_no)
     utils.logger.info(reachable_address_num)
-    utils.logger.info(indirects_num)
     
 
 def dsv_main(exec_path, disasm_path, disasm_type, verbose=False):
@@ -85,13 +83,14 @@ def dsv_batch(elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
     disasm_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(disasm_lib_dir) for f in filenames if f.endswith(disasm_type)]
     for disasm_path in disasm_files:
         file_name = utils.get_file_name(disasm_path)
+        print(file_name)
         exec_path = os.path.join(elf_lib_dir, file_name)
         if os.path.exists(exec_path):
             try:
                 dsv_main(exec_path, disasm_path, disasm_type, verbose)
                 time.sleep(15)
-                para_list = neat_unreach.main_single(file_name, elf_lib_dir, disasm_lib_dir, disasm_type, False)
-                print(file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
+                # para_list = neat_unreach.main_single(file_name, elf_lib_dir, disasm_lib_dir, disasm_type, False)
+                # print(file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
             except:
                 close_logger()
                 time.sleep(15)

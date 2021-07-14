@@ -147,12 +147,12 @@ NEED_TRACE_BACK = 'need_trace_back'
 POINTER_RELATED_ERROR = 'pointer_related_error'
 STDOUT_ADDRESS = 'stdout_address'
 STDOUT_HANDLER = 'stdout_handler'
-ASSUMPTION_FUNC_NAMES = 'assumption_func_names'
-VERIFIED_FUNC_NAME = 'verified_func_name'
+VERIFIED_FUNC_INFO = 'verified_func_info'
 TO_BE_VERIFIED_ARGS = 'to_be_verified_args'
+MEM_CONTENT_POLLUTED = 'mem_content_polluted'
 HEAP_ADDR = 'heap_addr'
 
-STATE_NAMES = {REG, MEM, FLAGS, FS, CS, GS, AUX_MEM, STDOUT, ASSUMPTION_FUNC_NAMES, TO_BE_VERIFIED_ARGS}
+STATE_NAMES = {REG, MEM, FLAGS, FS, CS, GS, AUX_MEM, STDOUT, TO_BE_VERIFIED_ARGS}
 RECORD_STATE_NAMES = [REG, MEM]
 
 TERMINATION_FUNCTIONS = {

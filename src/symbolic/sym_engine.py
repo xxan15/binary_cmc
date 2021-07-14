@@ -109,8 +109,8 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
     return sym_memory.read_memory_val(store, address, length)
 
 
-def reset_mem_content_pollute():
-    sym_memory.reset_mem_content_pollute()
+def reset_mem_content_pollute(store):
+    sym_memory.reset_mem_content_pollute(store)
 
 
 def pollute_all_mem_content(store):

@@ -3,6 +3,7 @@ from ..common import utils
 from .sym_store import Sym_Store
 from ..symbolic import sym_helper
 from ..symbolic import sym_engine
+from ..semantics import smt_helper
 from ..semantics import semantics
 
 
@@ -198,6 +199,35 @@ def substitute_sym_arg_for_all(store, rip, sym_arg, sym_new):
         for k, v in s.items():
             s[k] = sym_helper.substitute_sym_val(v, sym_arg, sym_new)
     
+
+def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
+    func_name = None
+    rip, store = func_call_blk.sym_store.rip, func_call_blk.sym_store.store
+    jump_address_str = func_call_blk.inst.split(' ', 1)[1].strip()
+    new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
+    if new_address in address_inst_map:
+        func_name = address_sym_table[new_address][0]
+    elif new_address in address_sym_table:
+        func_name = address_sym_table[new_address][0]
+    return func_name, new_address
+
+
+def print_unsound_input(m):
+    res = []
+    for d in m.decls():
+        s_val = m[d]
+        res.append(d.name() + ': ' + str(s_val))
+    return ', '.join(res)
+
+
+def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
+    func_name = None
+    rip, store = func_call_blk.sym_store.rip, func_call_blk.sym_store.store
+    jump_address_str = func_call_blk.inst.split(' ', 1)[1].strip()
+    new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
+    if new_address in address_inst_map:
+        func_name = address_sym_table[new_address][0]
+    return func_name, new_address
 
 # def remove_unreachable_tb_blocks(self, blk):
 #     address_list = []

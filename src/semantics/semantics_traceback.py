@@ -88,8 +88,8 @@ def mov(store, sym_names, dest, src):
             # src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
         elif src.endswith(']'):
             smt_helper.remove_reg_from_sym_srcs(dest, src_names)
-            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
-            if is_reg_bottom:
+            new_srcs, still_tb = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
+            if still_tb:
                 src_names = src_names + new_srcs
             else:
                 addr = sym_engine.get_effective_address(store, rip, src)
@@ -234,7 +234,7 @@ INSTRUCTION_SEMANTICS_MAP = {
 def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
     global rip, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
     rip = curr_rip
-    need_stop, boundary, still_tb, func_call_point, mem_len_map = False, None, True, False, {}
+    need_stop, boundary, still_tb, func_call_point = False, None, True, False
     if inst.startswith('lock '):
         inst = inst.split(' ', 1)[1]
     inst_split = inst.strip().split(' ', 1)
@@ -260,11 +260,20 @@ def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
         if inst.startswith('call') and new_address in address_sym_table:
             sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
             func_name = address_sym_table[new_address][0]
+            func_call_point = True
+            for sym_name in sym_not_in_stack:
+                length = lib.DEFAULT_REG_LEN
+                if sym_name not in lib.REG_NAMES:
+                    length = mem_len_map[sym_name]
+                if utils.imm_start_pat.match(sym_name):
+                    sym_name = '[' + sym_name + ']'
+                    val = sym_engine.get_sym(store, rip, sym_name, length)
+                    if sym_helper.is_bv_sym_var(val):
+                        func_call_point = False
             # if len(sym_in_stack) > 0:
             #     func_call_point = False
             #     rest = func_not_stack_mem_map
             #     rest.append((sym_not_in_stack, func_name))
             # else:
-            func_call_point = True
     return src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
 

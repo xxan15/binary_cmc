@@ -22,6 +22,7 @@ from ..common import global_var
 
 cnt = 0
 mem_cnt = 0
+stdout_mem_cnt = 0
 
 def cnt_init():
     global cnt
@@ -42,6 +43,13 @@ def gen_mem_sym(length=lib.DEFAULT_REG_LEN):
     expr = utils.generate_sym_expr(mem_cnt)
     res = BitVec('m#' + expr, length)
     mem_cnt += 1
+    return res
+    
+def gen_stdout_mem_sym(length=lib.DEFAULT_REG_LEN):
+    global stdout_mem_cnt
+    # expr = utils.generate_sym_expr(stdout_mem_cnt)
+    res = BitVec('stdout', length) + BitVecVal(stdout_mem_cnt, length)
+    stdout_mem_cnt += 1
     return res
 
 def gen_seg_reg_sym(name, length=lib.DEFAULT_REG_LEN):
@@ -241,6 +249,9 @@ def remove_memory_content(store, mem_address):
 
 def is_z3_bv_var(arg):
     return isinstance(arg, BitVecRef)
+
+def is_bv_sym_var(arg):
+    return isinstance(arg, BitVecRef) and not isinstance(arg, BitVecNumRef)
 
 def bvnum_eq(lhs, rhs):
     res = None

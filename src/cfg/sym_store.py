@@ -16,7 +16,6 @@
 
 from ..common import utils
 from ..common import lib
-from ..symbolic import sym_engine
 from ..symbolic import sym_helper
 from ..semantics import semantics
 
@@ -37,8 +36,8 @@ class Sym_Store:
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
             self.store[lib.NEED_TRACE_BACK] = False
             self.store[lib.POINTER_RELATED_ERROR] = False
-            self.store[lib.ASSUMPTION_FUNC_NAMES] = {}
-            self.store[lib.VERIFIED_FUNC_NAME] = None
+            self.store[lib.MEM_CONTENT_POLLUTED] = False
+            self.store[lib.VERIFIED_FUNC_INFO] = None
             self.store[lib.TO_BE_VERIFIED_ARGS] = {}
         if inst and not utils.check_branch_inst_wo_call(inst):
             self.parse_semantics(inst)

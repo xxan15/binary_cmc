@@ -23,7 +23,6 @@ from ..common import global_var
 
 letter_num_neg_pat = re.compile(r'\w+')
 sym_pat = re.compile(r'\W+')
-MEM_CONTENT_POLLUTED = False
 
 def get_sym_val(str_val, store, length):
     res = None
@@ -161,14 +160,12 @@ def get_effective_address(store, rip, src, length=lib.DEFAULT_REG_LEN):
     return res
 
 
-def reset_mem_content_pollute():
-    global MEM_CONTENT_POLLUTED
-    MEM_CONTENT_POLLUTED = False
+def reset_mem_content_pollute(store):
+    store[lib.MEM_CONTENT_POLLUTED] = False
 
 
 def pollute_all_mem_content(store):
-    global MEM_CONTENT_POLLUTED
-    MEM_CONTENT_POLLUTED = True
+    store[lib.MEM_CONTENT_POLLUTED] = True
     addr_list = list(store[lib.MEM].keys())
     for addr in addr_list:
         if not sym_helper.sym_is_int_or_bitvecnum(addr):
@@ -258,6 +255,13 @@ def is_mem_addr_in_stdout(store, address):
         tmp = simplify(address - stdout_handler)
         if sym_helper.is_bit_vec_num(tmp):
             res = tmp
+        else:
+            # utils.logger.info('is_mem_addr_in_stdout')
+            # utils.logger.info(address)
+            stdout = BitVec('stdout', lib.DEFAULT_REG_LEN)
+            tmp = simplify(address - stdout)
+            if sym_helper.is_bit_vec_num(tmp):
+                res = address
     return res
 
 def set_mem_sym(store, address, sym, length=lib.DEFAULT_REG_LEN):
@@ -317,7 +321,6 @@ def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM):
 
 
 def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
-    global MEM_CONTENT_POLLUTED
     res = None
     if sym_helper.is_bit_vec_num(address):
         val = None
@@ -327,7 +330,7 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
         if addr_in_rodata_section(int_address):
             rodata_base_addr = global_var.elf_info.rodata_base_addr
             val = global_var.elf_content.read_bytes(int_address - rodata_base_addr, length // 8)
-        elif not MEM_CONTENT_POLLUTED and addr_in_data_section(int_address):
+        elif not store[lib.MEM_CONTENT_POLLUTED] and addr_in_data_section(int_address):
         # elif addr_in_data_section(int_address):
             data_base_addr = global_var.elf_info.data_base_addr
             val = global_var.elf_content.read_bytes(int_address - data_base_addr, length // 8)
@@ -358,7 +361,7 @@ def get_stdout_mem_val(store, address, length=lib.DEFAULT_REG_LEN):
     if tmp is not None:
         res = get_mem_sym(store, tmp, length, lib.STDOUT)
         if res is None:
-            res = sym_helper.gen_mem_sym(length)
+            res = sym_helper.gen_stdout_mem_sym(length)
             store[lib.STDOUT][tmp] = res
     return res
 

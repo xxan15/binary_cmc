@@ -22,7 +22,7 @@ from ..common import global_var
 from ..disassembler import helper
 
 '''
-$ python -m src.dsv_check.disassemble_in_batch -e benchmark/coreutils-build -d benchmark/coreutils-objdump -b 1
+$ python -m src.mc_check.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-objdump -b 1
 '''
 
 INFIX = '.'
