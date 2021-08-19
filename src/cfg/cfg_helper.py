@@ -33,6 +33,22 @@ def gen_jt_idx_upperbound(trace_list, boundary):
     return idx, res
 
 
+def get_prev_address(address, address_inst_map):
+    p_address = None
+    for idx in range(1, utils.MAX_INST_ADDR_GAP):
+        tmp = address - idx
+        if tmp in address_inst_map:
+            p_address = tmp
+            break
+    return p_address
+
+
+def get_next_address(address, address_next_map, address_sym_table):
+    next_address = address_next_map[address]
+    if next_address in address_sym_table: return -1
+    return next_address
+
+
 def check_jt_assign_inst(inst_args):
     res = False
     inst_arg_s = inst_args.split(',')
@@ -73,22 +89,6 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
         if mem_val not in res:
             res.append(mem_val)
     return res, inst_dest, src_len
-
-
-def detect_loop(block, address, new_address, block_set):
-    exists_loop = False
-    parent_no = block.parent_no
-    prev_address = None
-    while parent_no:
-        parent_blk = block_set[parent_no]
-        p_address = parent_blk.address
-        if p_address == address:
-            if prev_address and prev_address == new_address:
-                exists_loop = True
-                break
-        parent_no = parent_blk.parent_no
-        prev_address = p_address
-    return exists_loop
 
 
 def detect_loop(block, address, new_address, block_set):
@@ -156,7 +156,6 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
     return None, None
 
 
-
 def construct_print_info(parent_store, parent_rip, new_sym_store, rip, invariant_arguments):
     p_info = []
     stack_addr = []
@@ -175,6 +174,7 @@ def construct_print_info(parent_store, parent_rip, new_sym_store, rip, invariant
     print_info = ', '.join(p_info)
     return print_info, stack_addr
 
+
 def get_inv_arg_val(store, rip, inv_arg, length=lib.DEFAULT_REG_LEN):
     res = None
     if inv_arg in lib.REG_NAMES:
@@ -190,15 +190,13 @@ def substitute_inv_arg_val_direct(store, rip, inv_arg, inv_val):
     else:
         sym_engine.set_sym(store, rip, '[' + inv_arg + ']', inv_val)
 
-def substitute_sym_arg_for_all(store, rip, sym_arg, sym_new):
-    # res = None 
-    # print(sym_arg)
-    # print(sym_new)
+
+def substitute_sym_arg_for_all(store, sym_arg, sym_new):
     for name in lib.RECORD_STATE_NAMES:
         s = store[name]
         for k, v in s.items():
             s[k] = sym_helper.substitute_sym_val(v, sym_arg, sym_new)
-    
+
 
 def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
     func_name = None
@@ -212,20 +210,13 @@ def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_ta
     return func_name, new_address
 
 
-def print_unsound_input(m):
-    res = []
-    for d in m.decls():
-        s_val = m[d]
-        res.append(d.name() + ': ' + str(s_val))
-    return ', '.join(res)
-
-
 def cfg_init_parameter(store, sym_table):
     if lib.STDOUT in sym_table:
         stdout_address = sym_table[lib.STDOUT]
         sym_address = sym_helper.bit_vec_val_sym(stdout_address)
         store[lib.STDOUT_ADDRESS] = sym_address
         store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address)
+
 
 def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
     func_name = None
@@ -237,3 +228,16 @@ def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, addre
     return func_name, new_address
 
 
+def check_path_reachability(constraint):
+    res = True
+    predicates = constraint.get_predicates()
+    res = sym_helper.check_pred_satisfiable(predicates)
+    return res
+
+
+def check_unsatisfied_input(constraint):
+    res = True
+    predicates = constraint.get_predicates()
+    unsat_predicates = [sym_helper.sym_not(p) for p in predicates]
+    res = sym_helper.check_pred_satisfiable(unsat_predicates)
+    return res

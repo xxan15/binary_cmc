@@ -162,6 +162,14 @@ def check_pred_satisfiable(predicates):
         return False
 
 
+def pp_z3_model_info(m):
+    res = []
+    for d in m.decls():
+        s_val = m[d]
+        res.append(d.name() + ': ' + str(s_val))
+    return ', '.join(res)
+
+
 def top_stack_addr(store):
     res = simplify(store[lib.REG]['rsp'])
     if res != None and sym_is_int_or_bitvecnum(res):
@@ -243,8 +251,6 @@ def is_term_address(address):
 
 def remove_memory_content(store, mem_address):
     del store[lib.MEM][mem_address]
-    if mem_address in store[lib.AUX_MEM]:
-        store[lib.AUX_MEM].remove(mem_address)
 
 
 def is_z3_bv_var(arg):

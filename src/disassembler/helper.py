@@ -17,13 +17,12 @@
 import re
 import os
 import sys
-import bap
 import angr
 import r2pipe
 
 from ..common import lib
 from ..common import utils
-from ..common import global_var
+
 
 BYTE_LEN_REPS = {
     'byte': 'byte', 
@@ -37,7 +36,6 @@ BYTE_LEN_REPS = {
     'xmmword': 'xmmword'
 }
 
-# INVALID_SECTION_LABELS = {'_fini', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
 
 BYTE_REP_PTR_MAP = {
     'q': 'qword ptr',
@@ -55,6 +53,7 @@ BYTELEN_REP_MAP = {
     8: 'byte ptr'
 }
 
+
 remote_addr_pat = re.compile('0x2[0-9a-fA-F]{5}')
 
 
@@ -65,17 +64,8 @@ def disassemble_to_asm(exec_path, disasm_path, disasm_type='objdump'):
     elif disasm_type == 'objdump':
         cmd = 'objdump -M intel -d ' + exec_path + ' > ' + disasm_path
         utils.execute_command(cmd)
-    elif disasm_type == 'bap':
-        cmd = 'bap -d asm ' + exec_path + ' > ' + disasm_path
-        utils.execute_command(cmd)
-    elif disasm_type == 'dyninst':
-        dyninst_path = os.path.join(utils.PROJECT_DIR, 'lib/disassemble_dyninst')
-        cmd = dyninst_path + ' ' + exec_path + ' > ' + disasm_path
-        utils.execute_command(cmd)
     elif disasm_type == 'angr':
         disassemble_angr(exec_path, disasm_path)
-    elif disasm_type == 'ghidra':
-        disassemble_ghidra(exec_path, disasm_path)
     else:
         raise Exception('The assembly file has not been generated')
 
@@ -105,27 +95,6 @@ def disassemble_radare2(exec_path, asm_path):
             res += r.cmd('pD ' + str(sec_size_table[sec_name]))
     with open(asm_path, 'w+') as f:
         f.write(res)
-
-
-def disassemble_ghidra(exec_path, asm_path):
-    cmd = os.path.join(utils.PROJECT_DIR, 'lib/ghidra_9.0.4/support/analyzeHeadless') + ' '
-    cmd += os.path.join(utils.PROJECT_DIR, 'lib/ghidra_9.0.4/') + ' ghidra.gpr -deleteProject'
-    cmd += ' -import ' + exec_path
-    cmd += ' -scriptPath ' + os.path.join(utils.PROJECT_DIR, 'src/disassembler/')
-    cmd += ' -postScript ghidra_disasm.py'
-    cmd += ' ' + str(global_var.elf_info.code_base_addr)
-    res = utils.execute_command(cmd)
-    lines = res.split('\n')
-    with open(asm_path, 'w+') as f:
-        code_start = False
-        for line in lines:
-            if code_start:
-                if line.startswith('--- instructions ---'):
-                    break
-                else:
-                    f.write(line + '\n')
-            if line.startswith('--- instructions ---'):
-                code_start = True
 
     
 # [Sections]
@@ -182,18 +151,6 @@ def calculate_absolute_address(line, rip):
             line = str(to_hex(absolute_address, 64))
     return line
 
-
-def calculate_dyninst_jmp_address(line, address, rip):
-    res = line
-    if line.endswith(']') and 'rip' in line:
-        res = utils.extract_content(line, '[')
-        if remote_addr_pat.search(line):
-            res = line
-            # res = res.replace('rip', hex(rip))
-        else:
-            res = res.replace('rip', hex(address))
-            res = hex(eval(res))
-    return res
 
 def check_section_start(line, disassembler='objdump'):
     result = False
@@ -261,147 +218,6 @@ def rewrite_att_memory_rep(inst_name, arg):
         res = res.replace('+-', '-')
     return res
 
-def add_att_memory_bytelen_rep(inst_name, arg, word_ptr_rep):
-    res = arg
-    if inst_name != 'lea' and (arg.endswith(']') or 's:' in arg):
-        res = word_ptr_rep + ' ' + arg
-    return res
-
-def rewrite_att_inst_name(name, inst):
-    res = name
-    word_ptr_rep = None
-    if name.startswith('cmov'):
-        inst_name, suffix = name[:-1], name[-1]
-        res = inst_name
-        word_ptr_rep = BYTE_REP_PTR_MAP[suffix]
-    elif name.startswith('jmp'):
-        res = 'jmp'
-        word_ptr_rep = 'qword ptr'
-    elif name.startswith(('j')):
-        word_ptr_rep = 'qword ptr'
-    elif name.startswith(('set')):
-        word_ptr_rep = 'byte ptr'
-    elif name in (('subss', 'movss', 'ucomiss')):
-        word_ptr_rep = 'dword ptr'
-    elif name in (('movsb', 'movsw', 'movsd', 'movsq', 'movsxd')):
-        suffix = name[-1]
-        word_ptr_rep = BYTE_REP_PTR_MAP[suffix]
-    elif name in (('movdqu', 'movaps', 'movdqa', 'movups')):
-        word_ptr_rep = 'xmmword ptr'
-    elif name in (('movsl')):
-        new_inst_name, suffix = name[:-1], name[-1]
-        res = new_inst_name
-        word_ptr_rep = BYTE_REP_PTR_MAP[suffix]
-    elif name == 'movq' and 'xmm' in inst:
-        pass
-    elif name.startswith(('movs', 'movz')):   # movslq, movzbl, movsl
-        inst_name, suffix = name[:-1], name[-1]
-        inst_name, src_len_rep = inst_name[:-1], inst_name[-1]
-        if src_len_rep == 'b' or (src_len_rep == 'w' and (suffix == 'l' or suffix == 'q')):
-            res = inst_name + 'x'
-        else:
-            res = inst_name + 'xd'
-        if src_len_rep in BYTE_REP_PTR_MAP:
-            word_ptr_rep = BYTE_REP_PTR_MAP[src_len_rep]
-        elif inst_name == 'movss':
-            word_ptr_rep = 'dword ptr'
-    elif name.startswith(('fld', 'fadd', 'fstp')) and name.endswith('s'):
-        inst_name, suffix = name[:-1], name[-1]
-        res = inst_name
-        word_ptr_rep = 'dword ptr'
-    elif name.endswith(('q', 'l', 'w', 'b', 't')):
-        inst_name, suffix = name[:-1], name[-1]
-        if inst_name in lib.INSTRUCTIONS:
-            res = inst_name
-            word_ptr_rep = BYTE_REP_PTR_MAP[suffix]
-        elif inst_name.startswith(('movs', 'movz')):   # movslq, movzbl
-            inst_name, src_len_rep = inst_name[:-1], inst_name[-1]
-            if src_len_rep == 'b' or (src_len_rep == 'w' and (suffix == 'l' or suffix == 'q')):
-                res = inst_name + 'x'
-            else:
-                res = inst_name + 'xd'
-            word_ptr_rep = BYTE_REP_PTR_MAP[src_len_rep]
-    return res, word_ptr_rep
-
-
-def format_bap_lea_inst_arg(name, arg):
-    res = arg
-    if name == 'lea':
-        if utils.imm_pat.match(arg):
-            res = '[' + arg + ']'
-    return res
-
-def reconstruct_dyninst_memory_rep(arg):
-    res = '['
-    arg_split = arg.split('(', 1)
-    arg_split_1 = arg_split[1].strip().rsplit(')', 1)[0].split(',')
-    arg_split_1_0 = arg_split_1[0].strip()
-    if arg_split_1_0.startswith('%') and arg_split_1_0.endswith(tuple(lib.SEG_REGS)):
-        res = arg_split_1_0.split('%', 1)[1].strip() + ':['
-        if arg_split[0].strip() != '':
-            offset = remove_att_prefix(arg_split[0].strip())
-            if utils.imm_pat.match(offset):
-                offset = utils.imm_str_to_int(offset)
-                offset = utils.get_signed_integer(offset, lib.C_INT_LEN)
-                res += hex(offset)
-            else:
-                res += offset
-    else:
-        res += remove_att_prefix(arg_split_1_0)
-        if len(arg_split_1) > 1:
-            if arg_split_1_0:
-                res += ' + '
-            res += remove_att_prefix(arg_split_1[1])
-            if len(arg_split_1) == 3:
-                res += ' * ' + remove_att_prefix(arg_split_1[2])
-        if arg_split[0].strip() != '':
-            offset = remove_att_prefix(arg_split[0].strip())
-            if utils.imm_pat.match(offset):
-                offset = utils.imm_str_to_int(offset)
-                offset = utils.get_signed_integer(offset, lib.C_INT_LEN)
-                res += ' + ' + hex(offset)
-            else:
-                res += ' + ' + offset
-    res += ']'
-    return res
-
-def modify_dyninst_operands(name, args):
-    res = args
-    if name == 'mul':
-        if len(args) == 3:
-            res = [args[1]]
-    elif name == 'imul':
-        if len(args) == 3:
-            res = [args[0], args[2], args[1]]
-    elif name in (('idiv', 'div')):
-        if len(args) == 2:
-            res = [args[1]]
-    return res
-
-def rewrite_dyninst_arg_format(name, arg):
-    if arg.startswith('0x'):
-        arg = hex(int(arg.split('0x', 1)[1].strip(), 16))
-    return arg
-
-def normalize_dyninst_inst_name(name):
-    res = name
-    if name == 'shl/sal':
-        res = 'shl'
-    return res
-
-def rewrite_dyninst_memory_rep(arg):
-    res = arg
-    if '(' in arg:
-        res = reconstruct_dyninst_memory_rep(arg)
-    elif ':' in arg:
-        arg_split = arg.split(':')
-        res = remove_att_prefix(arg_split[0]) + ':' + remove_att_prefix(arg_split[1])
-    else:
-        res = remove_att_prefix(arg)
-    if res.endswith(']'):
-        res = res.replace('+ -', '- ')
-    return res
-
 
 def rewrite_absolute_address_to_relative(arg, rip):
     res = arg
@@ -421,26 +237,12 @@ def rewrite_absolute_address_to_relative(arg, rip):
     return res
 
 
-def switch_mem_arg_order(arg):
-    res = arg
-    if arg.endswith(']') and 's:' not in arg:
-        arg_split = arg.strip().split('[')
-        arg_content = arg_split[1].split(']')[0].strip()
-        if arg_content.startswith('-') and utils.imm_start_pat.match(arg_content):
-            arg_content_split = arg_content.split('+')
-            if len(arg_content_split) > 1:
-                new_arg_content = '+'.join(arg_content_split[1:]) + '+' + arg_content_split[0]
-            else:
-                new_arg_content = arg_content
-            res = arg_split[0] + '[' + new_arg_content.replace('+-', '-').strip() + ']'
-    return res
-
-
 def convert_to_hex_rep(arg):
     res = arg
     if re.match(r'^[0-9a-f]+$|^-[0-9a-f]+$', arg):
         res = hex(int(arg, 16))
     return res
+
 
 def norm_objdump_arg(name, arg):
     res = arg
@@ -457,14 +259,6 @@ def normalize_radare2_arg(inst_name, arg):
         b_len_rep = arg.split(' ', 1)[0].strip()
         if b_len_rep in BYTE_LEN_REPS:
             res = re.sub(b_len_rep, BYTE_LEN_REPS[b_len_rep] + ' ptr', arg)
-    return res
-
-def normalize_angr_ghidra_arg(arg):
-    res = arg
-    if arg.endswith(']'):
-        b_len_rep = arg.split(' ', 1)[0].strip()
-        if b_len_rep in BYTE_LEN_REPS:
-            res = re.sub(b_len_rep, BYTE_LEN_REPS[b_len_rep], arg)
     return res
 
 

@@ -40,23 +40,23 @@ def mov(store, dest, src):
     sym_src = sym_engine.get_sym(store, rip, src, dest_len)
     res = sym_engine.set_sym(store, rip, dest, sym_src)
     return res
-    
+
 
 def lea(store, dest, src):
     address = sym_engine.get_effective_address(store, rip, src)
     sym_engine.set_sym(store, rip, dest, address)
-    
+
 
 def pop(store, dest):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
     res = sym_engine.get_mem_sym(store, sym_rsp)
-    if res is None: 
+    if res is None:
         res = sym_helper.gen_sym()
     # else:
     #     sym_helper.remove_memory_content(store, sym_rsp)
     sym_engine.set_sym(store, rip, dest, res)
     smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8')
-    
+
 
 def push(store, src):
     sym_src = sym_engine.get_sym(store, rip, src)
@@ -69,7 +69,7 @@ def call(store, dest):
 def ret(store):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
     res = sym_engine.get_mem_sym(store, sym_rsp)
-    if res is not None: 
+    if res is not None:
         sym_helper.remove_memory_content(store, sym_rsp)
     smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8')
     if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
@@ -97,7 +97,7 @@ def cdqe_op(store, length):
     dest = lib.AUX_REG_INFO[length * 2][0]
     res = sym_engine.extension(store, rip, src, length * 2, True)
     sym_engine.set_sym(store, rip, dest, res)
-    
+
 
 def mov_with_extension(signed=False):
     return lambda store, dest, src: mov_ext(store, dest, src, signed)
@@ -107,7 +107,7 @@ def mov_ext(store, dest, src, signed):
     sym_src = sym_engine.get_sym(store, rip, src, src_len)
     dest_len = utils.get_sym_length(dest)
     mov_op(store, dest, dest_len, sym_src, src_len, signed)
-    
+
 def mov_op(store, dest, dest_len, sym_src, src_len, signed):
     sym = sym_engine.extension_sym(sym_src, dest_len, src_len, signed)
     sym_engine.set_sym(store, rip, dest, sym)
@@ -120,7 +120,7 @@ def mul(store, src):
     sym_engine.set_sym(store, rip, dest, res)
     eq = sym_helper.is_equal(sym_helper.upper_half(res), 0)
     smt_helper.set_mul_OF_CF_flags(store, eq)
-    
+
 
 
 def imul(store, src, src1=None, src2=None):
@@ -140,7 +140,7 @@ def imul(store, src, src1=None, src2=None):
         sym_engine.set_sym(store, rip, dest, tmp)
     eq = sym_helper.is_equal(simplify(SignExt(bits_len, res)), tmp)
     smt_helper.set_mul_OF_CF_flags(store, eq)
-    
+
 
 
 def div(signed=True):
@@ -173,7 +173,7 @@ def cmpxchg(store, dest, src):
         smt_helper.set_flag_direct(store, 'ZF', None)
         sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(bits_len))
         sym_engine.set_sym(store, rip, a_reg, sym_helper.gen_sym(bits_len))
-    
+
 
 def cmov(store, curr_rip, inst, pred):
     inst_split = inst.strip().split(' ', 1)
@@ -181,7 +181,7 @@ def cmov(store, curr_rip, inst, pred):
     dest = inst_args[0]
     if pred:
         mov(store, dest, inst_args[1])
-   
+
 
 def set_op(store, inst, dest):
     dest_len = utils.get_sym_length(dest)
@@ -190,7 +190,7 @@ def set_op(store, inst, dest):
         sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(0, dest_len))
     elif res == True:
         sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(1, dest_len))
-    else: 
+    else:
         sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len))
 
 
@@ -222,7 +222,7 @@ def cmp_op(store, dest, src):
     smt_helper.set_OF_flag(store, rip, dest, src, res, '-')
     # utils.logger.debug('cmp_op')
     # smt_helper.pp_flags(store)
-    
+
 
 def sym_bin_op_cf(op='+'):
     return lambda store, dest, src: sym_bin_op_with_cf(store, op, dest, src)
@@ -291,7 +291,7 @@ def rotate_op(store, dest, src, to_left):
             else:
                 tmp = sym_helper.least_significant_bit(sym_dest, dest_len)
                 sym_dest = sym_dest >> 1
-                if tmp == True: 
+                if tmp == True:
                     sym_dest = sym_dest + (1 << dest_len)
             sym_dest = simplify(sym_dest)
             temp -= 1
@@ -321,7 +321,7 @@ def cdq_op(store, length):
     src, _, dest = lib.AUX_REG_INFO[length]
     res = sym_engine.extension(store, rip, src, length * 2, True)
     sym_engine.set_sym(store, rip, dest, res)
-    
+
 
 def bt(store, bit_base, bit_offset):
     sym_base = sym_engine.get_sym(store, rip, bit_base)
@@ -350,7 +350,7 @@ def parse_semantics(store, curr_rip, inst):
         inst = inst.split(' ', 1)[1]
     inst_split = inst.strip().split(' ', 1)
     inst_name = inst_split[0]
-    if inst_name == 'mov':
+    if inst_name in ('mov', 'movabs'):
         inst_args = utils.parse_inst_args(inst_split)
         res = mov(store, *inst_args)
         return res
@@ -430,5 +430,3 @@ def start_init(store, _start_address):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
     # sym_engine.set_sym(store, rip, 'r13', sym_rsp)
     sym_engine.set_mem_sym(store, sym_rsp, sym_src)
-
-

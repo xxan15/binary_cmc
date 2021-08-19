@@ -40,16 +40,15 @@ SEGMENT_REG_INIT_VAL = 0
 
 ASSEMBLY_FILE_NAME = 'test.s'
 
-DISASM_TYPES = ['objdump', 'radare2', 'angr', 'bap', 'ghidra', 'dyninst']
+DISASM_TYPES = ['objdump', 'radare2', 'angr']
 INVALID_SECTION_LABELS = {'_init', '_fini', '__libc_csu_init', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(os.path.realpath(__file__)))))
 
-LOG_NAMES = ['log', 'aux', 'output']
+LOG_NAMES = ['log', 'output']
 
 logger = logging.getLogger(LOG_NAMES[0])
-aux_logger = logging.getLogger(LOG_NAMES[1])
-output_logger = logging.getLogger(LOG_NAMES[2])
+output_logger = logging.getLogger(LOG_NAMES[1])
 
 def setup_logger(log_name, log_path, verbose, level=logging.INFO):
     file_handler = logging.FileHandler(log_path, mode='w+')
@@ -59,14 +58,7 @@ def setup_logger(log_name, log_path, verbose, level=logging.INFO):
         logger.setLevel(level)
         if not verbose:
             logger.propagate = False
-        logger.addHandler(file_handler) 
-    elif log_name == LOG_NAMES[1]:
-        global aux_logger
-        aux_logger = logging.getLogger(log_name)
-        aux_logger.setLevel(level)
-        if not verbose:
-            aux_logger.propagate = False
-        aux_logger.addHandler(file_handler) 
+        logger.addHandler(file_handler)
     else:
         global output_logger
         output_logger = logging.getLogger(log_name)
@@ -83,12 +75,6 @@ def close_logger(log_name):
         for handler in logger.handlers:
             handler.close()
             logger.removeHandler(handler)
-    elif log_name == LOG_NAMES[1]:
-        global aux_logger
-        aux_logger = logging.getLogger(log_name)
-        for handler in aux_logger.handlers:
-            handler.close()
-            aux_logger.removeHandler(handler)
     else:
         global output_logger
         output_logger = logging.getLogger(log_name)

@@ -19,10 +19,10 @@ import argparse
 
 from ..common import utils
 from ..common import global_var
-from ..disassembler import helper
+from . import helper
 
 '''
-$ python -m src.mc_check.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-objdump -b 1
+$ python -m src.disassembler.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-objdump -b 1
 '''
 
 INFIX = '.'
@@ -36,7 +36,7 @@ def disassemble_single(exec_path, disasm_dir, disasm_type='objdump'):
 
 
 def disassemble_file_for_disassemblers(exec_path):
-    for disasm_type in ['objdump', 'angr', 'ghidra', 'bap', 'radare2', 'dyninst']:
+    for disasm_type in ['objdump', 'angr', 'radare2']:
         global_var.get_elf_info(exec_path)
         new_path = exec_path + INFIX + disasm_type
         helper.disassemble_to_asm(exec_path, new_path, disasm_type)

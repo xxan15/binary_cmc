@@ -206,4 +206,11 @@ class TRACE_BACK_TYPE(Enum):
     INDIRECT = 1
     SYMBOLIC = 2
 
+
+class ANALYSIS_DATA_TYPE(Enum):
+    NUM_OF_FUNCTIONS = 0
+    NUM_OF_PATHS     = 1
+    NUM_OF_POSITIVES = 2
+    NUM_OF_NEGATIVES = 3
+
     

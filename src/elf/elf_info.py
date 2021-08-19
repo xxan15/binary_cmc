@@ -152,7 +152,7 @@ class ELF_Info(object):
                         #     sym_val = sym_helper.gen_spec_sym(utils.MEM_DATA_SEC_SUFFIX + hex(sym_val))
                         if sym_type == 'FUNC':
                             if '@' not in sym_name and sym_name not in utils.INVALID_SECTION_LABELS:
-                                self.function_addr_table[sym_name] = sym_val
+                               self.function_addr_table[sym_name] = sym_val
                         sym_name = self._correctify_sym_name(line_split[-1])
                         if sym_name not in self.sym_table:
                             self.sym_table[sym_name] = sym_val

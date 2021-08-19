@@ -26,11 +26,15 @@ address_inst_pattern = re.compile('^[ ]+[0-9a-f]+:[0-9a-f\t ]+')
 
 
 class Disasm_Objdump(Disasm):
-    def __init__(self, disasm_path):
+    def __init__(self, disasm_path, function_addr_table):
         self.disasm_path = disasm_path
         self.address_inst_map = {}
         self.address_next_map = {}
         self.address_label_map = {}
+        self.label_address_map = {}
+        self.function_addr_table = function_addr_table
+        self.func_call_order = ['_start', 'main']
+        self.funct_call_map = {}
         self.valid_address_no = 0
         self.read_asm_info()
 
@@ -47,17 +51,29 @@ class Disasm_Objdump(Disasm):
                     address, label = self._parse_address_label(line)
                     if label not in utils.INVALID_SECTION_LABELS:
                         label = label.split('@', 1)[0].strip()
-                        self.address_label_map[address] = [label]
+                        self.address_label_map[address] = label
+                        self.label_address_map[label] = address
                 elif address_inst_pattern.search(line):
                     address, inst, bin_len = self._parse_line(line)
                     if inst:
                         if inst.startswith('addr32 '):
                             inst = inst.split('addr32', 1)[1].strip()
                         inst = self._format_inst(address, inst)
+                        if inst.startswith('call '):
+                            address_str = inst.split(' ', 1)[1].strip()
+                            if utils.imm_start_pat.match(address_str):
+                                address = int(address_str, 16)
+                                if label in self.funct_call_map:
+                                    self.funct_call_map[label].append(address)
+                                else:
+                                    self.funct_call_map[label] = [address]
                         self.address_inst_map[address] = inst
                         self.valid_address_no += 1
         inst_addresses = sorted(list(self.address_inst_map.keys()))
         inst_num = len(inst_addresses)
+        self._replace_addr_w_label()
+        self.create_func_call_order()
+        print(self.func_call_order)
         for idx, address in enumerate(inst_addresses):
             n_idx = idx + 1
             if n_idx < inst_num:
@@ -65,6 +81,44 @@ class Disasm_Objdump(Disasm):
             else:
                 rip = address + bin_len
             self.address_next_map[address] = rip
+
+
+    def _replace_addr_w_label(self):
+        for label in self.funct_call_map:
+            address_list = self.funct_call_map[label]
+            for idx, address in enumerate(address_list):
+                if address in self.address_label_map:
+                    self.funct_call_map[label][idx] = self.address_label_map[address]
+
+
+    def create_func_call_order(self):
+        for func_name in self.function_addr_table:
+            if func_name not in (('_start', 'main')):
+                if func_name in self.funct_call_map:
+                    idx = len(self.function_addr_table)
+                    called_func_list = self.funct_call_map[func_name]
+                    for called_func in called_func_list:
+                        if called_func in self.func_call_order:
+                            curr_idx = self.func_call_order.index(called_func)
+                            if curr_idx < idx:
+                                idx = curr_idx
+                    #     else:
+                    #         self.func_call_order.append(called_func)
+                    #         curr_idx = self.func_call_order.index(called_func)
+                    #         if curr_idx < idx:
+                    #             idx = curr_idx
+                    # if func_name != 'main':
+                    #     if func_name in self.func_call_order:
+                    #         curr_idx = self.func_call_order.index(func_name)
+                    #         if curr_idx > idx:
+                    #             del self.func_call_order[curr_idx]
+                    #             self.func_call_order.insert(idx, func_name)
+                    #     else:
+                    #         self.func_call_order.insert(idx, func_name)
+                    self.func_call_order.insert(idx, func_name)
+                else:
+                    self.func_call_order.append(func_name)
+
 
 
     def _parse_line(self, line):

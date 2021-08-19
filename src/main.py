@@ -29,7 +29,7 @@ from .cfg.cfg import CFG
 
 CHECK_RESULTS = ['', '$\\times$']
 
-def construct_cfg(disasm_asm, disasm_type):
+def construct_cfg(disasm_asm):
     main_address = global_var.elf_info.main_address
     sym_table = global_var.elf_info.sym_table
     address_sym_table = global_var.elf_info.address_sym_table
@@ -46,7 +46,7 @@ def construct_cfg(disasm_asm, disasm_type):
     #     if func_name != 'main':
     func_name = '_start'
     start_address = function_addr_table[func_name]
-    cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_type)
+    cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
     write_results(disasm_asm, cfg)
 
 
@@ -55,31 +55,32 @@ def set_logger(disasm_path, disasm_type, verbose=False):
         logger_path = disasm_path.replace('.' + disasm_type, '.' + log_name)
         utils.setup_logger(log_name, logger_path, verbose, logging.DEBUG)
 
+
 def close_logger():
     for log_name in utils.LOG_NAMES:
         utils.close_logger(log_name)
 
 
 def write_results(disasm_asm, cfg):
-    reachable_address_num = len(cfg.reachable_addresses())
+    reachable_address_num = cfg.reachable_addresses_num()
     utils.logger.info(disasm_asm.valid_address_no)
     utils.logger.info(reachable_address_num)
     
 
-def dsv_main(exec_path, disasm_path, disasm_type, verbose=False):
+def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
     global_var.get_elf_info(exec_path)
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
-    disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
+    disasm_factory = Disasm_Factory(disasm_path, exec_path, global_var.elf_info.function_addr_table, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
     start_time = time.time()
-    construct_cfg(disasm_asm, disasm_type)
+    construct_cfg(disasm_asm)
     exec_time = time.time() - start_time
     utils.logger.info(exec_time)
     close_logger()
 
 
-def dsv_batch(elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
+def cmc_batch(elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
     disasm_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(disasm_lib_dir) for f in filenames if f.endswith(disasm_type)]
     for disasm_path in disasm_files:
         file_name = utils.get_file_name(disasm_path)
@@ -87,25 +88,21 @@ def dsv_batch(elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
         exec_path = os.path.join(elf_lib_dir, file_name)
         if os.path.exists(exec_path):
             try:
-                dsv_main(exec_path, disasm_path, disasm_type, verbose)
+                cmc_main(exec_path, disasm_path, disasm_type, verbose)
                 time.sleep(15)
-                # para_list = neat_unreach.main_single(file_name, elf_lib_dir, disasm_lib_dir, disasm_type, False)
-                # print(file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
             except:
                 close_logger()
                 time.sleep(15)
                 continue
 
 
-def dsv_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
+def cmc_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
     for file_name in file_names:
         exec_path = os.path.join(elf_lib_dir, file_name)
         disasm_path = os.path.join(disasm_lib_dir, file_name + '.' + disasm_type)
         try:
-            dsv_main(exec_path, disasm_path, disasm_type, verbose)
+            cmc_main(exec_path, disasm_path, disasm_type, verbose)
             time.sleep(15)
-            para_list = neat_unreach.main_single(file_name, elf_lib_dir, disasm_lib_dir, disasm_type, False)
-            print(file_name + '\t' + '\t'.join(list(map(lambda x: str(x), para_list))))
         except:
             close_logger()
             time.sleep(15)
@@ -113,9 +110,9 @@ def dsv_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, verbose=
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Disassembly Soundness Verification')
+    parser = argparse.ArgumentParser(description='Concolic Model Checker')
     parser.add_argument('-t', '--disasm_type', default='objdump', type=str, help='Disassembler')
-    parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run dsv_main in batch mode') 
+    parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run cmc_main in batch mode') 
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Benchmark library') 
     parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Elf shared object library') 
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
@@ -130,14 +127,14 @@ if __name__=='__main__':
     disasm_lib_dir = os.path.join(utils.PROJECT_DIR, log_dir)
     elf_lib_dir = os.path.join(utils.PROJECT_DIR, args.elf_dir)
     if args.batch:
-        dsv_batch(elf_lib_dir, disasm_lib_dir, disasm_type, args.verbose)
+        cmc_batch(elf_lib_dir, disasm_lib_dir, disasm_type, args.verbose)
     else:
         disasm_path = os.path.join(disasm_lib_dir, args.file_name + '.' + disasm_type)
         exec_path = os.path.join(elf_lib_dir, args.file_name)
-        dsv_main(exec_path, disasm_path, disasm_type, args.verbose)
+        cmc_main(exec_path, disasm_path, disasm_type, args.verbose)
     # 
     # file_names = ['basename', 'expand', 'link', 'mknod', 'uname', 'realpath', 'comm', 'echo', 'dir']
-    # dsv_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, args.verbose)
+    # cmc_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, args.verbose)
     # 
     
         

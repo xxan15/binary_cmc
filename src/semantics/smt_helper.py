@@ -126,7 +126,7 @@ def parse_condition(store, cond):
     # utils.logger.info(cond)
     # utils.logger.info(lhs)
     # utils.logger.info(rhs)
-    # if lhs == None or rhs == None: return None
+    if lhs == None or rhs == None: return None
     return sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
 
 
@@ -150,31 +150,6 @@ def parse_predicate(store, inst, val, prefix='j'):
     cond = inst.split(' ', 1)[0].split(prefix, 1)[1]
     expr = lib.CONDITIONAL_FLAGS[cond]
     expr = parse_pred_expr(store, expr)
-    if expr == None: return None
-    elif not val: expr = simplify(Not(expr))
-    return expr
-
-
-def parse_direct_predicate(store, rip, inst, p_inst, val, prefix='j'):
-    cond = inst.split(' ', 1)[0].split(prefix, 1)[1]
-    p_inst_split = p_inst.strip().split(' ', 1)
-    dest, src = utils.parse_inst_args(p_inst_split)
-    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
-    expr = None
-    if cond == 'e':
-        expr = simplify(sym_dest == sym_src)
-    elif cond == 'ne':
-        expr = simplify(sym_dest != sym_src)
-    elif cond == 'g' or cond == 'a':
-        expr = simplify(sym_dest > sym_src)
-    elif cond == 'l' or cond == 'b':
-        expr = simplify(sym_dest < sym_src)
-    elif cond == 'ge' or cond == 'ae':
-        expr = simplify(sym_dest >= sym_src)
-    elif cond == 'le' or cond == 'be':
-        expr = simplify(sym_dest <= sym_src)
-    # expr = lib.CONDITIONAL_FLAGS[cond]
-    # expr = parse_pred_expr(store, expr)
     if expr == None: return None
     elif not val: expr = simplify(Not(expr))
     return expr

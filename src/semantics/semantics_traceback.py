@@ -270,10 +270,5 @@ def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
                     val = sym_engine.get_sym(store, rip, sym_name, length)
                     if sym_helper.is_bv_sym_var(val):
                         func_call_point = False
-            # if len(sym_in_stack) > 0:
-            #     func_call_point = False
-            #     rest = func_not_stack_mem_map
-            #     rest.append((sym_not_in_stack, func_name))
-            # else:
     return src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
 
