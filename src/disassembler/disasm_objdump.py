@@ -33,7 +33,7 @@ class Disasm_Objdump(Disasm):
         self.address_label_map = {}
         self.label_address_map = {}
         self.function_addr_table = function_addr_table
-        self.func_call_order = ['_start', 'main']
+        self.func_call_order = ['_start']
         self.funct_call_map = {}
         self.valid_address_no = 0
         self.read_asm_info()
@@ -92,32 +92,37 @@ class Disasm_Objdump(Disasm):
 
 
     def create_func_call_order(self):
-        for func_name in self.function_addr_table:
-            if func_name not in (('_start', 'main')):
-                if func_name in self.funct_call_map:
-                    idx = len(self.function_addr_table)
-                    called_func_list = self.funct_call_map[func_name]
-                    for called_func in called_func_list:
-                        if called_func in self.func_call_order:
-                            curr_idx = self.func_call_order.index(called_func)
-                            if curr_idx < idx:
-                                idx = curr_idx
-                    #     else:
-                    #         self.func_call_order.append(called_func)
-                    #         curr_idx = self.func_call_order.index(called_func)
-                    #         if curr_idx < idx:
-                    #             idx = curr_idx
-                    # if func_name != 'main':
-                    #     if func_name in self.func_call_order:
-                    #         curr_idx = self.func_call_order.index(func_name)
-                    #         if curr_idx > idx:
-                    #             del self.func_call_order[curr_idx]
-                    #             self.func_call_order.insert(idx, func_name)
-                    #     else:
-                    #         self.func_call_order.insert(idx, func_name)
-                    self.func_call_order.insert(idx, func_name)
-                else:
-                    self.func_call_order.append(func_name)
+        func_stack = ['main']
+        while func_stack:
+            func_name = func_stack.pop()
+        # for func_name in self.function_addr_table:
+        #     if func_name not in (('_start', 'main')):
+            if func_name in self.funct_call_map:
+                idx = len(self.function_addr_table)
+                called_func_list = self.funct_call_map[func_name]
+                for called_func in called_func_list:
+                    if called_func in self.func_call_order:
+                        curr_idx = self.func_call_order.index(called_func)
+                        if curr_idx < idx:
+                            idx = curr_idx
+                    else:
+                        func_stack.append(called_func)
+                #     else:
+                #         self.func_call_order.append(called_func)
+                #         curr_idx = self.func_call_order.index(called_func)
+                #         if curr_idx < idx:
+                #             idx = curr_idx
+                # if func_name != 'main':
+                #     if func_name in self.func_call_order:
+                #         curr_idx = self.func_call_order.index(func_name)
+                #         if curr_idx > idx:
+                #             del self.func_call_order[curr_idx]
+                #             self.func_call_order.insert(idx, func_name)
+                #     else:
+                #         self.func_call_order.insert(idx, func_name)
+                self.func_call_order.insert(idx, func_name)
+            else:
+                self.func_call_order.append(func_name)
 
 
 

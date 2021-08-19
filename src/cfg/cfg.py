@@ -54,6 +54,8 @@ class CFG(object):
         self.cmc_func_exec_info = {}
         self.cmc_func_exec_info[func_name] = [0, 0, 0]
         self.func_call_order = func_call_order
+        # self.func_is_visited = [False] * len(func_call_order)
+        # self.func_is_visited[0] = True
         constraint = None
         sym_helper.cnt_init()
         semantics.start_init(sym_store.store, start_address)
@@ -150,6 +152,7 @@ class CFG(object):
                 func_name = self.address_sym_table[new_address][0]
                 if func_name not in self.func_call_order:
                     self.func_call_order.append(func_name)
+                    # self.func_is_visited.append(False)
                 # self.to_be_visited_func.add(func_name)
                 self.external_branch(func_name, block, address, inst, sym_store, constraint)
             elif new_address in self.address_inst_map:
