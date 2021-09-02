@@ -16,7 +16,7 @@
 
 from enum import Enum
 
-CONDITIONAL_FLAGS = {
+FLAG_CONDITIONS = {
     'a': 'CF==0 and ZF==0',
     'ae': 'CF==0',
     'b': 'CF==1',
@@ -112,17 +112,17 @@ AUX_REG_INFO = {
     64: ('rax', 'rdx', 'rdx:rax')
 }
 
-REG64_NAME_LIST = ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 
-    'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'rsp', 'rbp']
+REG64_NAME_LIST = ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi',
+                   'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'rsp', 'rbp']
 
-REG64_NAMES = {'rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi', 
-    'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15'}
+REG64_NAMES = {'rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi',
+               'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15'}
 
-CALLEE_SAVED_REGS= ['rbx', 'rbp', 'r12', 'r13', 'r14', 'r15']
+CALLEE_SAVED_REGS = ['rbx', 'rbp', 'r12', 'r13', 'r14', 'r15']
 
 REG_NAMES = REG64_NAMES | set(REG_INFO_DICT.keys())
 
-CONDITIONAL_JMP_INST = set(map(lambda x: 'j' + x, CONDITIONAL_FLAGS.keys()))
+CONDITIONAL_JMP_INST = set(map(lambda x: 'j' + x, FLAG_CONDITIONS.keys()))
 
 RFlags = ['CF', 'ZF', 'OF', 'SF']
 
@@ -183,23 +183,26 @@ GENERAL_INSTRUCTIONS = {
     'and', 'or', 'sar', 'shr', 'sal', 'shl', 'xchg',
     'neg', 'not', 'test', 'cmp', 'imul', 'mul', 'idiv', 'div',
     'cmpxchg', 'movzx', 'movsx', 'movsxd', 'leave', 'inc', 'dec', 'adc', 'sbb',
-    'cbw', 'cwde', 'cdqe','cwd', 'cdq', 'cqo', 'ror', 'rol', 'nop', 'hlt'
+    'cbw', 'cwde', 'cdqe', 'cwd', 'cdq', 'cqo', 'ror', 'rol', 'nop', 'hlt'
 }
 
 
 INSTS_AFF_FLAGS_WO_CMP_TEST = {
     'add', 'sub', 'xor', 'and', 'or', 'sar', 'shr', 'sal', 'shl',
     'neg', 'not', 'imul', 'mul', 'inc', 'dec', 'adc', 'sbb', 'ror', 'rol'
-    }
+}
 
-BAP_RELATED_INST = {'stos', 'fild', 'fld', 'fstp', 'fadd'}
+CONDITIONAL_MOV_INST = set(map(lambda x: 'cmov' + x, FLAG_CONDITIONS.keys()))
+
+CONDITIONAL_SET_INST = set(map(lambda x: 'set' + x, FLAG_CONDITIONS.keys()))
+
+INSTRUCTIONS = GENERAL_INSTRUCTIONS | JMP_INST | CONDITIONAL_MOV_INST | CONDITIONAL_SET_INST 
 
 
-CONDITIONAL_MOV_INST = set(map(lambda x: 'cmov' + x, CONDITIONAL_FLAGS.keys()))
-
-CONDITIONAL_SET_INST = set(map(lambda x: 'set' + x, CONDITIONAL_FLAGS.keys()))
-
-INSTRUCTIONS = GENERAL_INSTRUCTIONS | JMP_INST | CONDITIONAL_MOV_INST | CONDITIONAL_SET_INST | BAP_RELATED_INST
+class MEM_DATA_SECT_STATUS(Enum):
+    RAW = 0
+    POLLUTED = 1
+    RESTORED = 2
 
 
 class TRACE_BACK_TYPE(Enum):
@@ -207,10 +210,6 @@ class TRACE_BACK_TYPE(Enum):
     SYMBOLIC = 2
 
 
-class ANALYSIS_DATA_TYPE(Enum):
-    NUM_OF_FUNCTIONS = 0
-    NUM_OF_PATHS     = 1
-    NUM_OF_POSITIVES = 2
-    NUM_OF_NEGATIVES = 3
-
-    
+class TRACE_BACK_RET_TYPE(Enum):
+    UNRESOLVED = 0
+    SUCCEED = 1

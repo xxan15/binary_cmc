@@ -1,3 +1,19 @@
+# Concolic model checker
+# Copyright (C) <2021> <Xiaoxin An> <Virginia Tech>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from ..common import lib
 from ..common import utils
 from .sym_store import Sym_Store
@@ -241,3 +257,5 @@ def check_unsatisfied_input(constraint):
     unsat_predicates = [sym_helper.sym_not(p) for p in predicates]
     res = sym_helper.check_pred_satisfiable(unsat_predicates)
     return res
+
+

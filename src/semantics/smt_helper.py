@@ -148,7 +148,7 @@ def parse_pred_expr(store, expr):
 
 def parse_predicate(store, inst, val, prefix='j'):
     cond = inst.split(' ', 1)[0].split(prefix, 1)[1]
-    expr = lib.CONDITIONAL_FLAGS[cond]
+    expr = lib.FLAG_CONDITIONS[cond]
     expr = parse_pred_expr(store, expr)
     if expr == None: return None
     elif not val: expr = simplify(Not(expr))

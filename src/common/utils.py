@@ -399,8 +399,8 @@ def to_absolute_path(path, dir_path=''):
     return path
 
 
-def convert_dot_to_png(name):
-    cmd = 'dot -Tpng ' + name + '.dot > ' + name + '.png'
+def convert_dot_to_png(file_path):
+    cmd = 'dot -Tpng ' + file_path + '.dot > ' + file_path + '.png'
     execute_command(cmd)
 
 
@@ -411,6 +411,17 @@ def bytes_to_hex(bytes):
         res += n
     return res
 
+
+def replace_dot_in_func_name(name):
+    res = name.replace('.', '_dot_')
+    return res
+
+
+def norm_dot_pp_info(val):
+    res = val
+    if val.startswith('[') and val.endswith(']'):
+        res = val.replace('[', '\\[').replace(']', '\\]')
+    return res
 
 def bytes_to_int(bytes):
     # logger.debug(bytes)

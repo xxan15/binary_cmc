@@ -145,3 +145,5 @@ def ext_func_call(store, rip, ext_func_name):
     dests = regs_str_to_list('rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11')
     set_regs_sym(store, rip, dests)
     clear_flags(store)
+    
+    

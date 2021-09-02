@@ -18,6 +18,7 @@ from ..common import utils
 from ..common import lib
 from ..symbolic import sym_helper
 from ..semantics import semantics
+from ..common.lib import MEM_DATA_SECT_STATUS
 
 class Sym_Store:
     def __init__(self, store, rip=None, inst=None):
@@ -36,7 +37,7 @@ class Sym_Store:
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
             self.store[lib.NEED_TRACE_BACK] = False
             self.store[lib.POINTER_RELATED_ERROR] = False
-            self.store[lib.MEM_CONTENT_POLLUTED] = False
+            self.store[lib.MEM_CONTENT_POLLUTED] = MEM_DATA_SECT_STATUS.RAW
             self.store[lib.VERIFIED_FUNC_INFO] = None
             self.store[lib.TO_BE_VERIFIED_ARGS] = {}
             self.store[lib.CALLEE_SAVED_REG_INFO] = {}

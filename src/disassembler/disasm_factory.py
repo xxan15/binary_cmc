@@ -14,26 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from ..common import utils
-from . import helper
 from .disasm_objdump import Disasm_Objdump
-from .disasm_radare2 import Disasm_Radare2
 from .disasm_angr import Disasm_Angr
 
 class Disasm_Factory(object):
-    def __init__(self, disasm_path, exec_path=None, function_addr_table=None, disasm_type='objdump'):
+    def __init__(self, disasm_path, disasm_type='objdump'):
         self.disasm_type = disasm_type
         self.disasm_path = disasm_path
-        self.exec_path = exec_path
-        self.function_addr_table = function_addr_table
 
 
     def get_disasm(self):
         if self.disasm_type:
             if self.disasm_type == 'objdump':
-                return Disasm_Objdump(self.disasm_path, self.function_addr_table)
-            elif self.disasm_type == 'radare2':
-                return Disasm_Radare2(self.disasm_path, self.exec_path)
+                return Disasm_Objdump(self.disasm_path)
             elif self.disasm_type == 'angr':
                 return Disasm_Angr(self.disasm_path)
         return None

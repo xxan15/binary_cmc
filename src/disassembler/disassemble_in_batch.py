@@ -36,7 +36,7 @@ def disassemble_single(exec_path, disasm_dir, disasm_type='objdump'):
 
 
 def disassemble_file_for_disassemblers(exec_path):
-    for disasm_type in ['objdump', 'angr', 'radare2']:
+    for disasm_type in ['objdump', 'angr']:
         global_var.get_elf_info(exec_path)
         new_path = exec_path + INFIX + disasm_type
         helper.disassemble_to_asm(exec_path, new_path, disasm_type)

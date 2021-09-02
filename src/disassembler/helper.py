@@ -18,50 +18,15 @@ import re
 import os
 import sys
 import angr
-import r2pipe
 
-from ..common import lib
 from ..common import utils
-
-
-BYTE_LEN_REPS = {
-    'byte': 'byte', 
-    'dword': 'dword', 
-    'fword': 'fword', 
-    'qword': 'qword', 
-    'word': 'word', 
-    'tbyte': 'tbyte',
-    'tword': 'tbyte', 
-    'xword': 'tbyte',
-    'xmmword': 'xmmword'
-}
-
-
-BYTE_REP_PTR_MAP = {
-    'q': 'qword ptr',
-    'd': 'dword ptr',
-    'l': 'dword ptr',
-    'w': 'word ptr',
-    'b': 'byte ptr',
-    't': 'tbyte ptr'
-}
-
-BYTELEN_REP_MAP = {
-    64: 'qword ptr',
-    32: 'dword ptr',
-    16: 'word ptr',
-    8: 'byte ptr'
-}
 
 
 remote_addr_pat = re.compile('0x2[0-9a-fA-F]{5}')
 
-
 def disassemble_to_asm(exec_path, disasm_path, disasm_type='objdump'):
     if os.path.exists(disasm_path): return
-    elif disasm_type == 'radare2':
-        disassemble_radare2(exec_path, disasm_path)
-    elif disasm_type == 'objdump':
+    if disasm_type == 'objdump':
         cmd = 'objdump -M intel -d ' + exec_path + ' > ' + disasm_path
         utils.execute_command(cmd)
     elif disasm_type == 'angr':
@@ -80,46 +45,6 @@ def disassemble_angr(exec_path, asm_path):
             node.block.pp()
         print('\n')
     sys.stdout.close()
-
-
-def disassemble_radare2(exec_path, asm_path):
-    res = ''
-    r = r2pipe.open(exec_path)
-    r.cmd('e asm.lines=false')
-    r.cmd('e asm.syntax = intel')
-    s_info = r.cmd('iS')
-    sec_size_table = parse_r2_section_info(s_info)
-    for sec_name in (('.plt', '.plt.got', '.text')):
-        if sec_name in sec_size_table:
-            r.cmd('s section.' + sec_name)
-            res += r.cmd('pD ' + str(sec_size_table[sec_name]))
-    with open(asm_path, 'w+') as f:
-        f.write(res)
-
-    
-# [Sections]
-# Nm Paddr       Size Vaddr      Memsz Perms Name
-# ...
-# 14 0x00001510 13070 0x00001510 13070 -r-x .text
-# 15 0x00004820     9 0x00004820     9 -r-x .fini
-def parse_r2_section_info(section_info):
-    prev_name = ''
-    prev_address = 0
-    lines = section_info.split('\n')
-    sec_size_table = {}
-    sec_start = False
-    for line in lines:
-        line_split = utils.remove_multiple_spaces(line).split(' ')
-        if len(line_split) == 7:
-            if utils.imm_pat.match(line_split[1]):
-                address = utils.imm_str_to_int(line_split[1])
-                if sec_start:
-                    sec_size_table[prev_name] = address - prev_address
-                else:
-                    sec_start = True
-                prev_address = address
-                prev_name = line_split[-1]
-    return sec_size_table
 
 
 def convert_to_hex(line):
@@ -156,8 +81,6 @@ def check_section_start(line, disassembler='objdump'):
     result = False
     if disassembler == 'objdump':
         result = line.startswith('Disassembly of section')
-    elif disassembler == 'radare2':
-        result = re.match(r'^[ ]+;-- [0-9a-zA-Z._]+:', line)
     return result
 
 
@@ -249,71 +172,4 @@ def norm_objdump_arg(name, arg):
     if name == 'fdivrp' and arg == 'st':
         res = 'st(0)'
     return res
-
-
-def normalize_radare2_arg(inst_name, arg):
-    res = arg
-    if inst_name.startswith(('cmpsb', 'scasb')) and ']' in arg:
-        res = arg.rsplit(' ', 1)[1].strip()
-    elif arg.endswith(']') and ' ptr ' not in arg:
-        b_len_rep = arg.split(' ', 1)[0].strip()
-        if b_len_rep in BYTE_LEN_REPS:
-            res = re.sub(b_len_rep, BYTE_LEN_REPS[b_len_rep] + ' ptr', arg)
-    return res
-
-
-def retrieve_bytelen_rep(name, args):
-    word_ptr_rep = None
-    if len(args) == 1:
-        if args[0].endswith(']'):
-            word_ptr_rep = 'qword ptr'
-    elif name in (('movsx', 'movzx')):
-        word_ptr_rep = 'byte ptr'
-        # if args[0] in lib.REG_INFO_DICT:
-        #     word_len = lib.REG_INFO_DICT[args[0]][2]
-        #     if word_len == 16: word_ptr_rep = 'byte ptr'
-        #     else:
-        #         word_ptr_rep = 'word ptr'
-        # elif args[0] in lib.REG64_NAMES:
-        #     word_ptr_rep = 'word ptr'
-    elif name in (('movsd', 'movsb', 'movsxd')):
-        word_ptr_rep = BYTE_REP_PTR_MAP[name[-1]]
-    elif utils.check_branch_inst(name):
-        word_ptr_rep = 'qword ptr'
-    elif name != 'lea':
-        for arg in args:
-            if arg in lib.REG_INFO_DICT:
-                word_len = lib.REG_INFO_DICT[arg][2]
-                word_ptr_rep = BYTELEN_REP_MAP[word_len]
-                break
-            elif arg in lib.REG64_NAMES:
-                word_ptr_rep = BYTELEN_REP_MAP[64]
-                break
-    return word_ptr_rep
-
-
-def add_jump_address_wordptr_rep(arg):
-    res = arg
-    if arg.endswith(']'):
-        res = 'qword ptr ' + arg
-    return res
-
-
-# input1: 'mov    rax,QWORD PTR [rip+0x200a5a] '
-# output1: 'mov    rax,qword ptr [rip+0x200a5a] '
-def norm_ptr_rep(line):
-    res = line
-    if ' PTR ' in line or ' ptr ' in line:
-        for byte_len_rep in BYTE_LEN_REPS:
-            res = re.sub(byte_len_rep + ' PTR ', byte_len_rep.lower() + ' ptr ', res)
-    else:
-        for d_type in BYTE_LEN_REPS:
-            d_type_rep = d_type + ' '
-            d_type_lower_rep = d_type.lower() + ' '
-            if d_type_rep in line:
-                res = re.sub(d_type_rep, d_type_lower_rep + ' ptr ', res)
-            elif ',' + d_type_lower_rep in line or ' ' + d_type_lower_rep in line or '\t' + d_type_lower_rep in line:
-                res = re.sub(d_type_lower_rep, d_type_lower_rep + ' ptr ', res)
-    return res
-
 

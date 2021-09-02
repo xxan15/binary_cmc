@@ -29,7 +29,7 @@ from .cfg.cfg import CFG
 
 CHECK_RESULTS = ['', '$\\times$']
 
-def construct_cfg(disasm_asm):
+def construct_cfg(disasm_path, disasm_asm):
     main_address = global_var.elf_info.main_address
     sym_table = global_var.elf_info.sym_table
     address_sym_table = global_var.elf_info.address_sym_table
@@ -47,6 +47,8 @@ def construct_cfg(disasm_asm):
     func_name = '_start'
     start_address = function_addr_table[func_name]
     cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+    callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
+    cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
 
 
@@ -62,26 +64,37 @@ def close_logger():
 
 
 def write_results(disasm_asm, cfg):
+    num_of_verified_functions = len(cfg.func_call_order)
+    num_of_paths, num_of_positives, num_of_negatives = 0, 0, 0
+    for func_name in cfg.cmc_func_exec_info:
+        exec_info = cfg.cmc_func_exec_info[func_name]
+        num_of_paths += exec_info[0]
+        num_of_positives += exec_info[1]
+        num_of_negatives += exec_info[2]
     reachable_address_num = cfg.reachable_addresses_num()
-    utils.logger.info(disasm_asm.valid_address_no)
-    utils.logger.info(reachable_address_num)
+    utils.output_logger.info(reachable_address_num)
+    utils.output_logger.info(num_of_verified_functions)
+    utils.output_logger.info(num_of_paths)
+    utils.output_logger.info(num_of_positives)
+    utils.output_logger.info(num_of_negatives)
     
 
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
     global_var.get_elf_info(exec_path)
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
-    disasm_factory = Disasm_Factory(disasm_path, exec_path, global_var.elf_info.function_addr_table, disasm_type)
+    disasm_factory = Disasm_Factory(disasm_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
-    start_time = time.time()
-    construct_cfg(disasm_asm)
-    exec_time = time.time() - start_time
-    utils.logger.info(exec_time)
+    # start_time = time.time()
+    construct_cfg(disasm_path, disasm_asm)
+    # exec_time = time.time() - start_time
+    # utils.logger.info(exec_time)
     close_logger()
 
 
 def cmc_batch(elf_lib_dir, disasm_lib_dir, disasm_type, verbose=False):
     disasm_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(disasm_lib_dir) for f in filenames if f.endswith(disasm_type)]
+    disasm_files.sort()
     for disasm_path in disasm_files:
         file_name = utils.get_file_name(disasm_path)
         print(file_name)

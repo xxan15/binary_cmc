@@ -20,6 +20,7 @@ from ..common import lib
 from ..common import utils
 from . import sym_helper
 from ..common import global_var
+from ..common.lib import MEM_DATA_SECT_STATUS
 
 letter_num_neg_pat = re.compile(r'\w+')
 sym_pat = re.compile(r'\W+')
@@ -161,11 +162,11 @@ def get_effective_address(store, rip, src, length=lib.DEFAULT_REG_LEN):
 
 
 def reset_mem_content_pollute(store):
-    store[lib.MEM_CONTENT_POLLUTED] = False
+    store[lib.MEM_CONTENT_POLLUTED] = MEM_DATA_SECT_STATUS.RESTORED
 
 
 def pollute_all_mem_content(store):
-    store[lib.MEM_CONTENT_POLLUTED] = True
+    store[lib.MEM_CONTENT_POLLUTED] = MEM_DATA_SECT_STATUS.POLLUTED
     addr_list = list(store[lib.MEM].keys())
     for addr in addr_list:
         if not sym_helper.sym_is_int_or_bitvecnum(addr):
@@ -330,8 +331,7 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
         if addr_in_rodata_section(int_address):
             rodata_base_addr = global_var.elf_info.rodata_base_addr
             val = global_var.elf_content.read_bytes(int_address - rodata_base_addr, length // 8)
-        elif not store[lib.MEM_CONTENT_POLLUTED] and addr_in_data_section(int_address):
-        # elif addr_in_data_section(int_address):
+        elif store[lib.MEM_CONTENT_POLLUTED]==MEM_DATA_SECT_STATUS.RAW and addr_in_data_section(int_address):
             data_base_addr = global_var.elf_info.data_base_addr
             val = global_var.elf_content.read_bytes(int_address - data_base_addr, length // 8)
         else:
