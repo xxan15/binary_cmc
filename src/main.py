@@ -72,11 +72,11 @@ def write_results(disasm_asm, cfg):
         num_of_positives += exec_info[1]
         num_of_negatives += exec_info[2]
     reachable_address_num = cfg.reachable_addresses_num()
-    utils.output_logger.info(reachable_address_num)
-    utils.output_logger.info(num_of_verified_functions)
-    utils.output_logger.info(num_of_paths)
-    utils.output_logger.info(num_of_positives)
-    utils.output_logger.info(num_of_negatives)
+    utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
+    utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
+    utils.output_logger.info('# of paths: ' + str(num_of_paths))
+    utils.output_logger.info('# of sound paths: ' + str(num_of_positives))
+    utils.output_logger.info('# of unsound paths: ' + str(num_of_negatives))
     
 
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):

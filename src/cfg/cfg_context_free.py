@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-
 from ..common import utils
 from ..common import lib
 from ..common.lib import TRACE_BACK_TYPE
@@ -33,7 +31,7 @@ from ..symbolic import sym_helper
 from ..symbolic import sym_engine
 
 
-class CFG(object):
+class CFG_Context_Free(object):
     def __init__(self, sym_table, address_sym_table, address_inst_map, address_next_map, start_address, main_address, func_name, func_call_order):
         self.block_set = {}
         self.block_stack = []
