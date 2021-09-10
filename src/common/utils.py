@@ -414,6 +414,7 @@ def bytes_to_hex(bytes):
 
 def replace_dot_in_func_name(name):
     res = name.replace('.', '_dot_')
+    res = res.replace('@', '_at_')
     return res
 
 

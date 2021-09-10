@@ -134,13 +134,13 @@ def ext_free_mem_call(store, rip):
 
 
 def ext_rand_call(store, rip):
-    ext_func_call(store, rip, 'rand')
+    ext_func_call(store, rip)
     rax_val = sym_engine.get_sym(store, rip, 'rax')
     new_pred = simplify(rax_val >= 0)
     return new_pred
 
 
-def ext_func_call(store, rip, ext_func_name):
+def ext_func_call(store, rip):
     sym_engine.pollute_all_mem_content(store)
     dests = regs_str_to_list('rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11')
     set_regs_sym(store, rip, dests)

@@ -25,6 +25,7 @@ from .common import global_var
 from .disassembler import helper
 from .disassembler.disasm_factory import Disasm_Factory
 from .cfg.cfg import CFG
+from .cfg.cfg_context_free import CFG_Context_Free
 
 
 CHECK_RESULTS = ['', '$\\times$']
@@ -46,7 +47,7 @@ def construct_cfg(disasm_path, disasm_asm):
     #     if func_name != 'main':
     func_name = '_start'
     start_address = function_addr_table[func_name]
-    cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+    cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
     callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
@@ -65,12 +66,7 @@ def close_logger():
 
 def write_results(disasm_asm, cfg):
     num_of_verified_functions = len(cfg.func_call_order)
-    num_of_paths, num_of_positives, num_of_negatives = 0, 0, 0
-    for func_name in cfg.cmc_func_exec_info:
-        exec_info = cfg.cmc_func_exec_info[func_name]
-        num_of_paths += exec_info[0]
-        num_of_positives += exec_info[1]
-        num_of_negatives += exec_info[2]
+    num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
     reachable_address_num = cfg.reachable_addresses_num()
     utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
     utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))

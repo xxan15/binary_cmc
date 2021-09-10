@@ -29,6 +29,7 @@ from ..semantics import smt_helper
 from ..semantics import ext_handler
 from ..symbolic import sym_helper
 from ..symbolic import sym_engine
+from src import cfg
 
 
 class CFG_Context_Free(object):
@@ -57,14 +58,15 @@ class CFG_Context_Free(object):
         sym_store = Sym_Store(None, None, None)
         sym_store.store[lib.VERIFIED_FUNC_INFO] = (start_address, func_name)
         self.cmc_func_exec_info = {}
-        self.cmc_func_exec_info[func_name] = [0, 0, 0]
+        self.cmc_func_exec_info[func_name] = [0, 0, 0, 0, 0, 0, 0, 0]
         self.func_call_order = func_call_order
         constraint = None
         sym_helper.cnt_init()
         semantics.start_init(sym_store.store, start_address)
         cfg_helper.cfg_init_parameter(sym_store.store, self.sym_table)
         self.build_cfg(start_address, sym_store, constraint)
-
+        self.cmc_exec_info = cfg_helper.collect_statistic_data_from_map(self.cmc_func_exec_info)
+        
     
     def build_cfg(self, start_address, sym_store, constraint):
         start_inst = self.address_inst_map[start_address]
@@ -115,10 +117,11 @@ class CFG_Context_Free(object):
             # self.function_inedges_map[next_func_name] = {}
             # self.function_inedges_map[next_func_name][verified_func_name] = []
             self._release_unused_resources()
-            if next_func_name not in self.to_be_verified_func_store:
+            if next_func_name not in self.to_be_verified_func_store and '@' not in next_func_name:
                 self._create_new_symstore_w_to_be_verified_args(next_func_name)
-            func_start_address, func_start_inst, new_sym_store = self.to_be_verified_func_store[next_func_name]
-            self.add_new_block(None, func_start_address, func_start_inst, new_sym_store, None)
+            if '@' not in next_func_name:
+                func_start_address, func_start_inst, new_sym_store = self.to_be_verified_func_store[next_func_name]
+                self.add_new_block(None, func_start_address, func_start_inst, new_sym_store, None)
 
 
     def _release_unused_resources(self):
@@ -254,7 +257,7 @@ class CFG_Context_Free(object):
             _ = ext_handler.ext_free_mem_call(store, rip)
             self.build_ret_branch(block, address, inst, sym_store, constraint)
         else:
-            ext_handler.ext_func_call(store, rip, ext_func_name)
+            ext_handler.ext_func_call(store, rip)
             ext_name = ext_func_name.split('@', 1)[0].strip()
             if ext_name not in lib.TERMINATION_FUNCTIONS:
                 self.build_ret_branch(block, address, inst, sym_store, constraint)
@@ -268,7 +271,7 @@ class CFG_Context_Free(object):
                 func_start_address, _, new_sym_store = self.to_be_verified_func_store[func_name]
                 to_be_verified_args = self.invariant_argument_map[func_name]
                 self._add_to_be_verified_arg_to_func_symstore(to_be_verified_args, new_sym_store, func_start_address)
-            else:
+            elif '@' not in func_name:
                 self._create_new_symstore_w_to_be_verified_args(func_name)
         self.invariant_argument_map.clear()
                 
@@ -301,16 +304,18 @@ class CFG_Context_Free(object):
         verified_func_start_addr, verified_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
         # NUM_OF_PATHS
         self.cmc_func_exec_info[verified_func_name][0] += 1
-        if not sym_store.store[lib.POINTER_RELATED_ERROR]:
+        if sym_store.store[lib.POINTER_RELATED_ERROR]:
+            # NUM_OF_NEGATIVES
+            self.cmc_func_exec_info[verified_func_name][2] += 1
+            self._update_pointer_related_error_info(sym_store.store, verified_func_name)
+        else:
             # NUM_OF_POSITIVES
             self.cmc_func_exec_info[verified_func_name][1] += 1
+            self.cmc_func_exec_info[verified_func_name][7] += 1
             properties.compare_arg_val_w_original(self.block_set, block, sym_store, verified_func_start_addr, new_address)
             properties.check_called_saved_regs_convention(sym_store, new_address)
             self.add_to_be_verified_functions()
             utils.output_logger.info('Function ' + verified_func_name + ' is verified at specific path.\n')
-        else:
-            # NUM_OF_NEGATIVES
-            self.cmc_func_exec_info[verified_func_name][2] += 1
         utils.logger.info('The symbolic execution has been terminated at the path\n')
 
 
@@ -349,8 +354,12 @@ class CFG_Context_Free(object):
                         self.invariant_argument_map[func_name] = invariant_arguments
                     else:
                         self.invariant_argument_map[func_name].extend(invariant_arguments)
-                    self.function_inedges_map[func_name][verified_func_name].extend(invariant_arguments)
-
+                    if func_name not in self.function_inedges_map:
+                        self.function_inedges_map[func_name] = {}
+                    if func_name != verified_func_name:
+                        self.function_inedges_map[func_name][verified_func_name] = invariant_arguments
+                    if func_name not in self.func_call_order:
+                        self.func_call_order.append(func_name)
 
     def handle_symbolized_mem_w_tb(self, trace_list, src_names, rest, verified_func_name):
         trace_list = trace_list[::-1]
@@ -364,7 +373,8 @@ class CFG_Context_Free(object):
                 self.invariant_argument_map[func_name] = invariant_arguments
             else:
                 self.invariant_argument_map[func_name].extend(invariant_arguments)
-            self.function_inedges_map[func_name][verified_func_name].extend(invariant_arguments)
+            if func_name != verified_func_name:
+                self.function_inedges_map[func_name][verified_func_name] = invariant_arguments
         self._reconstruct_func_call_w_invariant_arguments(trace_list, parent_blk, invariant_arguments, func_name, new_address, rest)
         return 0
 
@@ -524,6 +534,9 @@ class CFG_Context_Free(object):
                     utils.output_logger.info('The path is unsound due to unresolved symbolic memory address at ' + tmp + '\n')
             if 'rdi' in sym_names:
                 utils.output_logger.info('The path is unsound due to the unresolved value of argc\n')
+            # Unresolved symbolic memory address
+            _, curr_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
+            self.cmc_func_exec_info[curr_func_name][6] += 1
         elif res == -2:
             # sym_name = sym_names[0]
             # mem_addr = utils.imm_str_to_int(sym_name)
@@ -532,6 +545,9 @@ class CFG_Context_Free(object):
             utils.logger.info('The path is unsound due to unresolved symbolic memory address at ' + tmp + ' in the original binary file\n')
             utils.output_logger.info('The path is unsound due to unresolved symbolic memory address at ' + tmp + ' in the original binary file\n')
             # utils.logger.info('Cannot trace back to the internal/external function that causes the issue')
+            # Unresolved symbolic memory address
+            _, curr_func_name = sym_store.store[lib.VERIFIED_FUNC_INFO]
+            self.cmc_func_exec_info[curr_func_name][6] += 1
         
         
     def _create_new_symstore_w_to_be_verified_args(self, func_name):
@@ -541,7 +557,7 @@ class CFG_Context_Free(object):
         semantics.start_init(new_sym_store.store, func_start_address)
         cfg_helper.cfg_init_parameter(new_sym_store.store, self.sym_table)
         new_sym_store.store[lib.VERIFIED_FUNC_INFO] = (func_start_address, func_name)
-        self.cmc_func_exec_info[func_name] = [0, 0, 0]
+        self.cmc_func_exec_info[func_name] = [0, 0, 0, 0, 0, 0, 0, 0]
         sym_x = sym_helper.gen_sym_x()
         smt_helper.push_val(new_sym_store.store, func_start_address, sym_x)
         to_be_verified_args = self.invariant_argument_map.get(func_name, [])
@@ -562,6 +578,15 @@ class CFG_Context_Free(object):
         else:
             self._add_block_based_on_predicate(parent_blk, address, inst, sym_store, constraint, rip, True)
             self._add_block_based_on_predicate(parent_blk, address, inst, sym_store, constraint, rip, False)
+
+
+    def _update_pointer_related_error_info(self, store, func_name):
+        if store[lib.POINTER_RELATED_ERROR] == lib.MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE:
+            self.cmc_func_exec_info[func_name][3] += 1
+        elif store[lib.POINTER_RELATED_ERROR] == lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE:
+            self.cmc_func_exec_info[func_name][4] += 1
+        elif store[lib.POINTER_RELATED_ERROR] == lib.MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW:
+            self.cmc_func_exec_info[func_name][5] += 1
 
 
     def _add_block_based_on_predicate(self, parent_blk, address, inst, sym_store, constraint, rip, pred):
@@ -632,7 +657,7 @@ class CFG_Context_Free(object):
                 utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(rdi_val))
                 self.jump_to_block(block, rdi_val, jmp_sym_store, constraint)
         fall_through_sym_store = Sym_Store(store, rip)
-        ext_handler.ext_func_call(fall_through_sym_store.store, fall_through_sym_store.rip, ext_func_name)
+        ext_handler.ext_func_call(fall_through_sym_store.store, fall_through_sym_store.rip)
         self.build_ret_branch(block, address, inst, fall_through_sym_store, constraint)  
 
 
@@ -662,6 +687,7 @@ class CFG_Context_Free(object):
         for name in self.func_call_order:
             res += self.draw_block(name)
         res += '\n'
+        res += self.draw_demonstration()
         for name, in_edge_map in self.function_inedges_map.items():
             res += self.draw_edges(name, in_edge_map)
         res += '}'
@@ -672,7 +698,52 @@ class CFG_Context_Free(object):
 
     def draw_block(self, name):
         res = '    ' + utils.replace_dot_in_func_name(name) 
-        res += ' [label=\"' + name + '\"];\n'
+        res += ' [label=<<table border="0" cellspacing="0">'
+        res += '<tr><td colspan="5">' + name + '</td></tr>'
+        res += self.pp_pointer_related_error_info(name)
+        res += '</table>>];\n'
+        return res
+
+
+    def pp_color_demonstr(self, color, statement):
+        res = '<tr>'
+        res += '<td border="0" bgcolor="' + color + '"></td>'
+        res += '<td colspan="4">' + statement + '</td>'
+        res += '</tr>'
+        return res
+
+
+    def draw_demonstration(self):
+        res = '    color_demonstration' 
+        res += ' [label=<<table border="0" cellspacing="0">'
+        for color, statement in lib.COLOR_ERROR_MAPPING.items():
+            res += self.pp_color_demonstr(color, statement)
+        res += '</table>>];\n'
+        return res
+
+
+    def pp_pointer_related_error_info(self, name):
+        res = ''
+        if name in self.cmc_func_exec_info:
+            res += '<tr>'
+            func_exec_info = self.cmc_func_exec_info[name]
+            # Null pointer dereference error
+            res += self._pp_specific_error_info(func_exec_info, 3, 'red')
+            # Use after free error
+            res += self._pp_specific_error_info(func_exec_info, 4, 'purple')
+            # Buffer overflow
+            res += self._pp_specific_error_info(func_exec_info, 5, 'grey')
+            # Unresolved symbolic memory address
+            res += self._pp_specific_error_info(func_exec_info, 6, 'yellow')
+            # Sound
+            res += self._pp_specific_error_info(func_exec_info, 7, 'green')
+            res += '</tr>'
+        return res
+
+
+    def _pp_specific_error_info(self, func_exec_info, index, color):
+        res = ''
+        res += '<td port="port' + str(index) + '" border="0" bgcolor="' + color + '">' + str(func_exec_info[index]) + '</td>'
         return res
 
 
@@ -692,14 +763,17 @@ class CFG_Context_Free(object):
 
     def pp_edge_label(self, edge_label):
         res = '<tr>\n<td>'
-        arg, pred = edge_label
-        if pred is not None:
-            if pred:
-                res += str(arg)
+        if len(edge_label) == 2:
+            arg, pred = edge_label
+            if pred is not None:
+                if pred:
+                    res += str(arg)
+                else:
+                    res += '<u>' + str(arg) + '</u>'
             else:
-                res += '<u>' + str(arg) + '</u>'
+                res += str(arg)
         else:
-            res += str(arg)
+            res += str(edge_label)
         res += '</td>\n</tr>'
         return res
 

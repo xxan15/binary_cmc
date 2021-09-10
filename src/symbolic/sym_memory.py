@@ -21,6 +21,7 @@ from ..common import utils
 from . import sym_helper
 from ..common import global_var
 from ..common.lib import MEM_DATA_SECT_STATUS
+from ..common.lib import MEMORY_RELATED_ERROR_TYPE
 
 letter_num_neg_pat = re.compile(r'\w+')
 sym_pat = re.compile(r'\W+')
@@ -217,10 +218,10 @@ def check_buffer_overflow(store, address, length):
                     prev_len = prev_sym.size() // 8
                     if (offset < 0 and prev_len > -offset) or offset > 0:
                         utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address) + '\n')
-                        store[lib.POINTER_RELATED_ERROR] = True
+                        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
     elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
         utils.output_logger.error('Error: Potential buffer overflow at address ' + hex(int_address) + '\n')
-        store[lib.POINTER_RELATED_ERROR] = True
+        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
 
 
 def set_mem_sym_val(store, address, sym, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM): 
@@ -337,10 +338,10 @@ def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
         else:
             if addr_in_heap(int_address):
                 utils.output_logger.error('Error: Potential use after free at address ' + hex(int_address) + '\n')
-                store[lib.POINTER_RELATED_ERROR] = True
+                store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
             elif int_address >= utils.MAX_HEAP_ADDR:
                 utils.output_logger.error('Error: Potential null pointer dereference at address ' + hex(int_address) + '\n')
-                store[lib.POINTER_RELATED_ERROR] = True
+                store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
         if val:
             res = BitVecVal(val, length)
         else:

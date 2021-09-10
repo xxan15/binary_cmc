@@ -36,7 +36,7 @@ class Sym_Store:
                     self.store[name] = {}
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
             self.store[lib.NEED_TRACE_BACK] = False
-            self.store[lib.POINTER_RELATED_ERROR] = False
+            self.store[lib.POINTER_RELATED_ERROR] = None
             self.store[lib.MEM_CONTENT_POLLUTED] = MEM_DATA_SECT_STATUS.RAW
             self.store[lib.VERIFIED_FUNC_INFO] = None
             self.store[lib.TO_BE_VERIFIED_ARGS] = {}

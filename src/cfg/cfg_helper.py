@@ -239,7 +239,7 @@ def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, addre
     rip, store = func_call_blk.sym_store.rip, func_call_blk.sym_store.store
     jump_address_str = func_call_blk.inst.split(' ', 1)[1].strip()
     new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
-    if new_address in address_inst_map:
+    if new_address in address_inst_map or new_address in address_sym_table:
         func_name = address_sym_table[new_address][0]
     return func_name, new_address
 
@@ -259,3 +259,31 @@ def check_unsatisfied_input(constraint):
     return res
 
 
+def find_out_func_name_with_addr_in_range(func_start_addr_name_map, address):
+    res = ''
+    start_addr_list = list(func_start_addr_name_map.keys())
+    start_addr_list.sort()
+    addr_num = len(start_addr_list)
+    for idx, start_addr in enumerate(start_addr_list):
+        if idx + 1 < addr_num:
+            next_addr = start_addr_list[idx + 1]
+            if address >= start_addr and address < next_addr:
+                res = func_start_addr_name_map[start_addr]
+                break
+        else:
+            res = func_start_addr_name_map[start_addr]
+    return res
+
+
+def collect_statistic_data_from_map(cmc_func_exec_info):
+    res = None
+    for name in cmc_func_exec_info:
+        func_exec_info = cmc_func_exec_info[name]
+        if res:
+            for idx, _ in enumerate(res):
+                res[idx] += func_exec_info[idx]
+        else:
+            res = func_exec_info
+    return res
+
+ 

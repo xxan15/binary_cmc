@@ -112,6 +112,14 @@ AUX_REG_INFO = {
     64: ('rax', 'rdx', 'rdx:rax')
 }
 
+COLOR_ERROR_MAPPING = {
+    'red': 'null pointer dereference',
+    'purple': 'use after free',
+    'grey': 'buffer overflow',
+    'yellow': 'unresolved symbolic memory address',
+    'green': 'sound'
+}
+
 REG64_NAME_LIST = ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi',
                    'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'rsp', 'rbp']
 
@@ -203,6 +211,12 @@ class MEM_DATA_SECT_STATUS(Enum):
     RAW = 0
     POLLUTED = 1
     RESTORED = 2
+
+
+class MEMORY_RELATED_ERROR_TYPE(Enum):
+    NULL_POINTER_DEREFERENCE = 1
+    USE_AFTER_FREE = 2
+    BUFFER_OVERFLOW = 3
 
 
 class TRACE_BACK_TYPE(Enum):
