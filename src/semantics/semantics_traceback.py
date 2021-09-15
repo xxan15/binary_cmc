@@ -219,6 +219,21 @@ def call(store, sym_names):
     return func_call_point
 
 
+def jmp_to_external_func(store, sym_names):
+    sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
+    func_call_point = True
+    for sym_name in sym_not_in_stack:
+        length = lib.DEFAULT_REG_LEN
+        if sym_name not in lib.REG_NAMES:
+            length = mem_len_map[sym_name]
+        if utils.imm_start_pat.match(sym_name):
+            sym_name = '[' + sym_name + ']'
+            val = sym_engine.get_sym(store, rip, sym_name, length)
+            if sym_helper.is_bv_sym_var(val):
+                func_call_point = False
+    return func_call_point
+
+
 INSTRUCTION_SEMANTICS_MAP = {
     'mov': mov,
     'lea': lea,
@@ -246,7 +261,7 @@ INSTRUCTION_SEMANTICS_MAP = {
 }
 
 
-def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
+def parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names, tb_type):
     global rip, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
     rip = curr_rip
     need_stop, boundary, still_tb, func_call_point = False, None, True, False
@@ -268,11 +283,15 @@ def parse_sym_src(address_sym_table, store, curr_rip, inst, sym_names, tb_type):
         src_names = cmp_op(store, sym_names, tb_type, *inst_args)
     elif inst_name.startswith('rep'):
         inst = inst_split[1].strip()
-        src_names, need_stop, boundary, still_tb = parse_sym_src(store, curr_rip, inst, sym_names)
+        src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map = parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names, tb_type)
     elif utils.check_jmp_with_address(inst):
         jump_address_str = inst.split(' ', 1)[1].strip()
         new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
-        if inst.startswith('call') and new_address in address_sym_table:
-            func_call_point = call(store, sym_names)
+        if utils.CONTEXT_SENSITIVE:
+            if smt_helper.check_jmp_inst_as_external_call(address_sym_table, address_inst_map, store, rip, inst):
+                func_call_point = jmp_to_external_func(store, sym_names)
+        else:
+            if inst.startswith('call') and new_address in address_sym_table:
+                func_call_point = call(store, sym_names)
     return src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
 

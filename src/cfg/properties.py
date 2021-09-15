@@ -32,9 +32,7 @@ def check_called_saved_regs_convention(sym_store, new_address):
                 res = False
                 utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT save the value at register ' + reg + ' at specific path.\n')
         args = list(sym_store.store[lib.CALLEE_SAVED_REG_INFO].keys())
-        if res:
-            utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' DOES save the value at registers ' + str(args) + ' at specific path.\n')
-
+        
 
 def check_changed_arg_val_position(block_set, block, sym_store, start_address, arg, length):
     func_list = []

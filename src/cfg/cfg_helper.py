@@ -220,9 +220,9 @@ def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_ta
     jump_address_str = func_call_blk.inst.split(' ', 1)[1].strip()
     new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
     if new_address in address_inst_map:
-        func_name = address_sym_table[new_address][0]
+        func_name = get_function_name_from_addr_sym_table(address_sym_table, new_address)
     elif new_address in address_sym_table:
-        func_name = address_sym_table[new_address][0]
+        func_name = get_function_name_from_addr_sym_table(address_sym_table, new_address)
     return func_name, new_address
 
 
@@ -240,7 +240,7 @@ def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, addre
     jump_address_str = func_call_blk.inst.split(' ', 1)[1].strip()
     new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
     if new_address in address_inst_map or new_address in address_sym_table:
-        func_name = address_sym_table[new_address][0]
+        func_name = get_function_name_from_addr_sym_table(address_sym_table, new_address)
     return func_name, new_address
 
 
@@ -276,7 +276,7 @@ def find_out_func_name_with_addr_in_range(func_start_addr_name_map, address):
 
 
 def collect_statistic_data_from_map(cmc_func_exec_info):
-    res = None
+    res = [0] * utils.CMC_EXEC_RES_COUNT
     for name in cmc_func_exec_info:
         func_exec_info = cmc_func_exec_info[name]
         if res:
@@ -286,4 +286,15 @@ def collect_statistic_data_from_map(cmc_func_exec_info):
             res = func_exec_info
     return res
 
+
+def get_function_name_from_addr_sym_table(address_sym_table, address):
+    res = ''
+    if address in address_sym_table:
+        val = address_sym_table[address]
+        if len(val) > 1:
+            res = val[1]
+        else:
+            res = val[0]
+    return res
+ 
  

@@ -37,6 +37,9 @@ MAX_HEAP_ADDR = MIN_HEAP_ADDR
 INIT_STACK_FRAME_POINTER = 2**48-9
 MAX_DEVIATION = 5
 SEGMENT_REG_INIT_VAL = 0
+CMC_EXEC_RES_COUNT = 8
+
+CONTEXT_SENSITIVE = True
 
 ASSEMBLY_FILE_NAME = 'test.s'
 
@@ -89,7 +92,10 @@ float_pat = re.compile('^[0-9.]+$|^-[0-9.]+$')
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$')
 imm_start_pat = re.compile('^0x[0-9a-fA-F]+|^[0-9]+|^-[0-9]+|^-0x[0-9a-fA-F]+')
 imm_pat_wo_prefix = re.compile('^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
+
 MEM_DATA_SEC_SUFFIX = 'mem@'
+LOG_UNREACHABLE_INDICATOR = 'Unreachable instructions:'
+SOUNDNESS_EXCEPTION_INDICATOR = 'ambiguous operand size'
 
 OPPOSITE_FLAG_MAP = {
     'b': 'ae',
@@ -592,6 +598,8 @@ def read_glibc_data_base_addr(src_bin_path):
                 section_offset = int(line_split[-1], 16)
                 data_base_addr = section_address - section_offset
     return data_base_addr
+
+
 
 def insert_search(sorted_list, target):
     res = None

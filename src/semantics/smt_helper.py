@@ -286,6 +286,16 @@ def check_cmp_dest_is_sym(store, rip, dest, sym_names):
     return res
 
 
+def check_jmp_inst_as_external_call(address_sym_table, address_inst_map, store, rip, inst):
+    res = False
+    if inst.startswith('jmp '):
+        jump_address_str = inst.split(' ', 1)[1].strip()
+        new_address = get_jump_address(store, rip, jump_address_str)
+        if new_address in address_sym_table and new_address not in address_inst_map:
+            res = True
+    return res
+
+
 def remove_reg_from_sym_srcs(reg, src_names):
     src_reg = get_root_reg(reg)
     if src_reg in src_names:

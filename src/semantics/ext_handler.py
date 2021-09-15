@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sys
 from z3 import *
 from ..common import lib
 from ..common import utils
@@ -77,24 +78,19 @@ def ext_puts(store, rip):
     set_regs_sym(store, rip, dests)
     clear_flags(store)
 
-def ext_printf(store, rip):
-    dests = 'rax, rcx, rdx, r8, r9, r10, r11, rsi, rdi'
-    set_regs_sym(store, rip, dests)
-
-def ext_malloc(store, rip):
-    dests = 'rax, rcx, rdx, r8, r9, r10, r11, rsi, rdi'
-    set_regs_sym(store, rip, dests)
     
 FUNCTION_DICT = {
     'time@GLIBC': ext_time,
     'srand@GLIBC': ext_srand,
     'rand@GLIBC': ext_rand,
-    'free@GLIBC': ext_free,
-    'puts@GLIBC': ext_puts,
-    'printf@GLIBC': ext_printf,
-    'malloc@GLIBC': ext_malloc
+    'puts@GLIBC': ext_puts
 }
 
+
+def insert_termination_symbol(store, rip):
+    sym_x = sym_helper.gen_sym_x()
+    smt_helper.push_val(store, rip, sym_x)
+            
 
 def ext__libc_start_main(store, rip, main_address):
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
@@ -102,18 +98,19 @@ def ext__libc_start_main(store, rip, main_address):
     set_regs_sym(store, rip, dests)
     sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx'))
     clear_flags(store)
-    sym_x = sym_helper.gen_sym_x()
-    smt_helper.push_val(store, rip, sym_x)
+    insert_termination_symbol(store, rip)
     
 
 def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name):
-    mem_size = sym_engine.get_sym(store, rip, 'rdi')
+    mem_size = sym_engine.get_sym(store, rip, 'rdi') if ext_func_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi')
     mem_addr = sym_helper.bit_vec_val_sym(heap_addr)
     sym_engine.set_sym(store, rip, 'rax', mem_addr)
     if sym_helper.sym_is_int_or_bitvecnum(mem_size):
         mem_size = mem_size.as_long()
     else:
         mem_size = utils.MAX_MALLOC_SIZE
+    if mem_size == 0:
+        sys.exit('The allocation size for ' + ext_func_name + ' function cannot be zero')
     mem_val = sym_helper.bottom(mem_size) if ext_func_name is not 'calloc' else sym_helper.bit_vec_val_sym(0, mem_size)
     sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
     heap_addr += mem_size
@@ -129,8 +126,7 @@ def ext_free_mem_call(store, rip):
     if mem_addr in store[lib.MEM]:
         sym_helper.remove_memory_content(store, mem_addr)
     else:
-        return 0
-    return 1
+        store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
 
 
 def ext_rand_call(store, rip):

@@ -56,3 +56,11 @@ def resolve_value_for_stack_addr_inv_arg(mem_len_map, sym_store, stack_addr, sub
             res = sym_helper.substitute_sym_val(res, sym_helper.bit_vec_wrap(d.name(), s_len), s_val)
             substitute_pair.append((sym_helper.bit_vec_wrap(d.name(), s_len), s_val))
         sym_engine.set_sym(sym_store.store, sym_store.rip, '[' + stack_addr + ']', res)
+
+
+def pp_tb_debug_info(ret_type, address, inst):
+    res = 'The path is unsound due to '
+    res += ret_type.name.lower()
+    res += ' at ' + hex(address) + ': ' + inst
+    return res
+    

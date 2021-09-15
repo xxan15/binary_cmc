@@ -37,8 +37,7 @@ def construct_cfg(disasm_path, disasm_asm):
     # sym_mem_info_table = global_var.elf_info.sym_mem_info_table
     address_label_map = disasm_asm.address_label_map
     for address in address_label_map:
-        if address not in address_sym_table:
-            address_sym_table[address] = address_label_map[address]
+        address_sym_table[address] = address_label_map[address]
     function_addr_table = global_var.elf_info.function_addr_table
     # print(address_sym_table)
     # print(sym_table)
@@ -47,7 +46,10 @@ def construct_cfg(disasm_path, disasm_asm):
     #     if func_name != 'main':
     func_name = '_start'
     start_address = function_addr_table[func_name]
-    cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+    if utils.CONTEXT_SENSITIVE:
+        cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+    else:
+        cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
     callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
@@ -127,8 +129,10 @@ if __name__=='__main__':
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Whether to print log information on the screen')
     parser.add_argument('-c', '--bmc_bound', default=25, type=int, help='The default value of the BMC bound')
+    parser.add_argument('-s', '--context_sensitive', default=True, action='store_false', help='The model checker is executed under a context-sensitive environment')
     args = parser.parse_args()
     utils.MAX_VISIT_COUNT = args.bmc_bound
+    utils.CONTEXT_SENSITIVE = args.context_sensitive
     disasm_type = args.disasm_type
     log_dir = args.log_dir
     if disasm_type != 'objdump' and 'objdump' in args.log_dir:
