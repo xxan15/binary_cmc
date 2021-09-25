@@ -187,7 +187,8 @@ def _add_aux_memory(store, rip, inst_args):
         if arg.endswith(']'):
             address = sym_engine.get_effective_address(store, rip, arg)
             if address in store[lib.MEM] and address not in store[lib.AUX_MEM]:
-                sym_arg = store[lib.MEM][address]
+                sym_arg = sym_engine.get_sym(store, rip, address)
+                # store[lib.MEM][address][0]
                 if sym_helper.is_bit_vec_num(sym_arg):
                     store[lib.AUX_MEM].add(address)
             break
@@ -210,7 +211,7 @@ def get_bottom_source(line, store, rip, mem_len_map):
     for lsi in line_split:
         lsi = lsi.strip()
         if lsi in lib.REG_NAMES:
-            val = store[lib.REG][lsi]
+            val = sym_engine.get_sym(store, rip, lsi)
             if not sym_helper.sym_is_int_or_bitvecnum(val):
                 res.append(lsi)
                 still_tb = True
@@ -317,13 +318,13 @@ def add_src_to_syms(store, sym_names, src):
     return src_names
 
 
-def sym_bin_op_na_flags(store, rip, op, dest, src):
+def sym_bin_op_na_flags(store, rip, op, dest, src, block_id):
     res = sym_engine.sym_bin_op(store, rip, op, dest, src)
-    sym_engine.set_sym(store, rip, dest, res)
+    sym_engine.set_sym(store, rip, dest, res, block_id)
     return res
 
 
-def push_val(store, rip, sym_val):
-    sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8')
-    sym_engine.set_mem_sym(store, sym_rsp, sym_val)
+def push_val(store, rip, sym_val, block_id):
+    sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
+    sym_engine.set_mem_sym(store, sym_rsp, sym_val, block_id)
 

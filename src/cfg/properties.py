@@ -22,25 +22,13 @@ from ..symbolic import sym_engine
 from . import cfg_helper
 
 
-def check_called_saved_regs_convention(sym_store, new_address):
-    if len(sym_store.store[lib.CALLEE_SAVED_REG_INFO]) > 0:
-        res = True
-        for reg in sym_store.store[lib.CALLEE_SAVED_REG_INFO]:
-            prev_val = sym_store.store[lib.CALLEE_SAVED_REG_INFO][reg]
-            new_val = sym_engine.get_sym(sym_store.store, new_address, reg)
-            if not sym_helper.strict_bitvec_equal(prev_val, new_val):
-                res = False
-                utils.output_logger.info('Function ' + sym_store.store[lib.VERIFIED_FUNC_INFO][1] + ' does NOT save the value at register ' + reg + ' at specific path.\n')
-        args = list(sym_store.store[lib.CALLEE_SAVED_REG_INFO].keys())
-        
-
 def check_changed_arg_val_position(block_set, block, sym_store, start_address, arg, length):
     func_list = []
     blk = block
     store = sym_store.store
-    parent_no = block.parent_no
-    while parent_no:
-        parent_blk = block_set[parent_no]
+    parent_id = block.parent_id
+    while parent_id:
+        parent_blk = block_set[parent_id]
         parent_store = parent_blk.sym_store.store
         if parent_blk.address != start_address:
             if blk.inst.startswith('call '):
@@ -57,7 +45,7 @@ def check_changed_arg_val_position(block_set, block, sym_store, start_address, a
                     func_name, _ = cfg_helper.retrieve_internal_call_inst_func_name(blk, self.address_inst_map, self.address_sym_table)
                     func_list.append(func_name)
             break
-        parent_no = parent_blk.parent_no
+        parent_id = parent_blk.parent_id
         blk = parent_blk
         store = parent_store
     return func_list

@@ -23,13 +23,16 @@ from . import smt_helper
 from . import ext_handler
 
 rip = 0
+block_id = 0
+
 
 def sym_bin_op(op):
     return lambda store, dest, src: sym_bin_oprt(store, op, dest, src)
 
+
 def sym_bin_oprt(store, op, dest, src):
     dest_len = utils.get_sym_length(dest)
-    res = smt_helper.sym_bin_op_na_flags(store, rip, op, dest, src)
+    res = smt_helper.sym_bin_op_na_flags(store, rip, op, dest, src, block_id)
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_CF_flag(store, rip, dest, src, op)
     smt_helper.set_OF_flag(store, rip, dest, src, res, op)
@@ -38,13 +41,12 @@ def sym_bin_oprt(store, op, dest, src):
 def mov(store, dest, src):
     dest_len = utils.get_sym_length(dest)
     sym_src = sym_engine.get_sym(store, rip, src, dest_len)
-    res = sym_engine.set_sym(store, rip, dest, sym_src)
-    return res
+    sym_engine.set_sym(store, rip, dest, sym_src, block_id)
 
 
 def lea(store, dest, src):
     address = sym_engine.get_effective_address(store, rip, src)
-    sym_engine.set_sym(store, rip, dest, address)
+    sym_engine.set_sym(store, rip, dest, address, block_id)
 
 
 def pop(store, dest):
@@ -54,34 +56,42 @@ def pop(store, dest):
         res = sym_helper.gen_sym()
     # else:
     #     sym_helper.remove_memory_content(store, sym_rsp)
-    sym_engine.set_sym(store, rip, dest, res)
-    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8')
+    sym_engine.set_sym(store, rip, dest, res, block_id)
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
 
 
 def push(store, src):
     sym_src = sym_engine.get_sym(store, rip, src)
-    smt_helper.push_val(store, rip, sym_src)
+    smt_helper.push_val(store, rip, sym_src, block_id)
+
 
 def call(store, dest):
     push(store, hex(rip))
 
 
-def ret(store):
+def call_op(store, rip, block_id):
+    sym_src = sym_engine.get_sym(store, rip, hex(rip))
+    smt_helper.push_val(store, rip, sym_src, block_id)
+
+
+def ret(store, block_id):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is not None:
         sym_helper.remove_memory_content(store, sym_rsp)
-    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8')
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
     if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
         res = res.as_long()
     return res
 
 
 def xchg(store, dest, src):
-    if dest == src: return
-    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
-    sym_engine.set_sym(store, rip, dest, sym_src)
-    sym_engine.set_sym(store, rip, src, sym_dest)
+    if dest == src:
+        return
+    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(
+        store, rip, dest, src)
+    sym_engine.set_sym(store, rip, dest, sym_src, block_id)
+    sym_engine.set_sym(store, rip, src, sym_dest, block_id)
 
 
 def leave(store):
@@ -92,15 +102,17 @@ def leave(store):
 def cdqe(length):
     return lambda store: cdqe_op(store, length)
 
+
 def cdqe_op(store, length):
     src = lib.AUX_REG_INFO[length][0]
     dest = lib.AUX_REG_INFO[length * 2][0]
     res = sym_engine.extension(store, rip, src, length * 2, True)
-    sym_engine.set_sym(store, rip, dest, res)
+    sym_engine.set_sym(store, rip, dest, res, block_id)
 
 
 def mov_with_extension(signed=False):
     return lambda store, dest, src: mov_ext(store, dest, src, signed)
+
 
 def mov_ext(store, dest, src, signed):
     src_len = utils.get_sym_length(src)
@@ -108,19 +120,19 @@ def mov_ext(store, dest, src, signed):
     dest_len = utils.get_sym_length(dest)
     mov_op(store, dest, dest_len, sym_src, src_len, signed)
 
+
 def mov_op(store, dest, dest_len, sym_src, src_len, signed):
     sym = sym_engine.extension_sym(sym_src, dest_len, src_len, signed)
-    sym_engine.set_sym(store, rip, dest, sym)
+    sym_engine.set_sym(store, rip, dest, sym, block_id)
 
 
 def mul(store, src):
     bits_len = utils.get_sym_length(src)
     a_reg, _, dest = lib.AUX_REG_INFO[bits_len]
     res = sym_engine.sym_bin_op(store, rip, 'umul', a_reg, src)
-    sym_engine.set_sym(store, rip, dest, res)
+    sym_engine.set_sym(store, rip, dest, res, block_id)
     eq = sym_helper.is_equal(sym_helper.upper_half(res), 0)
     smt_helper.set_mul_OF_CF_flags(store, eq)
-
 
 
 def imul(store, src, src1=None, src2=None):
@@ -131,20 +143,20 @@ def imul(store, src, src1=None, src2=None):
         else:
             tmp = sym_engine.sym_bin_op(store, rip, 'smul', src1, src2)
         res = sym_helper.extract(bits_len - 1, 0, tmp)
-        sym_engine.set_sym(store, rip, src, res)
+        sym_engine.set_sym(store, rip, src, res, block_id)
         dest = src
     else:
         a_reg, _, dest = lib.AUX_REG_INFO[bits_len]
         tmp = sym_engine.sym_bin_op(store, rip, 'smul', a_reg, src)
         res = sym_helper.extract(bits_len - 1, 0, tmp)
-        sym_engine.set_sym(store, rip, dest, tmp)
+        sym_engine.set_sym(store, rip, dest, tmp, block_id)
     eq = sym_helper.is_equal(simplify(SignExt(bits_len, res)), tmp)
     smt_helper.set_mul_OF_CF_flags(store, eq)
 
 
-
 def div(signed=True):
     return lambda store, src: div_op(store, src, signed)
+
 
 def div_op(store, src, signed):
     bits_len = utils.get_sym_length(src)
@@ -152,8 +164,8 @@ def div_op(store, src, signed):
     div_op_name, rem_op_name = ('sdiv', 'smod') if signed else ('udiv', 'umod')
     quotient = sym_engine.sym_bin_op(store, rip, div_op_name, dest, src)
     remainder = sym_engine.sym_bin_op(store, rip, rem_op_name, dest, src)
-    sym_engine.set_sym(store, rip, qreg, quotient)
-    sym_engine.set_sym(store, rip, rreg, remainder)
+    sym_engine.set_sym(store, rip, qreg, quotient, block_id)
+    sym_engine.set_sym(store, rip, rreg, remainder, block_id)
     smt_helper.reset_all_flags(store)
 
 
@@ -171,11 +183,15 @@ def cmpxchg(store, dest, src):
         mov(store, a_reg, dest)
     else:
         smt_helper.set_flag_direct(store, 'ZF', None)
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(bits_len))
-        sym_engine.set_sym(store, rip, a_reg, sym_helper.gen_sym(bits_len))
+        sym_engine.set_sym(
+            store, rip, dest, sym_helper.gen_sym(bits_len), block_id)
+        sym_engine.set_sym(store, rip, a_reg,
+                           sym_helper.gen_sym(bits_len), block_id)
 
 
-def cmov(store, curr_rip, inst, pred):
+def cmov(store, curr_rip, inst, pred, curr_block_id):
+    global block_id
+    block_id = curr_block_id
     inst_split = inst.strip().split(' ', 1)
     inst_args = utils.parse_inst_args(inst_split)
     dest = inst_args[0]
@@ -187,29 +203,37 @@ def set_op(store, inst, dest):
     dest_len = utils.get_sym_length(dest)
     res = smt_helper.parse_predicate(store, inst, True, 'set')
     if res == False:
-        sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(0, dest_len))
+        sym_engine.set_sym(
+            store, rip, dest, sym_helper.bit_vec_val_sym(0, dest_len), block_id)
     elif res == True:
-        sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(1, dest_len))
+        sym_engine.set_sym(
+            store, rip, dest, sym_helper.bit_vec_val_sym(1, dest_len), block_id)
     else:
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len))
+        sym_engine.set_sym(
+            store, rip, dest, sym_helper.gen_sym(dest_len), block_id)
 
 
 def rep(store, inst_name, inst):
     sym_rcx = sym_engine.get_sym(store, rip, 'rcx')
     rcx_is_0 = sym_helper.is_equal(sym_rcx, 0)
     while rcx_is_0 == False:
-        res = parse_semantics(store, rip, inst)
-        if res == -1: break
+        res = parse_semantics(store, rip, inst, block_id)
+        if res == -1:
+            break
         sym_rcx = smt_helper.sym_bin_op_na_flags(store, rip, '-', 'rcx', '1')
         rcx_is_0 = sym_helper.is_equal(sym_rcx, 0)
-        if rcx_is_0 == True: break
+        if rcx_is_0 == True:
+            break
         sym_zf = smt_helper.get_flag_direct(store, 'ZF')
-        if inst_name in ('repz', 'repe') and sym_zf == False: break
-        elif inst_name in ('repnz', 'repne') and sym_zf == True: break
+        if inst_name in ('repz', 'repe') and sym_zf == False:
+            break
+        elif inst_name in ('repnz', 'repne') and sym_zf == True:
+            break
 
 
 def cmp_op(store, dest, src):
-    sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
+    sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(
+        store, rip, dest, src)
     res = sym_engine.sym_bin_op(store, rip, '-', dest, src)
     # if isinstance(res, BitVecNumRef):
     #     if not isinstance(sym_dest, BitVecNumRef) and not isinstance(sym_src, BitVecNumRef):
@@ -227,6 +251,7 @@ def cmp_op(store, dest, src):
 def sym_bin_op_cf(op='+'):
     return lambda store, dest, src: sym_bin_op_with_cf(store, op, dest, src)
 
+
 def sym_bin_op_with_cf(store, op, dest, src):
     dest_len = utils.get_sym_length(dest)
     sym_bin_oprt(store, op, dest, src)
@@ -236,7 +261,7 @@ def sym_bin_op_with_cf(store, op, dest, src):
     elif carry_val == False:
         pass
     else:
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len))
+        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len), block_id)
 
 
 def test(store, dest, src):
@@ -251,28 +276,30 @@ def neg(store, dest):
     sym_dest = sym_engine.get_sym(store, rip, dest, dest_len)
     eq = sym_helper.is_equal(sym_dest, 0)
     smt_helper._set_flag_neg_val(store, 'CF', eq)
-    sym_engine.set_sym(store, rip, dest, sym_helper.neg(sym_dest))
+    sym_engine.set_sym(store, rip, dest, sym_helper.neg(sym_dest), block_id)
 
 
 def not_op(store, dest):
     dest_len = utils.get_sym_length(dest)
     sym_dest = sym_engine.get_sym(store, rip, dest, dest_len)
-    sym_engine.set_sym(store, rip, dest, sym_helper.not_op(sym_dest))
+    sym_engine.set_sym(store, rip, dest, sym_helper.not_op(sym_dest), block_id)
 
 
 def inc_dec(op):
     return lambda store, dest: inc_dec_op(store, op, dest)
 
+
 def inc_dec_op(store, op, dest):
     dest_len = utils.get_sym_length(dest)
     res = sym_engine.sym_bin_op(store, rip, op, dest, '1')
-    sym_engine.set_sym(store, rip, dest, res)
+    sym_engine.set_sym(store, rip, dest, res, block_id)
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_OF_flag(store, rip, dest, '1', res, op)
 
 
 def rotate(to_left=True):
     return lambda store, dest, src: rotate_op(store, dest, src, to_left)
+
 
 def rotate_op(store, dest, src, to_left):
     dest_len = utils.get_sym_length(dest)
@@ -295,7 +322,7 @@ def rotate_op(store, dest, src, to_left):
                     sym_dest = sym_dest + (1 << dest_len)
             sym_dest = simplify(sym_dest)
             temp -= 1
-        sym_engine.set_sym(store, rip, dest, sym_dest)
+        sym_engine.set_sym(store, rip, dest, sym_dest, block_id)
         if count & mask != 0:
             if to_left:
                 cf_val = sym_helper.least_significant_bit(sym_dest, dest_len)
@@ -311,16 +338,17 @@ def rotate_op(store, dest, src, to_left):
         else:
             smt_helper.set_flag_direct(store, 'OF')
     else:
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len))
+        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(dest_len), block_id)
 
 
 def cdq(length):
     return lambda store: cdq_op(store, length)
 
+
 def cdq_op(store, length):
     src, _, dest = lib.AUX_REG_INFO[length]
     res = sym_engine.extension(store, rip, src, length * 2, True)
-    sym_engine.set_sym(store, rip, dest, res)
+    sym_engine.set_sym(store, rip, dest, res, block_id)
 
 
 def bt(store, bit_base, bit_offset):
@@ -341,24 +369,20 @@ def bt(store, bit_base, bit_offset):
         smt_helper._set_flag_val(store, 'CF', None)
 
 
-
-def parse_semantics(store, curr_rip, inst):
-    global rip
-    rip = curr_rip
+def parse_semantics(store, curr_rip, inst, curr_block_id):
+    global rip, block_id
+    rip, block_id = curr_rip, curr_block_id
     # print(inst)
     if inst.startswith('lock '):
         inst = inst.split(' ', 1)[1]
     inst_split = inst.strip().split(' ', 1)
     inst_name = inst_split[0]
-    if inst_name in ('mov', 'movabs'):
-        inst_args = utils.parse_inst_args(inst_split)
-        res = mov(store, *inst_args)
-        return res
-    elif inst_name in INSTRUCTION_SEMANTICS_MAP:
+    if inst_name in INSTRUCTION_SEMANTICS_MAP:
         inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
         inst_args = utils.parse_inst_args(inst_split)
         inst_op(store, *inst_args)
-    elif inst_name in ('nop', 'hlt'): pass
+    elif inst_name in ('nop', 'hlt'):
+        pass
     elif inst_name.startswith('set'):
         inst_args = utils.parse_inst_args(inst_split)
         set_op(store, inst, *inst_args)
@@ -370,13 +394,14 @@ def parse_semantics(store, curr_rip, inst):
         return -1
     else:
         inst_args = utils.parse_inst_args(inst_split)
-        sym_engine.undefined(store, rip, *inst_args)
+        sym_engine.undefined(store, rip, block_id, *inst_args)
         smt_helper.reset_all_flags(store)
         return -1
     return 0
 
 
 INSTRUCTION_SEMANTICS_MAP = {
+    'mov': mov,
     'lea': lea,
     'push': push,
     'pop': pop,
@@ -399,6 +424,7 @@ INSTRUCTION_SEMANTICS_MAP = {
     'idiv': div(True),
     'div': div(False),
     'cmpxchg': cmpxchg,
+    'movabs': mov,
     'movzx': mov_with_extension(False),
     'movsx': mov_with_extension(True),
     'movsxd': mov_with_extension(True),
@@ -418,15 +444,3 @@ INSTRUCTION_SEMANTICS_MAP = {
     'bt': bt,
     'call': call
 }
-
-def start_init(store, _start_address):
-    dests = lib.REG64_NAMES
-    ext_handler.set_regs_sym(store, rip, dests)
-    sym_engine.set_sym(store, rip, 'rsp', sym_helper.bit_vec_val_sym(utils.INIT_STACK_FRAME_POINTER))
-    ext_handler.set_segment_regs_sym(store, rip)
-    # utils.logger.debug('The following registers are set to symbolic value: ' + str(dests))
-    ext_handler.clear_flags(store)
-    sym_src = sym_helper.gen_sym()
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
-    # sym_engine.set_sym(store, rip, 'r13', sym_rsp)
-    sym_engine.set_mem_sym(store, sym_rsp, sym_src)

@@ -19,6 +19,7 @@ from ..common import utils
 from .sym_store import Sym_Store
 from ..symbolic import sym_helper
 from ..symbolic import sym_engine
+from ..semantics import ext_handler
 from ..semantics import smt_helper
 from ..semantics import semantics
 
@@ -88,6 +89,7 @@ def check_jump_table_assign_inst(trace_list, idx):
     return n_idx, res
 
 
+# Read all the jump table entries
 def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
     res = []
     inst = blk.inst
@@ -95,7 +97,7 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
     inst_dest = inst_arg_split[0]
     inst_src = inst_arg_split[1].strip()
     src_len = utils.get_sym_length(inst_src)
-    parent_blk = block_set[blk.parent_no]
+    parent_blk = block_set[blk.parent_id]
     p_store = parent_blk.sym_store.store
     for idx in range(jt_idx_upperbound):
         mem_address = sym_engine.get_jump_table_address(p_store, inst_src, src_sym, idx)
@@ -109,28 +111,28 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
 
 def detect_loop(block, address, new_address, block_set):
     exists_loop = False
-    parent_no = block.parent_no
+    parent_id = block.parent_id
     prev_address = None
-    while parent_no:
-        parent_blk = block_set[parent_no]
+    while parent_id:
+        parent_blk = block_set[parent_id]
         p_address = parent_blk.address
         if p_address == address:
             if prev_address and prev_address == new_address:
                 exists_loop = True
                 break
-        parent_no = parent_blk.parent_no
+        parent_id = parent_blk.parent_id
         prev_address = p_address
     return exists_loop
 
 
 def backtrack_to_start(block, address, block_set):
     trace_list = [address]
-    parent_no = block.parent_no
-    while parent_no:
-        parent_blk = block_set[parent_no]
+    parent_id = block.parent_id
+    while parent_id:
+        parent_blk = block_set[parent_id]
         p_address = parent_blk.address
         trace_list.append(p_address)
-        parent_no = parent_blk.parent_no
+        parent_id = parent_blk.parent_id
     return trace_list
 
 
@@ -168,7 +170,7 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
         else:
             for sym_store in sym_store_list:
                 sym_store.rip = rip
-                sym_store.parse_semantics(inst)
+                semantics.parse_semantics(sym_store.store, rip, inst, blk.block_id)
     return None, None
 
 
@@ -297,4 +299,15 @@ def get_function_name_from_addr_sym_table(address_sym_table, address):
             res = val[0]
     return res
  
- 
+
+def start_init(store, rip, block_id):
+    dests = lib.REG64_NAMES
+    ext_handler.set_regs_sym(store, rip, dests, block_id)
+    sym_engine.set_sym(store, rip, 'rsp', sym_helper.bit_vec_val_sym(utils.INIT_STACK_FRAME_POINTER), block_id)
+    ext_handler.set_segment_regs_sym(store, rip)
+    # utils.logger.debug('The following registers are set to symbolic value: ' + str(dests))
+    ext_handler.clear_flags(store)
+    sym_src = sym_helper.gen_sym()
+    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
+    sym_engine.set_mem_sym(store, sym_rsp, sym_src, block_id)
+    

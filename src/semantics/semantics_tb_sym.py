@@ -23,7 +23,7 @@ from . import smt_helper
 from . import semantics
 
 rip = 0
-need_stop, boundary, still_tb, func_call_point, rest, mem_len_map = False, None, True, False, [], {}
+still_tb, func_call_point, rest, mem_len_map = True, False, [], {}
 
 
 def sym_bin_on_src(store, sym_names, src):
@@ -109,11 +109,22 @@ def lea(store, sym_names, dest, src):
     return list(set(src_names))
 
 
-def pop(store, sym_names, dest):
-    global still_tb
+def push(store, sym_names, src):
     src_names = sym_names
-    if dest in src_names:
-        still_tb = False
+    sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
+    prev_rsp = str(sym_helper.sym_op('-', sym_rsp, 8))
+    if prev_rsp in sym_names:
+        src_names.remove(prev_rsp)
+    src_names.append(src)
+    return src_names
+
+def pop(store, sym_names, dest):
+    sym_rsp = str(sym_engine.get_sym(store, rip, 'rsp'))
+    src_names = sym_names
+    smt_helper.remove_reg_from_sym_srcs(dest, src_names)
+    new_srcs = [sym_rsp]
+    src_names = src_names + new_srcs
+    mem_len_map[sym_rsp] = lib.DEFAULT_REG_LEN
     return src_names
 
 
@@ -151,6 +162,10 @@ def div_op(store, sym_names, src):
     return src_names
 
 
+def cdqe(store, sym_names):
+    return sym_names
+
+
 def cmpxchg(store, sym_names, dest, src):
     src_names = sym_names
     bits_len = utils.get_sym_length(dest)
@@ -170,25 +185,6 @@ def cmov(store, sym_names, inst, dest, src):
     res = smt_helper.parse_predicate(store, inst, True, 'cmov')
     if res == False: pass
     else: src_names = mov(store, sym_names, dest, src)
-    return src_names
-
-
-def cmp_op(store, sym_names, tb_type, dest, src):
-    src_names = sym_names
-    global need_stop, boundary, still_tb
-    if tb_type == TRACE_BACK_TYPE.INDIRECT:
-        if smt_helper.check_source_is_sym(store, rip, src, sym_names):
-            dest, src = src, dest
-        if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
-            sym_src = sym_engine.get_sym(store, rip, src)
-            if sym_helper.sym_is_int_or_bitvecnum(sym_src):
-                src_names = [dest]
-                need_stop = True
-                boundary = sym_helper.int_from_sym(sym_src)
-            else:
-                still_tb = False
-        else:
-            still_tb = False
     return src_names
 
 
@@ -231,12 +227,16 @@ def jmp_to_external_func(store, sym_names):
             val = sym_engine.get_sym(store, rip, sym_name, length)
             if sym_helper.is_bv_sym_var(val):
                 func_call_point = False
+        elif sym_name in lib.REG64_NAMES:
+            if sym_name not in lib.CALLEE_NOT_SAVED_REGS:
+                func_call_point = False
     return func_call_point
 
 
 INSTRUCTION_SEMANTICS_MAP = {
     'mov': mov,
     'lea': lea,
+    'push': push,
     'pop': pop,
     'add': sym_bin_op,
     'sub': sym_bin_op,
@@ -257,14 +257,15 @@ INSTRUCTION_SEMANTICS_MAP = {
     'movsx': mov,
     'movsxd': mov,
     'adc': sym_bin_op,
-    'sbb': sym_bin_op
+    'sbb': sym_bin_op,
+    'cdqe': cdqe
 }
 
 
-def parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names, tb_type):
-    global rip, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
+def parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names):
+    global rip, still_tb, func_call_point, rest, mem_len_map
     rip = curr_rip
-    need_stop, boundary, still_tb, func_call_point = False, None, True, False
+    still_tb, func_call_point = True, False
     if inst.startswith('lock '):
         inst = inst.split(' ', 1)[1]
     inst_split = inst.strip().split(' ', 1)
@@ -278,12 +279,9 @@ def parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sy
     elif inst_name.startswith('cmov'):
         inst_args = utils.parse_inst_args(inst_split)
         src_names = cmov(store, sym_names, inst, *inst_args)
-    elif inst_name == 'cmp':
-        inst_args = utils.parse_inst_args(inst_split)
-        src_names = cmp_op(store, sym_names, tb_type, *inst_args)
     elif inst_name.startswith('rep'):
         inst = inst_split[1].strip()
-        src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map = parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names, tb_type)
+        src_names, still_tb, func_call_point, rest, mem_len_map = parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sym_names)
     elif utils.check_jmp_with_address(inst):
         jump_address_str = inst.split(' ', 1)[1].strip()
         new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
@@ -293,5 +291,5 @@ def parse_sym_src(address_sym_table, address_inst_map, store, curr_rip, inst, sy
         else:
             if inst.startswith('call') and new_address in address_sym_table:
                 func_call_point = call(store, sym_names)
-    return src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map
+    return src_names, still_tb, func_call_point, rest, mem_len_map
 

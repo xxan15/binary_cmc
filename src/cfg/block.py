@@ -19,26 +19,26 @@ from ..common import utils
 
 class Block(object):
 
-    cnt = -1
+    cnt = utils.INIT_BLOCK_NO
     
-    def __init__(self, parent_no, address, inst, sym_store, constraint):
-        self.parent_no = parent_no
+    def __init__(self, parent_id, address, inst, sym_store, constraint):
+        self.parent_id = parent_id
         self.address = address
         self.inst = inst
         self.sym_store = sym_store
         self.constraint = constraint
         self.children_blk_list = []
-        self.block_no = self.__class__.cnt
+        self.block_id = self.__class__.cnt
         self.__class__.cnt += 1
 
 
-    def add_to_children_list(self, block_no):
-        self.children_blk_list.append(block_no)
+    def add_to_children_list(self, block_id):
+        self.children_blk_list.append(block_id)
 
     
     def draw(self):
-        res = '    block_' + str(self.block_no) + ' [label=\"'
-        res += '<b' + str(self.block_no) + '> '
+        res = '    block_' + str(self.block_id) + ' [label=\"'
+        res += '<b' + str(self.block_id) + '> '
         res += self.inst
         res += '\\l'
         if self.sym_store:
@@ -50,11 +50,11 @@ class Block(object):
 
 
     def draw_edge(self):
-        res = '    block_' + str(self.block_no) + ':b' + str(self.block_no)
+        res = '    block_' + str(self.block_id) + ':b' + str(self.block_id)
         res += ' -> {'
         for end_block in self.children_blk_list:
-            end_block_no = end_block.block_no
-            res += 'block_' + str(end_block_no) + ':b' + str(end_block_no)
+            end_block_id = end_block.block_id
+            res += 'block_' + str(end_block_id) + ':b' + str(end_block_id)
             res += ' '
         res += '};\n'
         return res

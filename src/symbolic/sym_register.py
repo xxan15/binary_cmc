@@ -33,16 +33,26 @@ def get_register_sym(store, name):
     sym = None
     if name in lib.REG_INFO_DICT:
         p_name, start_idx, length = lib.REG_INFO_DICT[name]
-        p_sym = store[lib.REG][p_name]
+        p_sym = store[lib.REG][p_name][0]
         if p_sym == sym_helper.bottom(): 
             sym = sym_helper.bottom(length)
         else:
             sym = bitwise_sub(p_sym, start_idx, length)
     elif name in lib.REG64_NAMES:
-        sym = store[lib.REG][name]
+        sym = store[lib.REG][name][0]
     else:
         sym = sym_helper.bottom(lib.DEFAULT_REG_LEN)
     return simplify(sym)
+
+
+def get_reg_sym_block_id(store, name):
+    res = None
+    if name in lib.REG_INFO_DICT:
+        p_name, _, _ = lib.REG_INFO_DICT[name]
+        res = store[lib.REG][p_name][1]
+    elif name in lib.REG64_NAMES:
+        res = store[lib.REG][name][1]
+    return res
 
 
 def bitwise_extend_parent(p_sym, sym, start_idx, length):
@@ -57,13 +67,13 @@ def bitwise_extend_parent(p_sym, sym, start_idx, length):
     return simplify(res)
 
 
-def set_register_sym(store, name, sym):
+def set_register_sym(store, name, sym, block_id):
     if name in lib.REG_INFO_DICT:
         p_name, start_idx, length = lib.REG_INFO_DICT[name]
-        p_sym = store[lib.REG][p_name]
-        store[lib.REG][p_name] = bitwise_extend_parent(p_sym, sym, start_idx, length)
+        p_sym = store[lib.REG][p_name][0]
+        store[lib.REG][p_name] = [bitwise_extend_parent(p_sym, sym, start_idx, length), block_id]
     elif name in lib.REG64_NAMES:
-        store[lib.REG][name] = simplify(sym)
+        store[lib.REG][name] = [simplify(sym), block_id]
 
 
 def get_segment_reg_val(store, segment_reg):

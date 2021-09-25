@@ -97,6 +97,15 @@ def is_bit_vec_num(sym):
 def is_equal(x, y):
     return simplify(x == y)
 
+
+def sym_op(op, x, y):
+    res = None
+    if op == '-':
+        res = simplify(x - y)
+    elif op == '+':
+        res = simplify(x + y)
+    return res
+
 def not_equal(x, y):
     return simplify(x != y)
 
@@ -171,7 +180,7 @@ def pp_z3_model_info(m):
 
 
 def top_stack_addr(store):
-    res = simplify(store[lib.REG]['rsp'])
+    res = simplify(store[lib.REG]['rsp'][0])
     if res != None and sym_is_int_or_bitvecnum(res):
         res = res.as_long()
     return res

@@ -25,7 +25,8 @@ from . import trace_back
 from . import cfg_helper
 from . import properties
 from ..semantics import semantics
-from ..semantics import semantics_traceback
+from ..semantics import semantics_tb_sym
+from ..semantics import semantics_tb_indirect
 from ..semantics import smt_helper
 from ..semantics import ext_handler
 from ..symbolic import sym_helper
@@ -62,7 +63,7 @@ class CFG_Context_Free(object):
         self.func_call_order = func_call_order
         constraint = None
         sym_helper.cnt_init()
-        semantics.start_init(sym_store.store, start_address)
+        cfg_helper.start_init(sym_store.store, start_address)
         cfg_helper.cfg_init_parameter(sym_store.store, self.sym_table)
         self.build_cfg(start_address, sym_store, constraint)
         self.cmc_exec_info = cfg_helper.collect_statistic_data_from_map(self.cmc_func_exec_info)
@@ -323,7 +324,6 @@ class CFG_Context_Free(object):
             # Sound cases
             self.cmc_func_exec_info[verified_func_name][7] += 1
             properties.compare_arg_val_w_original(self.block_set, block, sym_store, verified_func_start_addr, new_address)
-            properties.check_called_saved_regs_convention(sym_store, new_address)
             self.add_to_be_verified_functions()
             utils.output_logger.info('Function ' + verified_func_name + ' is verified at specific path.\n')
         utils.logger.info('The symbolic execution has been terminated at the path\n')
@@ -447,7 +447,7 @@ class CFG_Context_Free(object):
                 else:
                     return lib.TRACE_BACK_RET_TYPE.TB_PARENT_BLOCK_DOES_NOT_EXIST, sym_names
             # p_store = self.block_set[blk.parent_no].sym_store.store
-            src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map = semantics_traceback.parse_sym_src(self.address_sym_table, self.address_inst_map, p_store, blk.sym_store.rip, blk.inst, sym_names, tb_type)
+            src_names, need_stop, boundary, still_tb, func_call_point, rest, mem_len_map = semantics_tb_indirect.parse_sym_src(self.address_sym_table, self.address_inst_map, p_store, blk.sym_store.rip, blk.inst, sym_names, tb_type)
             self.mem_len_map.update(mem_len_map)
             utils.logger.info(hex(blk.address) + ': ' + blk.inst)
             utils.logger.info(src_names)
@@ -573,7 +573,6 @@ class CFG_Context_Free(object):
         smt_helper.push_val(new_sym_store.store, func_start_address, sym_x)
         to_be_verified_args = self.invariant_argument_map.get(func_name, [])
         self._add_to_be_verified_arg_to_func_symstore(to_be_verified_args, new_sym_store, func_start_address)
-        self._preserve_callee_saved_regs_value(new_sym_store, func_start_address)
         self.to_be_verified_func_store[func_name] = (func_start_address, func_start_inst, new_sym_store)
         # sym_store = Sym_Store(new_sym_store.store, func_start_address, func_start_inst)
         # self._add_new_block(None, func_start_address, func_start_inst, sym_store, new_constraint)
@@ -671,13 +670,6 @@ class CFG_Context_Free(object):
         ext_handler.ext_func_call(fall_through_sym_store.store, fall_through_sym_store.rip)
         self.build_ret_branch(block, address, inst, fall_through_sym_store, constraint)  
 
-
-    def _preserve_callee_saved_regs_value(self, sym_store, rip):
-        to_be_preserved_regs = lib.CALLEE_SAVED_REGS
-        for reg in to_be_preserved_regs:
-            prev_val = sym_engine.get_sym(sym_store.store, rip, reg)
-            sym_store.store[lib.CALLEE_SAVED_REG_INFO][reg] = prev_val
-        
 
     def _add_to_be_verified_arg_to_func_symstore(self, to_be_verified_args, new_sym_store, func_start_address):
         for arg in to_be_verified_args:

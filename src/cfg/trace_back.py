@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import random
+
 from ..common import lib
 from ..common import utils
 from .sym_store import Sym_Store
@@ -63,4 +65,22 @@ def pp_tb_debug_info(ret_type, address, inst):
     res += ret_type.name.lower()
     res += ' at ' + hex(address) + ': ' + inst
     return res
-    
+
+
+def reach_traceback_halt_point(b_id_sym_list):
+    res = False
+    if len(b_id_sym_list) == 1:
+        b_id, sym_name = b_id_sym_list[0]
+        if sym_name == 'rdi' and b_id < 12:
+            res = True
+    return res
+
+
+def generate_alternative_values(alternative_sym):
+    res = []
+    if alternative_sym == 'rdi':
+        random.seed()
+        for i in range(utils.REBUILD_BRANCHES_NUM):
+            val = random.randint(0, utils.MAX_ARGC_NUM)
+            res.append(sym_helper.bit_vec_val_sym(val))
+    return res

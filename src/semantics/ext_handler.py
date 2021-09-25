@@ -27,84 +27,54 @@ def regs_str_to_list(regs):
     return [reg.strip() for reg in regs_split]
 
 
-def set_regs_bottom(store, rip, dests):
+def set_regs_bottom(store, rip, dests, block_id):
     dest_list = regs_str_to_list(dests)
     for dest in dest_list:
-        sym_engine.set_sym(store, rip, dest, sym_helper.bottom())
+        sym_engine.set_sym(store, rip, dest, sym_helper.bottom(), block_id)
 
 
-def set_regs_sym(store, rip, dests):
+def set_regs_sym(store, rip, dests, block_id):
     for dest in dests:
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym())
+        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(), block_id)
         
 def set_segment_regs_sym(store, rip):
     dest_list = lib.SEG_REGS
     for dest in dest_list:
         if dest == 'ds':
-            sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(utils.SEGMENT_REG_INIT_VAL))
+            sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(utils.SEGMENT_REG_INIT_VAL), 0)
         else:
-            sym_engine.set_sym(store, rip, dest, sym_helper.gen_seg_reg_sym(dest))
+            sym_engine.set_sym(store, rip, dest, sym_helper.gen_seg_reg_sym(dest), 0)
 
-def set_reg_val(store, rip, dest, val=0):
-    sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(val))
+def set_reg_val(store, rip, dest, val, block_id):
+    sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(val), block_id)
 
 
 def clear_flags(store):
     for flag in lib.RFlags:
         store[lib.FLAGS][flag] = None
     
-def ext_time(store, rip):
-    set_regs_sym(store, rip, 'rax')
 
-def ext_srand(store, rip):
-    dests = 'rcx, rdx, r9, r10, rsi, rdi'
-    set_reg_val(store, rip, 'rax')
-    set_regs_sym(store, rip, dests)
-    set_reg_val(store, rip, 'r11', 0x1f)
-    sym_engine.set_sym(store, rip, 'r8', sym_engine.get_sym(store, rip, 'rdx'))
-    clear_flags(store)
-
-def ext_rand(store, rip):
-    dests = 'rax, rcx, rdx, r8, rsi, rdi'
-    set_regs_sym(store, rip, dests)
-
-def ext_free(store, rip):
-    dests = 'rax, rcx, rdx, rsi, rdi'
-    set_regs_sym(store, rip, dests)
-    clear_flags(store)
-
-def ext_puts(store, rip):
-    dests = 'rax, rdi'
-    set_regs_sym(store, rip, dests)
-    clear_flags(store)
-
-    
-FUNCTION_DICT = {
-    'time@GLIBC': ext_time,
-    'srand@GLIBC': ext_srand,
-    'rand@GLIBC': ext_rand,
-    'puts@GLIBC': ext_puts
-}
-
-
-def insert_termination_symbol(store, rip):
+def insert_termination_symbol(store, rip, block_id):
     sym_x = sym_helper.gen_sym_x()
-    smt_helper.push_val(store, rip, sym_x)
+    smt_helper.push_val(store, rip, sym_x, block_id)
             
 
-def ext__libc_start_main(store, rip, main_address):
+def ext__libc_start_main(store, rip, main_address, block_id, inv_names):
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
-    set_reg_val(store, rip, 'rax', main_address)
-    set_regs_sym(store, rip, dests)
-    sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx'))
+    for inv_name in inv_names:
+        if inv_name in dests:
+            dests.remove(inv_name)
+    set_reg_val(store, rip, 'rax', main_address, block_id)
+    set_regs_sym(store, rip, dests, block_id)
+    sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx'), block_id)
     clear_flags(store)
-    insert_termination_symbol(store, rip)
+    insert_termination_symbol(store, rip, block_id)
     
 
-def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name):
+def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names):
     mem_size = sym_engine.get_sym(store, rip, 'rdi') if ext_func_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi')
     mem_addr = sym_helper.bit_vec_val_sym(heap_addr)
-    sym_engine.set_sym(store, rip, 'rax', mem_addr)
+    sym_engine.set_sym(store, rip, 'rax', mem_addr, block_id)
     if sym_helper.sym_is_int_or_bitvecnum(mem_size):
         mem_size = mem_size.as_long()
     else:
@@ -116,7 +86,10 @@ def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name):
     heap_addr += mem_size
     utils.MAX_HEAP_ADDR = max(utils.MAX_HEAP_ADDR, heap_addr)
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
-    set_regs_sym(store, rip, dests)
+    for inv_name in inv_names:
+        if inv_name in dests:
+            dests.remove(inv_name)
+    set_regs_sym(store, rip, dests, block_id)
     clear_flags(store)
     return heap_addr
 
@@ -129,17 +102,14 @@ def ext_free_mem_call(store, rip):
         store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
 
 
-def ext_rand_call(store, rip):
-    ext_func_call(store, rip)
-    rax_val = sym_engine.get_sym(store, rip, 'rax')
-    new_pred = simplify(rax_val >= 0)
-    return new_pred
-
-
-def ext_func_call(store, rip):
-    sym_engine.pollute_all_mem_content(store)
-    dests = regs_str_to_list('rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11')
-    set_regs_sym(store, rip, dests)
+def ext_func_call(store, rip, block_id, inv_names, mem_preserve_assumption):
+    dests = lib.CALLEE_NOT_SAVED_REGS
+    for inv_name in inv_names:
+        if inv_name in dests:
+            dests.remove(inv_name)
+    if not mem_preserve_assumption:
+        sym_engine.pollute_all_mem_content(store, block_id)
+    set_regs_sym(store, rip, dests, block_id)
     clear_flags(store)
     
     

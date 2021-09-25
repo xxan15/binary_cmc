@@ -126,8 +126,6 @@ REG64_NAME_LIST = ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi',
 REG64_NAMES = {'rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi',
                'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15'}
 
-CALLEE_SAVED_REGS = ['rbx', 'rbp', 'r12', 'r13', 'r14', 'r15']
-
 REG_NAMES = REG64_NAMES | set(REG_INFO_DICT.keys())
 
 CONDITIONAL_JMP_INST = set(map(lambda x: 'j' + x, FLAG_CONDITIONS.keys()))
@@ -135,6 +133,8 @@ CONDITIONAL_JMP_INST = set(map(lambda x: 'j' + x, FLAG_CONDITIONS.keys()))
 RFlags = ['CF', 'ZF', 'OF', 'SF']
 
 SEG_REGS = {'ss', 'cs', 'ds', 'es', 'fs', 'gs'}
+
+CALLEE_NOT_SAVED_REGS = ['rax', 'rcx', 'rdx', 'rsi', 'rdi', 'r8', 'r9', 'r10', 'r11']
 
 JMP_INST = CONDITIONAL_JMP_INST | {'jmp', 'call', 'ret'}
 
@@ -159,7 +159,6 @@ STDOUT_ADDRESS = 'stdout_address'
 STDOUT_HANDLER = 'stdout_handler'
 VERIFIED_FUNC_INFO = 'verified_func_info'
 TO_BE_VERIFIED_ARGS = 'to_be_verified_args'
-CALLEE_SAVED_REG_INFO = 'callee_saved_reg_info'
 MEM_CONTENT_POLLUTED = 'mem_content_polluted'
 HEAP_ADDR = 'heap_addr'
 
@@ -235,4 +234,5 @@ class TRACE_BACK_RET_TYPE(Enum):
     SYMADDR_SUCCEED = 6
     SYMADDR_NO_FUNC_INVARIANTS = 7
     SYMADDR_W_FUNC_INDOUBT = 8
-    TB_PARENT_BLOCK_DOES_NOT_EXIST = 9
+    SYMADDR_UNINITIALIZED_MEM_CONTENT = 9
+    TB_PARENT_BLOCK_DOES_NOT_EXIST = 10

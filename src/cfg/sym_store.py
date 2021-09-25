@@ -17,11 +17,10 @@
 from ..common import utils
 from ..common import lib
 from ..symbolic import sym_helper
-from ..semantics import semantics
 from ..common.lib import MEM_DATA_SECT_STATUS
 
 class Sym_Store:
-    def __init__(self, store, rip=None, inst=None):
+    def __init__(self, store, rip=None):
         self.rip = rip
         if store:
             self.store = store.copy()
@@ -37,17 +36,10 @@ class Sym_Store:
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR
             self.store[lib.NEED_TRACE_BACK] = False
             self.store[lib.POINTER_RELATED_ERROR] = None
-            self.store[lib.MEM_CONTENT_POLLUTED] = MEM_DATA_SECT_STATUS.RAW
+            self.store[lib.MEM_CONTENT_POLLUTED] = utils.INIT_BLOCK_NO
             self.store[lib.VERIFIED_FUNC_INFO] = None
             self.store[lib.TO_BE_VERIFIED_ARGS] = {}
-            self.store[lib.CALLEE_SAVED_REG_INFO] = {}
-        if inst and not utils.check_branch_inst_wo_call(inst):
-            self.parse_semantics(inst)
 
-    def parse_semantics(self, inst):
-        res = semantics.parse_semantics(self.store, self.rip, inst)
-        if res == -2:
-            self.store[lib.NEED_TRACE_BACK] = True
 
     def pp_val(self, sym):
         res = ''
@@ -116,9 +108,10 @@ class Sym_Store:
         s = self.store[k]
         s_old = old.store[k]
         for k in s:
-            v = s[k]
+            v = s[k][0]
             v_old = s_old.get(k, None)
             if v_old is not None:
+                v_old = v_old[0]
                 if not sym_helper.bitvec_eq(v_old, v):
                     return False
         # for ki in other_v:
