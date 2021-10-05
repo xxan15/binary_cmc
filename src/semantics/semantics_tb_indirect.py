@@ -30,7 +30,7 @@ def sym_bin_on_src(store, sym_names, src):
     global mem_len_map
     src_names = sym_names
     src_len = utils.get_sym_length(src)
-    sym_src = sym_engine.get_sym(store, rip, src, src_len)
+    sym_src = sym_engine.get_sym(store, rip, src, utils.TB_DEFAULT_BLOCK_NO, src_len)
     if not sym_helper.sym_is_int_or_bitvecnum(sym_src):
         if ':' in src:
             lhs, rhs = src.split(':')
@@ -88,8 +88,8 @@ def mov(store, sym_names, dest, src):
             # src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
         elif src.endswith(']'):
             smt_helper.remove_reg_from_sym_srcs(dest, src_names)
-            new_srcs, still_tb = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
-            if still_tb:
+            new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
+            if is_reg_bottom:
                 src_names = src_names + new_srcs
             else:
                 addr = sym_engine.get_effective_address(store, rip, src)
@@ -100,11 +100,11 @@ def mov(store, sym_names, dest, src):
 
 
 def lea(store, sym_names, dest, src):
-    global still_tb, mem_len_map
+    global mem_len_map
     src_names = sym_names
     if dest in src_names:
         src_names.remove(dest)
-        new_srcs, still_tb = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
+        new_srcs, _ = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
         src_names = src_names + new_srcs
     return list(set(src_names))
 
@@ -155,8 +155,8 @@ def cmpxchg(store, sym_names, dest, src):
     src_names = sym_names
     bits_len = utils.get_sym_length(dest)
     a_reg = lib.AUX_REG_INFO[bits_len][0]
-    sym_lhs = sym_engine.get_sym(store, rip, a_reg, bits_len)
-    sym_rhs = sym_engine.get_sym(store, rip, dest, bits_len)
+    sym_lhs = sym_engine.get_sym(store, rip, a_reg, utils.TB_DEFAULT_BLOCK_NO, bits_len)
+    sym_rhs = sym_engine.get_sym(store, rip, dest, utils.TB_DEFAULT_BLOCK_NO, bits_len)
     eq = sym_helper.is_equal(sym_lhs, sym_rhs)
     if eq == True:
         src_names = mov(store, sym_names, dest, src)
@@ -179,7 +179,7 @@ def cmp_op(store, sym_names, dest, src):
     if smt_helper.check_source_is_sym(store, rip, src, sym_names):
         dest, src = src, dest
     if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
-        sym_src = sym_engine.get_sym(store, rip, src)
+        sym_src = sym_engine.get_sym(store, rip, src, utils.TB_DEFAULT_BLOCK_NO)
         if sym_helper.sym_is_int_or_bitvecnum(sym_src):
             src_names = [dest]
             need_stop = True

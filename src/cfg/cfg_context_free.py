@@ -420,7 +420,7 @@ class CFG_Context_Free(object):
             if stack_addrs and inv_arg in stack_addrs:
                 stack_addr = inv_arg
                 if last_constraint:
-                    self._resolve_value_for_stack_addr_inv_arg(tmp_sym_store, stack_addr, substitute_pair, last_constraint)
+                    cfg_helper.resolve_value_for_stack_addr_inv_arg(tmp_sym_store, stack_addr, substitute_pair, last_constraint)
             else:
                 length = lib.DEFAULT_REG_LEN
                 if inv_arg not in lib.REG_NAMES:
@@ -625,22 +625,6 @@ class CFG_Context_Free(object):
                 if sym_helper.sym_is_int_or_bitvecnum(jmp_target):
                     target = jmp_target
         return target
-
-
-    def _resolve_value_for_stack_addr_inv_arg(self, sym_store, stack_addr, substitute_pair, last_constraint):
-        predicates = last_constraint.get_predicates()
-        m = sym_helper.check_pred_satisfiable(predicates)
-        if m is not False:
-            stack_val_len = self.mem_len_map[stack_addr]
-            stack_val = sym_engine.get_sym(sym_store.store, sym_store.rip, '[' + stack_addr + ']', stack_val_len)
-            res = stack_val
-            for d in m.decls():
-                s_val = m[d]
-                s_len = s_val.size()
-                res = sym_helper.substitute_sym_val(res, sym_helper.bit_vec_wrap(d.name(), s_len), s_val)
-                substitute_pair.append((sym_helper.bit_vec_wrap(d.name(), s_len), s_val))
-            sym_engine.set_sym(sym_store.store, sym_store.rip, '[' + stack_addr + ']', res)
-
 
 
     def _explored_func_block(self, sym_store, new_address):

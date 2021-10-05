@@ -49,46 +49,57 @@ def set_mul_OF_CF_flags(store, val):
         set_OF_CF_flags(store, False)
 
 
-def set_OF_flag(store, rip, dest, src, res, op='+'):
-    dest, src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
+def set_OF_flag(store, rip, dest, src, res, block_id, op='+'):
+    dest, src, _, _ = sym_engine.get_dest_src_sym(
+        store, rip, dest, src, block_id)
     if op == '+':
-        case1 = And(sym_helper.is_neg(dest), sym_helper.is_neg(src), sym_helper.is_pos(res))
-        case2 = And(sym_helper.is_pos(dest), sym_helper.is_pos(src), sym_helper.is_neg(res))
+        case1 = And(sym_helper.is_neg(dest), sym_helper.is_neg(
+            src), sym_helper.is_pos(res))
+        case2 = And(sym_helper.is_pos(dest), sym_helper.is_pos(
+            src), sym_helper.is_neg(res))
         _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     elif op == '-':
-        case1 = And(sym_helper.is_neg(dest), sym_helper.is_pos(src), sym_helper.is_pos(res))
-        case2 = And(sym_helper.is_pos(dest), sym_helper.is_neg(src), sym_helper.is_neg(res))
+        case1 = And(sym_helper.is_neg(dest), sym_helper.is_pos(
+            src), sym_helper.is_pos(res))
+        case2 = And(sym_helper.is_pos(dest), sym_helper.is_neg(
+            src), sym_helper.is_neg(res))
         _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     else:
         store[lib.FLAGS]['OF'] = False
-    
 
-def set_CF_flag(store, rip, dest, src, op='+'):
+
+def set_CF_flag(store, rip, dest, src, block_id, op='+'):
     if op == '+':
-        _set_add_CF_flag(store, rip, dest, src)
+        _set_add_CF_flag(store, rip, dest, src, block_id)
     elif op == '-':
-        _set_sub_CF_flag(store, rip, dest, src)
+        _set_sub_CF_flag(store, rip, dest, src, block_id)
     else:
         store[lib.FLAGS]['CF'] = False
+
 
 def set_flag_direct(store, flag_name, value=None):
     store[lib.FLAGS][flag_name] = value
 
+
 def get_flag_direct(store, flag_name):
     return store[lib.FLAGS][flag_name]
+
 
 def pp_flags(store):
     for flag in lib.RFlags:
         utils.logger.debug(flag + ': ' + str(store[lib.FLAGS][flag]))
 
 
-def _set_sub_CF_flag(store, rip, dest, src):
-    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
+def _set_sub_CF_flag(store, rip, dest, src, block_id):
+    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(
+        store, rip, dest, src, block_id)
     res = sym_helper.is_less(sym_dest, sym_src)
     store[lib.FLAGS]['CF'] = res
 
-def _set_add_CF_flag(store, rip, dest, src):
-    sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(store, rip, dest, src)
+
+def _set_add_CF_flag(store, rip, dest, src, block_id):
+    sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(
+        store, rip, dest, src, block_id)
     res = sym_helper.zero_ext(1, sym_src) + sym_helper.zero_ext(1, sym_dest)
     msb = sym_helper.most_significant_bit(res, dest_len + 1)
     store[lib.FLAGS]['CF'] = msb
@@ -113,20 +124,24 @@ def reset_all_flags(store):
     for flag in lib.RFlags:
         store[lib.FLAGS][flag] = None
 
+
 def reset_all_flags_except_one(store, flag_name):
     for flag in lib.RFlags:
         if flag != flag_name:
             store[lib.FLAGS][flag] = None
 
+
 def parse_condition(store, cond):
     logic_op = re.search(r'[<!=>]+', cond).group(0)
     lhs, rhs = cond.split(logic_op)
     lhs = store[lib.FLAGS][lhs]
-    rhs = bool(utils.imm_str_to_int(rhs)) if utils.imm_pat.match(rhs) else store[lib.FLAGS][rhs]
+    rhs = bool(utils.imm_str_to_int(rhs)) if utils.imm_pat.match(
+        rhs) else store[lib.FLAGS][rhs]
     # utils.logger.info(cond)
     # utils.logger.info(lhs)
     # utils.logger.info(rhs)
-    if lhs == None or rhs == None: return None
+    if lhs == None or rhs == None:
+        return None
     return sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
 
 
@@ -137,10 +152,12 @@ def parse_pred_expr(store, expr):
     result = False
     for and_conds in and_or_conds:
         res = parse_condition(store, and_conds[0])
-        if res == None: return None
+        if res == None:
+            return None
         for ac in and_conds[1:]:
             curr = parse_condition(store, ac)
-            if curr == None: return None
+            if curr == None:
+                return None
             res = And(res, curr)
         result = Or(result, res)
     return simplify(result)
@@ -150,13 +167,15 @@ def parse_predicate(store, inst, val, prefix='j'):
     cond = inst.split(' ', 1)[0].split(prefix, 1)[1]
     expr = lib.FLAG_CONDITIONS[cond]
     expr = parse_pred_expr(store, expr)
-    if expr == None: return None
-    elif not val: expr = simplify(Not(expr))
+    if expr == None:
+        return None
+    elif not val:
+        expr = simplify(Not(expr))
     return expr
 
 
 def top_stack(store, rip):
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
+    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', utils.INIT_BLOCK_NO)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
         res = res.as_long()
@@ -187,7 +206,8 @@ def _add_aux_memory(store, rip, inst_args):
         if arg.endswith(']'):
             address = sym_engine.get_effective_address(store, rip, arg)
             if address in store[lib.MEM] and address not in store[lib.AUX_MEM]:
-                sym_arg = sym_engine.get_sym(store, rip, address)
+                block_id = store[lib.MEM][address][1]
+                sym_arg = sym_engine.get_sym(store, rip, address, block_id)
                 # store[lib.MEM][address][0]
                 if sym_helper.is_bit_vec_num(sym_arg):
                     store[lib.AUX_MEM].add(address)
@@ -196,7 +216,7 @@ def _add_aux_memory(store, rip, inst_args):
 
 def get_jump_address(store, rip, operand):
     length = utils.get_sym_length(operand)
-    res = sym_engine.get_sym(store, rip, operand, length)
+    res = sym_engine.get_sym(store, rip, operand, utils.INIT_BLOCK_NO, length)
     if sym_helper.is_bit_vec_num(res):
         res = res.as_long()
     return res
@@ -207,25 +227,26 @@ def get_jump_address(store, rip, operand):
 # line: 'rax'
 def get_bottom_source(line, store, rip, mem_len_map):
     line_split = re.split(r'(\W+)', line)
-    res, still_tb = [], False
+    res, is_reg_bottom = [], False
     for lsi in line_split:
         lsi = lsi.strip()
         if lsi in lib.REG_NAMES:
-            val = sym_engine.get_sym(store, rip, lsi)
+            val = sym_engine.get_sym(store, rip, lsi, utils.INIT_BLOCK_NO)
             if not sym_helper.sym_is_int_or_bitvecnum(val):
                 res.append(lsi)
-                still_tb = True
-    if not still_tb:
+                is_reg_bottom = True
+    if not is_reg_bottom:
         addr = sym_engine.get_effective_address(store, rip, line)
         res.append(str(addr))
         length = utils.get_sym_length(line)
         mem_len_map[str(addr)] = length
-        still_tb = True
-    return res, still_tb
+    return res, is_reg_bottom
 
 # line: 'rax + rbx * 1 + 0'
 # line: 'rbp - 0x14'
 # line: 'rax'
+
+
 def get_mem_reg_source(line):
     line_split = re.split(r'(\W+)', line)
     res = []
@@ -253,10 +274,9 @@ def check_source_is_sym(store, rip, src, syms):
         res = src in syms
     elif ':' in src:
         lhs, rhs = src.split(':')
-        res = check_source_is_sym(store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
+        res = check_source_is_sym(
+            store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
     elif src.endswith(']'):
-        # src_val = sym_engine.get_sym(store, rip, src)
-        # res = not sym_helper.is_bit_vec_num(src_val)
         addr = sym_engine.get_effective_address(store, rip, src)
         res = str(addr) in syms
     return res
@@ -319,7 +339,7 @@ def add_src_to_syms(store, sym_names, src):
 
 
 def sym_bin_op_na_flags(store, rip, op, dest, src, block_id):
-    res = sym_engine.sym_bin_op(store, rip, op, dest, src)
+    res = sym_engine.sym_bin_op(store, rip, op, dest, src, block_id)
     sym_engine.set_sym(store, rip, dest, res, block_id)
     return res
 
@@ -327,4 +347,3 @@ def sym_bin_op_na_flags(store, rip, op, dest, src, block_id):
 def push_val(store, rip, sym_val, block_id):
     sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_val, block_id)
-

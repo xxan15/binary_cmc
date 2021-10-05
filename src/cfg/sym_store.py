@@ -62,7 +62,7 @@ class Sym_Store:
         result = ''
         if self.rip:
             result += 'rip:' + hex(self.rip) + '\n'
-        pp_lib_names = [lib.REG, lib.MEM]
+        pp_lib_names = [lib.REG]
         for k in pp_lib_names:
             v = self.store[k]
             res_str = ''

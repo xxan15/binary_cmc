@@ -32,15 +32,15 @@ def check_changed_arg_val_position(block_set, block, sym_store, start_address, a
         parent_store = parent_blk.sym_store.store
         if parent_blk.address != start_address:
             if blk.inst.startswith('call '):
-                parent_val = sym_engine.get_sym(parent_store, blk.address, arg, length)
-                curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, length)
+                parent_val = sym_engine.get_sym(parent_store, blk.address, arg, parent_blk.block_id, length)
+                curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, blk.block_id, length)
                 if not sym_helper.bitvec_eq(parent_val, curr_val):
                     func_name, _ = cfg_helper.retrieve_internal_call_inst_func_name(blk, self.address_inst_map, self.address_sym_table)
                     func_list.append(func_name)
         else:
             if blk.inst.startswith('call '):
-                parent_val = sym_engine.get_sym(parent_store, blk.address, arg, length)
-                curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, length)
+                parent_val = sym_engine.get_sym(parent_store, blk.address, arg, parent_blk.block_id, length)
+                curr_val = sym_engine.get_sym(store, blk.sym_store.rip, arg, blk.block_id, length)
                 if not sym_helper.bitvec_eq(parent_val, curr_val):
                     func_name, _ = cfg_helper.retrieve_internal_call_inst_func_name(blk, self.address_inst_map, self.address_sym_table)
                     func_list.append(func_name)
@@ -56,7 +56,7 @@ def compare_arg_val_w_original(block_set, block, sym_store, start_address, new_a
         res = True
         for arg in sym_store.store[lib.TO_BE_VERIFIED_ARGS]:
             prev_val, length, tmp_res = sym_store.store[lib.TO_BE_VERIFIED_ARGS][arg]
-            new_val = sym_engine.get_sym(sym_store.store, new_address, arg, length)
+            new_val = sym_engine.get_sym(sym_store.store, new_address, arg, block.block_id, length)
             if not sym_helper.strict_bitvec_equal(prev_val, new_val):
                 if sym_helper.is_bv_sym_var(new_val):
                     res = False

@@ -27,20 +27,20 @@ block_id = 0
 
 
 def sym_bin_op(op):
-    return lambda store, dest, src: sym_bin_oprt(store, op, dest, src)
+    return lambda store, dest, src: sym_bin_oprt(store, op, dest, src, block_id)
 
 
-def sym_bin_oprt(store, op, dest, src):
+def sym_bin_oprt(store, op, dest, src, block_id):
     dest_len = utils.get_sym_length(dest)
     res = smt_helper.sym_bin_op_na_flags(store, rip, op, dest, src, block_id)
     smt_helper.modify_status_flags(store, res, dest_len)
-    smt_helper.set_CF_flag(store, rip, dest, src, op)
-    smt_helper.set_OF_flag(store, rip, dest, src, res, op)
+    smt_helper.set_CF_flag(store, rip, dest, src, block_id, op)
+    smt_helper.set_OF_flag(store, rip, dest, src, res, block_id, op)
 
 
 def mov(store, dest, src):
     dest_len = utils.get_sym_length(dest)
-    sym_src = sym_engine.get_sym(store, rip, src, dest_len)
+    sym_src = sym_engine.get_sym(store, rip, src, block_id, dest_len)
     sym_engine.set_sym(store, rip, dest, sym_src, block_id)
 
 
@@ -50,18 +50,16 @@ def lea(store, dest, src):
 
 
 def pop(store, dest):
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
+    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is None:
         res = sym_helper.gen_sym()
-    # else:
-    #     sym_helper.remove_memory_content(store, sym_rsp)
     sym_engine.set_sym(store, rip, dest, res, block_id)
     smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
 
 
 def push(store, src):
-    sym_src = sym_engine.get_sym(store, rip, src)
+    sym_src = sym_engine.get_sym(store, rip, src, block_id)
     smt_helper.push_val(store, rip, sym_src, block_id)
 
 
@@ -70,12 +68,12 @@ def call(store, dest):
 
 
 def call_op(store, rip, block_id):
-    sym_src = sym_engine.get_sym(store, rip, hex(rip))
+    sym_src = sym_engine.get_sym(store, rip, hex(rip), block_id)
     smt_helper.push_val(store, rip, sym_src, block_id)
 
 
 def ret(store, block_id):
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp')
+    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is not None:
         sym_helper.remove_memory_content(store, sym_rsp)
@@ -88,8 +86,7 @@ def ret(store, block_id):
 def xchg(store, dest, src):
     if dest == src:
         return
-    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(
-        store, rip, dest, src)
+    sym_dest, sym_src, _, _ = sym_engine.get_dest_src_sym(store, rip, dest, src, block_id)
     sym_engine.set_sym(store, rip, dest, sym_src, block_id)
     sym_engine.set_sym(store, rip, src, sym_dest, block_id)
 
@@ -106,7 +103,7 @@ def cdqe(length):
 def cdqe_op(store, length):
     src = lib.AUX_REG_INFO[length][0]
     dest = lib.AUX_REG_INFO[length * 2][0]
-    res = sym_engine.extension(store, rip, src, length * 2, True)
+    res = sym_engine.extension(store, rip, src, block_id, length * 2, True)
     sym_engine.set_sym(store, rip, dest, res, block_id)
 
 
@@ -116,7 +113,7 @@ def mov_with_extension(signed=False):
 
 def mov_ext(store, dest, src, signed):
     src_len = utils.get_sym_length(src)
-    sym_src = sym_engine.get_sym(store, rip, src, src_len)
+    sym_src = sym_engine.get_sym(store, rip, src, block_id, src_len)
     dest_len = utils.get_sym_length(dest)
     mov_op(store, dest, dest_len, sym_src, src_len, signed)
 
@@ -129,7 +126,7 @@ def mov_op(store, dest, dest_len, sym_src, src_len, signed):
 def mul(store, src):
     bits_len = utils.get_sym_length(src)
     a_reg, _, dest = lib.AUX_REG_INFO[bits_len]
-    res = sym_engine.sym_bin_op(store, rip, 'umul', a_reg, src)
+    res = sym_engine.sym_bin_op(store, rip, 'umul', a_reg, src, block_id)
     sym_engine.set_sym(store, rip, dest, res, block_id)
     eq = sym_helper.is_equal(sym_helper.upper_half(res), 0)
     smt_helper.set_mul_OF_CF_flags(store, eq)
@@ -139,15 +136,15 @@ def imul(store, src, src1=None, src2=None):
     bits_len = utils.get_sym_length(src)
     if src1 != None:
         if src2 == None:
-            tmp = sym_engine.sym_bin_op(store, rip, 'smul', src, src1)
+            tmp = sym_engine.sym_bin_op(store, rip, 'smul', src, src1, block_id)
         else:
-            tmp = sym_engine.sym_bin_op(store, rip, 'smul', src1, src2)
+            tmp = sym_engine.sym_bin_op(store, rip, 'smul', src1, src2, block_id)
         res = sym_helper.extract(bits_len - 1, 0, tmp)
         sym_engine.set_sym(store, rip, src, res, block_id)
         dest = src
     else:
         a_reg, _, dest = lib.AUX_REG_INFO[bits_len]
-        tmp = sym_engine.sym_bin_op(store, rip, 'smul', a_reg, src)
+        tmp = sym_engine.sym_bin_op(store, rip, 'smul', a_reg, src, block_id)
         res = sym_helper.extract(bits_len - 1, 0, tmp)
         sym_engine.set_sym(store, rip, dest, tmp, block_id)
     eq = sym_helper.is_equal(simplify(SignExt(bits_len, res)), tmp)
@@ -162,8 +159,8 @@ def div_op(store, src, signed):
     bits_len = utils.get_sym_length(src)
     qreg, rreg, dest = lib.AUX_REG_INFO[bits_len]
     div_op_name, rem_op_name = ('sdiv', 'smod') if signed else ('udiv', 'umod')
-    quotient = sym_engine.sym_bin_op(store, rip, div_op_name, dest, src)
-    remainder = sym_engine.sym_bin_op(store, rip, rem_op_name, dest, src)
+    quotient = sym_engine.sym_bin_op(store, rip, div_op_name, dest, src, block_id)
+    remainder = sym_engine.sym_bin_op(store, rip, rem_op_name, dest, src, block_id)
     sym_engine.set_sym(store, rip, qreg, quotient, block_id)
     sym_engine.set_sym(store, rip, rreg, remainder, block_id)
     smt_helper.reset_all_flags(store)
@@ -172,8 +169,8 @@ def div_op(store, src, signed):
 def cmpxchg(store, dest, src):
     bits_len = utils.get_sym_length(dest)
     a_reg = lib.AUX_REG_INFO[bits_len][0]
-    sym_lhs = sym_engine.get_sym(store, rip, a_reg, bits_len)
-    sym_rhs = sym_engine.get_sym(store, rip, dest, bits_len)
+    sym_lhs = sym_engine.get_sym(store, rip, a_reg, block_id, bits_len)
+    sym_rhs = sym_engine.get_sym(store, rip, dest, block_id, bits_len)
     eq = sym_helper.is_equal(sym_lhs, sym_rhs)
     if eq == True:
         smt_helper.set_flag_direct(store, 'ZF', Bool(True))
@@ -214,7 +211,7 @@ def set_op(store, inst, dest):
 
 
 def rep(store, inst_name, inst):
-    sym_rcx = sym_engine.get_sym(store, rip, 'rcx')
+    sym_rcx = sym_engine.get_sym(store, rip, 'rcx', block_id)
     rcx_is_0 = sym_helper.is_equal(sym_rcx, 0)
     while rcx_is_0 == False:
         res = parse_semantics(store, rip, inst, block_id)
@@ -233,8 +230,8 @@ def rep(store, inst_name, inst):
 
 def cmp_op(store, dest, src):
     sym_dest, sym_src, dest_len, _ = sym_engine.get_dest_src_sym(
-        store, rip, dest, src)
-    res = sym_engine.sym_bin_op(store, rip, '-', dest, src)
+        store, rip, dest, src, block_id)
+    res = sym_engine.sym_bin_op(store, rip, '-', dest, src, block_id)
     # if isinstance(res, BitVecNumRef):
     #     if not isinstance(sym_dest, BitVecNumRef) and not isinstance(sym_src, BitVecNumRef):
     #         tmp = res.as_long()
@@ -242,8 +239,8 @@ def cmp_op(store, dest, src):
     #             res = sym_helper.gen_sym()
     #             sym_engine.set_sym(store, rip, src, sym_helper.gen_sym())
     smt_helper.modify_status_flags(store, res, dest_len)
-    smt_helper.set_CF_flag(store, rip, dest, src, '-')
-    smt_helper.set_OF_flag(store, rip, dest, src, res, '-')
+    smt_helper.set_CF_flag(store, rip, dest, src, block_id, '-')
+    smt_helper.set_OF_flag(store, rip, dest, src, res, block_id, '-')
     # utils.logger.debug('cmp_op')
     # smt_helper.pp_flags(store)
 
@@ -254,10 +251,10 @@ def sym_bin_op_cf(op='+'):
 
 def sym_bin_op_with_cf(store, op, dest, src):
     dest_len = utils.get_sym_length(dest)
-    sym_bin_oprt(store, op, dest, src)
+    sym_bin_oprt(store, op, dest, src, block_id)
     carry_val = smt_helper.get_flag_direct(store, 'CF')
     if carry_val == True:
-        sym_bin_oprt(store, op, dest, '1')
+        sym_bin_oprt(store, op, dest, '1', block_id)
     elif carry_val == False:
         pass
     else:
@@ -265,7 +262,7 @@ def sym_bin_op_with_cf(store, op, dest, src):
 
 
 def test(store, dest, src):
-    res = sym_engine.sym_bin_op(store, rip, '&', dest, src)
+    res = sym_engine.sym_bin_op(store, rip, '&', dest, src, block_id)
     dest_len = utils.get_sym_length(dest)
     smt_helper.modify_status_flags(store, res, dest_len)
     smt_helper.set_test_OF_CF_flags(store)
@@ -273,7 +270,7 @@ def test(store, dest, src):
 
 def neg(store, dest):
     dest_len = utils.get_sym_length(dest)
-    sym_dest = sym_engine.get_sym(store, rip, dest, dest_len)
+    sym_dest = sym_engine.get_sym(store, rip, dest, block_id, dest_len)
     eq = sym_helper.is_equal(sym_dest, 0)
     smt_helper._set_flag_neg_val(store, 'CF', eq)
     sym_engine.set_sym(store, rip, dest, sym_helper.neg(sym_dest), block_id)
@@ -281,7 +278,7 @@ def neg(store, dest):
 
 def not_op(store, dest):
     dest_len = utils.get_sym_length(dest)
-    sym_dest = sym_engine.get_sym(store, rip, dest, dest_len)
+    sym_dest = sym_engine.get_sym(store, rip, dest, block_id, dest_len)
     sym_engine.set_sym(store, rip, dest, sym_helper.not_op(sym_dest), block_id)
 
 
@@ -291,10 +288,10 @@ def inc_dec(op):
 
 def inc_dec_op(store, op, dest):
     dest_len = utils.get_sym_length(dest)
-    res = sym_engine.sym_bin_op(store, rip, op, dest, '1')
+    res = sym_engine.sym_bin_op(store, rip, op, dest, '1', block_id)
     sym_engine.set_sym(store, rip, dest, res, block_id)
     smt_helper.modify_status_flags(store, res, dest_len)
-    smt_helper.set_OF_flag(store, rip, dest, '1', res, op)
+    smt_helper.set_OF_flag(store, rip, dest, '1', res, block_id, op)
 
 
 def rotate(to_left=True):
@@ -303,12 +300,12 @@ def rotate(to_left=True):
 
 def rotate_op(store, dest, src, to_left):
     dest_len = utils.get_sym_length(dest)
-    count = sym_engine.get_sym(store, rip, src, 8)
+    count = sym_engine.get_sym(store, rip, src, block_id, 8)
     if sym_helper.is_bit_vec_num(count):
         count = sym_helper.int_from_sym(count)
         mask = 0x3f if dest_len == 64 else 0x1f
         temp = (count & mask) % dest_len
-        sym_dest = sym_engine.get_sym(store, rip, dest, dest_len)
+        sym_dest = sym_engine.get_sym(store, rip, dest, block_id, dest_len)
         while temp != 0:
             if to_left:
                 tmp = sym_helper.most_significant_bit(sym_dest, dest_len)
@@ -347,13 +344,13 @@ def cdq(length):
 
 def cdq_op(store, length):
     src, _, dest = lib.AUX_REG_INFO[length]
-    res = sym_engine.extension(store, rip, src, length * 2, True)
+    res = sym_engine.extension(store, rip, src, block_id, length * 2, True)
     sym_engine.set_sym(store, rip, dest, res, block_id)
 
 
 def bt(store, bit_base, bit_offset):
-    sym_base = sym_engine.get_sym(store, rip, bit_base)
-    sym_offset = sym_engine.get_sym(store, rip, bit_offset)
+    sym_base = sym_engine.get_sym(store, rip, bit_base, block_id)
+    sym_offset = sym_engine.get_sym(store, rip, bit_offset, block_id)
     offset_size = utils.get_sym_length(bit_offset)
     smt_helper.reset_all_flags_except_one(store, 'ZF')
     if sym_helper.is_bit_vec_num(sym_offset):

@@ -69,8 +69,8 @@ def close_logger():
 def write_results(disasm_asm, cfg):
     num_of_verified_functions = len(cfg.func_call_order)
     num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
-    reachable_address_num = cfg.reachable_addresses_num()
-    utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
+    # reachable_address_num = cfg.reachable_addresses_num()
+    # utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
     utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
     utils.output_logger.info('# of sound paths: ' + str(num_of_positives))

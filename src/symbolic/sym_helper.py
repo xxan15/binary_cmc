@@ -24,6 +24,8 @@ cnt = 0
 mem_cnt = 0
 stdout_mem_cnt = 0
 
+STDOUT_ADDR = BitVec('stdout', lib.DEFAULT_REG_LEN)
+
 def cnt_init():
     global cnt
     global mem_cnt
@@ -57,7 +59,7 @@ def gen_seg_reg_sym(name, length=lib.DEFAULT_REG_LEN):
     return res
 
 def substitute_sym_val(arg, prev_val, new_val):
-    return substitute(arg, (prev_val, new_val))
+    return simplify(substitute(arg, (prev_val, new_val)))
 
 
 def models(formula, max=10):
@@ -160,6 +162,7 @@ def least_significant_bit(val, dest_len):
 def bit_vec_wrap(name, length):
     return BitVec(name, length)
 
+
 def check_pred_satisfiable(predicates):
     s = Solver()
     for pred in predicates:
@@ -169,6 +172,29 @@ def check_pred_satisfiable(predicates):
         return s.model()
     else:
         return False
+
+
+def repeated_check_pred_satisfiable(predicates, num):
+    res = []
+    s = Solver()
+    for pred in predicates:
+        s.add(pred)
+    while len(res) < num and s.check() == sat:
+        m = s.model()
+        res.append(m)
+        # Create a new constraint the blocks the current model
+        block = []
+        for d in m:
+            # d is a declaration
+            if d.arity() > 0:
+                raise Z3Exception("uninterpreted functions are not supported")
+            # create a constant from declaration
+            c = d()
+            if is_array(c) or c.sort().kind() == Z3_UNINTERPRETED_SORT:
+                raise Z3Exception("arrays and uninterpreted sorts are not supported")
+            block.append(c != m[d])
+        s.add(And(block))
+    return res
 
 
 def pp_z3_model_info(m):
@@ -233,6 +259,10 @@ def int_from_sym(sym_val):
 
 def extract_bytes(high, low, sym):
     return Extract(high * 8 - 1, low * 8, sym)
+
+
+def concat_sym(*args):
+    return Concat(args)
 
 
 def bit_vec_val_sym(val, length=lib.DEFAULT_REG_LEN):

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import random
+
 from ..common import lib
 from ..common import utils
 from .sym_store import Sym_Store
@@ -101,7 +103,7 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
     p_store = parent_blk.sym_store.store
     for idx in range(jt_idx_upperbound):
         mem_address = sym_engine.get_jump_table_address(p_store, inst_src, src_sym, idx)
-        mem_val = sym_engine.read_memory_val(p_store, mem_address, src_len)
+        mem_val = sym_engine.read_memory_val(p_store, mem_address, utils.INIT_BLOCK_NO, src_len)
         if not sym_helper.is_bit_vec_num(mem_val):
             return None, inst_dest, src_len
         if mem_val not in res:
@@ -114,14 +116,16 @@ def detect_loop(block, address, new_address, block_set):
     parent_id = block.parent_id
     prev_address = None
     while parent_id:
-        parent_blk = block_set[parent_id]
-        p_address = parent_blk.address
-        if p_address == address:
-            if prev_address and prev_address == new_address:
-                exists_loop = True
-                break
-        parent_id = parent_blk.parent_id
-        prev_address = p_address
+        if parent_id in block_set:
+            parent_blk = block_set[parent_id]
+            p_address = parent_blk.address
+            if p_address == address:
+                if prev_address and prev_address == new_address:
+                    exists_loop = True
+                    break
+            parent_id = parent_blk.parent_id
+            prev_address = p_address
+        else: break
     return exists_loop
 
 
@@ -163,7 +167,7 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
             inst_dest = inst_split[1].strip()
             target_addresses = []
             for sym_store in sym_store_list:
-                target_addr = sym_engine.get_sym(sym_store.store, rip, inst_dest)
+                target_addr = sym_engine.get_sym(sym_store.store, rip, inst_dest, utils.INIT_BLOCK_NO)
                 target_addresses.append(target_addr)
             address_jt_entries_map[address] = (inst_dest, target_addresses)
             return inst_dest, target_addresses
@@ -174,7 +178,13 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
     return None, None
 
 
-def construct_print_info(parent_store, parent_rip, new_sym_store, rip, invariant_arguments):
+def get_real_length(mem_len_map, arg):
+    length = lib.DEFAULT_REG_LEN
+    if arg not in lib.REG_NAMES:
+        length = mem_len_map[arg]
+    return length
+
+def construct_print_info(parent_id, parent_store, parent_rip, new_sym_store, rip, invariant_arguments):
     p_info = []
     stack_addr = []
     stack_top = sym_helper.top_stack_addr(new_sym_store.store)
@@ -187,19 +197,91 @@ def construct_print_info(parent_store, parent_rip, new_sym_store, rip, invariant
                 mem_addr = utils.imm_str_to_int(inv_arg)
                 if mem_addr >= stack_top:
                     stack_addr.append(inv_arg)
-        prev_val = sym_engine.get_sym(parent_store, parent_rip, inv_arg)
+        prev_val = sym_engine.get_sym(parent_store, parent_rip, inv_arg, parent_id)
         sym_engine.set_sym(new_sym_store.store, rip, inv_arg, prev_val)
     print_info = ', '.join(p_info)
     return print_info, stack_addr
 
 
-def get_inv_arg_val(store, rip, inv_arg, length=lib.DEFAULT_REG_LEN):
+def get_inv_arg_val(store, rip, inv_arg, block_id, length=lib.DEFAULT_REG_LEN):
     res = None
     if inv_arg in lib.REG_NAMES:
-        res = sym_engine.get_sym(store, rip, inv_arg, length)
+        res = sym_engine.get_sym(store, rip, inv_arg, block_id, length)
     else:
-        res = sym_engine.get_sym(store, rip, '[' + inv_arg + ']', length)
+        res = sym_engine.get_sym(store, rip, '[' + inv_arg + ']', block_id, length)
     return res
+    
+
+def repeated_random_concretization(conc_res, sym_val, sym_len, count):
+    while len(conc_res[sym_val]) < count:
+        # rand_val = random.randint(0, 2**sym_len - 1)
+        rand_val = random.randint(0, utils.MAX_ARGC_NUM)
+        if sym_val not in conc_res:
+            conc_res[sym_val] = [sym_helper.bit_vec_val_sym(rand_val, sym_len)]
+        else:
+            conc_res[sym_val].append(sym_helper.bit_vec_val_sym(rand_val, sym_len))
+
+
+
+def ramdom_concretize_sym(conc_res, sym_vals, sym_lens, count):
+    for idx, sym_val in enumerate(sym_vals):
+        sym_len = sym_lens[idx]
+        if sym_val in conc_res:
+            repeated_random_concretization(conc_res, sym_val, sym_len, count)
+        else:
+            rand_val = random.randint(0, 2**sym_len - 1)
+            conc_res[sym_val] = [sym_helper.bit_vec_val_sym(rand_val, sym_len)]
+            repeated_random_concretization(conc_res, sym_val, sym_len, count)
+
+            
+
+def concretize_sym_arg(sym_vals, sym_lens, constraint):
+    conc_res = {}
+    random.seed()
+    sym_val_strs = [str(sym_val) for sym_val in sym_vals]
+    sym_exist_in_constraint = False
+    predicates = constraint.get_predicates()
+    m_list = sym_helper.repeated_check_pred_satisfiable(predicates, utils.REBUILD_BRANCHES_NUM)
+    if m_list:
+        for m in m_list:
+            for d in m.decls():
+                d_name = d.name()
+                if d_name in sym_val_strs:
+                    sym_exist_in_constraint = True
+                    idx = sym_val_strs.index(d_name)
+                    sym_val = sym_vals[idx]
+                    if sym_val in conc_res:
+                        conc_res[sym_val].append(m[d])
+                    else:
+                        conc_res[sym_val] = [m[d]]
+            if not sym_exist_in_constraint: break
+    ramdom_concretize_sym(conc_res, sym_vals, sym_lens, utils.REBUILD_BRANCHES_NUM)
+    return conc_res
+
+
+def update_sym_addr_valueset_map(sym_addr_valueset_map, concretize_sym_args):
+    for sym_val in concretize_sym_args:
+        if sym_val not in sym_addr_valueset_map:
+            sym_addr_valueset_map[sym_val] = concretize_sym_args[sym_val]
+        # if sym_val not in sym_addr_valueset_map:
+        #     sym_addr_valueset_map[sym_val] = conc_vals
+        # else:
+        #     sym_addr_valueset_map[sym_val].append(conc_val)
+
+
+def resolve_value_for_stack_addr_inv_arg(self, block_id, sym_store, stack_addr, substitute_pair, last_constraint):
+    predicates = last_constraint.get_predicates()
+    m = sym_helper.check_pred_satisfiable(predicates)
+    if m is not False:
+        stack_val_len = self.mem_len_map[stack_addr]
+        stack_val = sym_engine.get_sym(sym_store.store, sym_store.rip, '[' + stack_addr + ']', block_id, stack_val_len)
+        res = stack_val
+        for d in m.decls():
+            s_val = m[d]
+            s_len = s_val.size()
+            res = sym_helper.substitute_sym_val(res, sym_helper.bit_vec_wrap(d.name(), s_len), s_val)
+            substitute_pair.append((sym_helper.bit_vec_wrap(d.name(), s_len), s_val))
+        sym_engine.set_sym(sym_store.store, sym_store.rip, '[' + stack_addr + ']', res)
 
 
 def substitute_inv_arg_val_direct(store, rip, inv_arg, inv_val):
@@ -213,8 +295,8 @@ def substitute_sym_arg_for_all(store, sym_arg, sym_new):
     for name in lib.RECORD_STATE_NAMES:
         s = store[name]
         for k, v in s.items():
-            s[k] = sym_helper.substitute_sym_val(v, sym_arg, sym_new)
-
+            s[k][0] = sym_helper.substitute_sym_val(v[0], sym_arg, sym_new)
+            
 
 def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
     func_name = None
@@ -229,11 +311,16 @@ def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_ta
 
 
 def cfg_init_parameter(store, sym_table):
+    if lib.STDIN in sym_table:
+        stdin_address = sym_table[lib.STDIN]
+        sym_address = sym_helper.bit_vec_val_sym(stdin_address)
+        store[lib.STDIN_ADDRESS] = sym_address
+        store[lib.STDIN_HANDLER] = sym_engine.get_memory_val(store, sym_address, utils.INIT_BLOCK_NO)
     if lib.STDOUT in sym_table:
         stdout_address = sym_table[lib.STDOUT]
         sym_address = sym_helper.bit_vec_val_sym(stdout_address)
         store[lib.STDOUT_ADDRESS] = sym_address
-        store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address)
+        store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address, utils.INIT_BLOCK_NO)
 
 
 def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):

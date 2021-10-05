@@ -66,13 +66,13 @@ def ext__libc_start_main(store, rip, main_address, block_id, inv_names):
             dests.remove(inv_name)
     set_reg_val(store, rip, 'rax', main_address, block_id)
     set_regs_sym(store, rip, dests, block_id)
-    sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx'), block_id)
+    sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx', block_id), block_id)
     clear_flags(store)
     insert_termination_symbol(store, rip, block_id)
     
 
 def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names):
-    mem_size = sym_engine.get_sym(store, rip, 'rdi') if ext_func_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi')
+    mem_size = sym_engine.get_sym(store, rip, 'rdi', block_id) if ext_func_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi', block_id)
     mem_addr = sym_helper.bit_vec_val_sym(heap_addr)
     sym_engine.set_sym(store, rip, 'rax', mem_addr, block_id)
     if sym_helper.sym_is_int_or_bitvecnum(mem_size):
@@ -94,12 +94,19 @@ def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names
     return heap_addr
 
 
-def ext_free_mem_call(store, rip):
-    mem_addr = sym_engine.get_sym(store, rip, 'rdi')
+def ext_free_mem_call(store, rip, block_id):
+    succeed = True
+    mem_addr = sym_engine.get_sym(store, rip, 'rdi', block_id)
     if mem_addr in store[lib.MEM]:
         sym_helper.remove_memory_content(store, mem_addr)
-    else:
+    elif sym_helper.sym_is_int_or_bitvecnum(mem_addr):
+        succeed = False
+        utils.logger.error('Error: Use after free at address ' + str(mem_addr))
+        utils.logger.error('Error: Memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        utils.output_logger.error('Error: Use after free at address ' + str(mem_addr))
+        utils.output_logger.error('Error: Memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
         store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
+    return succeed
 
 
 def ext_func_call(store, rip, block_id, inv_names, mem_preserve_assumption):

@@ -24,7 +24,7 @@ from . import sym_helper
 
 OPS_NEED_EXTENSION = {'<<', '>>', '>>>'}
 
-def get_sym(store, rip, src, length=lib.DEFAULT_REG_LEN):
+def get_sym(store, rip, src, block_id, length=lib.DEFAULT_REG_LEN):
     res = None
     if src in lib.REG_NAMES:   # rax
         res = sym_register.get_register_sym(store, src)
@@ -39,12 +39,12 @@ def get_sym(store, rip, src, length=lib.DEFAULT_REG_LEN):
         if src.endswith(']'):
             val = sym_memory.get_effective_address(store, rip, src)
         else:
-            val = get_sym(store, rip, src, lib.DEFAULT_REG_LEN)
+            val = get_sym(store, rip, src, block_id, lib.DEFAULT_REG_LEN)
         address = simplify(val)
         res = sym_memory.get_seg_memory_val(store, address, seg_reg, length)
     elif src.endswith(']'): # byte ptr [rbx+rax*1]
         address = sym_memory.get_effective_address(store, rip, src)
-        res = sym_memory.get_memory_val(store, address, length)
+        res = sym_memory.get_memory_val(store, address, block_id, length)
     elif ':' in src:     # rdx:rax
         regs = src.split(':')
         left = sym_register.get_register_sym(store, regs[0])
@@ -75,8 +75,8 @@ def get_sym_block_id(store, rip, src):
 def get_register_sym(store, src):
     return sym_register.get_register_sym(store, src)
 
-def get_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
-    return sym_memory.get_memory_val(store, address, length)
+def get_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):
+    return sym_memory.get_memory_val(store, address, block_id, length)
 
 def set_sym(store, rip, dest, sym, block_id):
     if dest in lib.REG_NAMES:        # rax
@@ -95,7 +95,7 @@ def set_sym(store, rip, dest, sym, block_id):
             val = sym_memory.get_effective_address(store, rip, dest_rest)
         else:
             rest_len = utils.get_sym_length(dest_rest)
-            val = get_sym(store, rip, dest_rest, rest_len)
+            val = get_sym(store, rip, dest_rest, block_id, rest_len)
         address = simplify(val)
         store[seg_reg][address] = sym
         # sym_memory.set_mem_sym(store, address, sym, dest_len)
@@ -120,8 +120,8 @@ def get_jump_table_address(store, arg, src_sym, src_val):
     return sym_memory.get_jump_table_address(store, arg, src_sym, src_val)
 
 
-def read_memory_val(store, address, length=lib.DEFAULT_REG_LEN):
-    return sym_memory.read_memory_val(store, address, length)
+def read_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):
+    return sym_memory.read_memory_val(store, address, block_id, length)
 
 
 def reset_mem_content_pollute(store, block_id):
@@ -139,9 +139,9 @@ def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN):
     return sym_memory.get_mem_sym(store, address, length)
 
 
-def sym_bin_op(store, rip, op, dest, src):
+def sym_bin_op(store, rip, op, dest, src, block_id):
     func = SYM_BIN_OP_MAP[op]
-    sym_dest, sym_src, dest_len, src_len = get_dest_src_sym(store, rip, dest, src)
+    sym_dest, sym_src, dest_len, src_len = get_dest_src_sym(store, rip, dest, src, block_id)
     if op in OPS_NEED_EXTENSION and dest_len != src_len:
         sym_src = extension_sym(sym_src, dest_len, src_len)
     res = func(sym_dest, sym_src, dest_len)
@@ -167,9 +167,9 @@ SYM_BIN_OP_MAP = {
 }
 
 
-def extension(store, rip, src, dest_len, sign=False):
+def extension(store, rip, src, block_id, dest_len, sign=False):
     src_len = utils.get_sym_length(src)
-    sym_src = get_sym(store, rip, src, src_len)
+    sym_src = get_sym(store, rip, src, block_id, src_len)
     res = extension_sym(sym_src, dest_len, src_len, sign)
     return res
 
@@ -192,10 +192,10 @@ def undefined(store, rip, block_id, *args):
         set_sym(store, rip, dest, sym_helper.bottom(dest_len), block_id)
 
 
-def get_dest_src_sym(store, rip, dest, src):
+def get_dest_src_sym(store, rip, dest, src, block_id):
     dest_len = utils.get_sym_length(dest)
     src_len = utils.get_sym_length(src, dest_len)
-    sym_src = get_sym(store, rip, src, src_len)
-    sym_dest = get_sym(store, rip, dest, dest_len)
+    sym_src = get_sym(store, rip, src, block_id, src_len)
+    sym_dest = get_sym(store, rip, dest, block_id, dest_len)
     return sym_dest, sym_src, dest_len, src_len
 

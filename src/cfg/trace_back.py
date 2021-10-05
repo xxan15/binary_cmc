@@ -25,7 +25,6 @@ from ..semantics import smt_helper
 from ..semantics import semantics
 
 
-
 def get_func_call_invariant_arguments(block_set, func_call_blk, src_names):
     indoubt_arguments = []
     invariant_arguments = []
@@ -34,8 +33,8 @@ def get_func_call_invariant_arguments(block_set, func_call_blk, src_names):
     parent_rip, curr_rip = parent_blk.sym_store.rip, func_call_blk.sym_store.rip
     for src_name in src_names:
         if src_name in lib.REG_NAMES:
-            prev_val = sym_engine.get_sym(parent_store, parent_rip, src_name)
-            curr_val = sym_engine.get_sym(curr_store, curr_rip, src_name)
+            prev_val = sym_engine.get_sym(parent_store, parent_rip, src_name, parent_blk.block_id)
+            curr_val = sym_engine.get_sym(curr_store, curr_rip, src_name, func_call_blk.block_id)
             if sym_helper.bvnum_eq(prev_val, curr_val):
                 indoubt_arguments.append(src_name)
         else:
@@ -71,7 +70,7 @@ def reach_traceback_halt_point(b_id_sym_list):
     res = False
     if len(b_id_sym_list) == 1:
         b_id, sym_name = b_id_sym_list[0]
-        if sym_name == 'rdi' and b_id < 12:
+        if sym_name in ('rdi', 'rsi') and b_id < 12:
             res = True
     return res
 
