@@ -34,6 +34,7 @@ class Disasm_Objdump(Disasm):
         self.address_next_map = {}
         self.address_label_map = {}
         self.address_func_map = {}
+        self.address_ext_func_map = {}
         self.func_call_order = ['_start']
         self.funct_call_map = {}
         self.valid_address_no = 0
@@ -58,6 +59,8 @@ class Disasm_Objdump(Disasm):
                         if '@' not in label:
                             label = label.strip()
                             self.address_func_map[address] = label
+                        else:
+                            self.address_ext_func_map[address] = label
                 elif address_inst_pattern.search(line):
                     address, inst, bin_len = self._parse_line(line)
                     if inst:

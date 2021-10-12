@@ -48,6 +48,7 @@ TB_DEFAULT_BLOCK_NO = -2
 CONTEXT_SENSITIVE = True
 
 ASSEMBLY_FILE_NAME = 'test.s'
+PREDEFINED_CONSTRAINT_FILE = 'ext_env.config'
 
 DISASM_TYPES = ['objdump', 'radare2', 'angr']
 INVALID_SECTION_LABELS = {'_init', '_fini', '__libc_csu_init', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
@@ -642,4 +643,5 @@ def u_hex(num):
     res = hex(num)
     res = res.split('0x', 1)[1]
     return res
+
 

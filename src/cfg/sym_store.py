@@ -45,6 +45,8 @@ class Sym_Store:
         res = ''
         if sym_helper.is_bit_vec_num(sym):
             res = hex(sym.as_long()) 
+        elif isinstance(sym, list):
+            res = self.pp_val(sym[0])
         else: res = str(sym)
         return res
 

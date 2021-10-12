@@ -57,7 +57,7 @@ def clear_flags(store):
 def insert_termination_symbol(store, rip, block_id):
     sym_x = sym_helper.gen_sym_x()
     smt_helper.push_val(store, rip, sym_x, block_id)
-            
+
 
 def ext__libc_start_main(store, rip, main_address, block_id, inv_names):
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
@@ -82,9 +82,9 @@ def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names
     if mem_size == 0:
         sys.exit('The allocation size for ' + ext_func_name + ' function cannot be zero')
     mem_val = sym_helper.bottom(mem_size) if ext_func_name is not 'calloc' else sym_helper.bit_vec_val_sym(0, mem_size)
-    sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
     heap_addr += mem_size
     utils.MAX_HEAP_ADDR = max(utils.MAX_HEAP_ADDR, heap_addr)
+    sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
     for inv_name in inv_names:
         if inv_name in dests:
@@ -101,10 +101,8 @@ def ext_free_mem_call(store, rip, block_id):
         sym_helper.remove_memory_content(store, mem_addr)
     elif sym_helper.sym_is_int_or_bitvecnum(mem_addr):
         succeed = False
-        utils.logger.error('Error: Use after free at address ' + str(mem_addr))
-        utils.logger.error('Error: Memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
-        utils.output_logger.error('Error: Use after free at address ' + str(mem_addr))
-        utils.output_logger.error('Error: Memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        utils.logger.error('Error: Use after free at address ' + str(mem_addr) + ' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        utils.output_logger.error('Error: Use after free at address ' + str(mem_addr) +' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
         store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
     return succeed
 

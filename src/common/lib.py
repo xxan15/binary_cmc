@@ -228,7 +228,7 @@ class TRACE_BACK_TYPE(Enum):
 
 
 class TRACE_BACK_RET_TYPE(Enum):
-    UNRESOLVED = 0
+    JT_UNRESOLVED = 0
     JT_SUCCEED = 1
     JT_NO_UPPERBOUND = 2
     JT_NOT_ASSIGN_INST = 3
@@ -238,4 +238,14 @@ class TRACE_BACK_RET_TYPE(Enum):
     SYMADDR_NO_FUNC_INVARIANTS = 7
     SYMADDR_W_FUNC_INDOUBT = 8
     SYMADDR_UNINITIALIZED_MEM_CONTENT = 9
-    TB_PARENT_BLOCK_DOES_NOT_EXIST = 10
+    SYMADDR_SYM_NOT_IN_GLOBAL_VALUTSET = 10
+    TB_PARENT_BLOCK_DOES_NOT_EXIST = 11
+    TB_BLOCK_DOES_NOT_EXIST = 12
+    TB_EXCEEDS_LIMITATION = 13
+
+class Tree(object):
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.data = None
+        self.children_list = []
+

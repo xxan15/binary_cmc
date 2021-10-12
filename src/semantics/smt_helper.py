@@ -135,8 +135,7 @@ def parse_condition(store, cond):
     logic_op = re.search(r'[<!=>]+', cond).group(0)
     lhs, rhs = cond.split(logic_op)
     lhs = store[lib.FLAGS][lhs]
-    rhs = bool(utils.imm_str_to_int(rhs)) if utils.imm_pat.match(
-        rhs) else store[lib.FLAGS][rhs]
+    rhs = bool(utils.imm_str_to_int(rhs)) if utils.imm_pat.match(rhs) else store[lib.FLAGS][rhs]
     # utils.logger.info(cond)
     # utils.logger.info(lhs)
     # utils.logger.info(rhs)
@@ -304,16 +303,6 @@ def check_cmp_dest_is_sym(store, rip, dest, sym_names):
             else:
                 addr = sym_engine.get_effective_address(store, rip, dest)
                 res = str(addr) == sym_names[0]
-    return res
-
-
-def check_jmp_inst_as_external_call(address_sym_table, address_inst_map, store, rip, inst):
-    res = False
-    if inst.startswith('jmp '):
-        jump_address_str = inst.split(' ', 1)[1].strip()
-        new_address = get_jump_address(store, rip, jump_address_str)
-        if new_address in address_sym_table and new_address not in address_inst_map:
-            res = True
     return res
 
 

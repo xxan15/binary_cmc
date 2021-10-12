@@ -351,4 +351,17 @@ def is_bottom(sym_val, dest_len):
     return sym_val == bottom(dest_len)
 
 
+def parse_predefined_constraint(constraint_config_file):
+    res = {}
+    with open(constraint_config_file, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line_split = line.strip().split(' ', 1)
+            ext_func_name = line_split[0]
+            constraint = line_split[1].strip()
+            if ext_func_name in res:
+                res[ext_func_name].apend(constraint)
+            else:
+                res[ext_func_name] = [constraint]
+    return res
 

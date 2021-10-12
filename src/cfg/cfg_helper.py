@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 import random
 
 from ..common import lib
 from ..common import utils
+from .constraint import Constraint
 from .sym_store import Sym_Store
 from ..symbolic import sym_helper
 from ..symbolic import sym_engine
@@ -229,7 +231,8 @@ def ramdom_concretize_sym(conc_res, sym_vals, sym_lens, count):
         if sym_val in conc_res:
             repeated_random_concretization(conc_res, sym_val, sym_len, count)
         else:
-            rand_val = random.randint(0, 2**sym_len - 1)
+            # rand_val = random.randint(0, 2**sym_len - 1)
+            rand_val = random.randint(0, utils.MAX_ARGC_NUM)
             conc_res[sym_val] = [sym_helper.bit_vec_val_sym(rand_val, sym_len)]
             repeated_random_concretization(conc_res, sym_val, sym_len, count)
 
@@ -398,3 +401,84 @@ def start_init(store, rip, block_id):
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_src, block_id)
     
+
+def get_sym_val(store, rip, src, block_id):
+    res = None
+    src = src.strip()
+    res = sym_engine.get_sym(store, rip, src, block_id)
+    return res
+
+
+def preprocess_constraint(constraint):
+    res = constraint
+    if 'fresh heap pointer' in constraint:
+        op = re.search(r'[<!=>]+', constraint).group(0)
+        arg = constraint.split(op, 1)[0].strip()
+        res = utils.MIN_HEAP_ADDR + '<=' + arg + '<=' + utils.MAX_HEAP_ADDR
+    return res
+
+def parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs):
+    lhs = get_sym_val(store, rip, lhs, block_id)
+    rhs = get_sym_val(store, rip, rhs, block_id)
+    if lhs == None or rhs == None: return None
+    pred = sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
+    return pred
+
+
+def parse_single_predicate(store, rip, block_id, constraint):
+    predicates = None
+    constraint = preprocess_constraint(constraint)
+    logic_ops = re.findall(r'[<!=>]+', constraint)
+    if len(logic_ops) == 1:
+        operands = []
+        rest = constraint
+        for logic_op in logic_ops:
+            lhs, rest = rest.split(logic_op, 1)
+            operands.sppend(lhs.strip())
+        operands.append(rest.strip())
+        index = 0
+        for logic_op in logic_ops:
+            pred = parse_basic_pred(store, rip, block_id, logic_op, operands[index], operands[index+1])
+            if pred:
+                if predicates:
+                    predicates = simplify(And(predicateds, pred))
+                else:
+                    predicates = pred
+            index += 1
+    elif len(logic_ops) > 1:
+        logic_op = logic_ops[0]
+        lhs, rhs = constraint.split(logic_op)
+        predicates = parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs)
+    return predicates
+
+
+def parse_predicates(store, rip, block_id, constraint):
+    constraint_list = constraint.split('or')
+    predicates = None
+    for c in constraint_list:
+        pred = parse_single_predicate(store, rip, block_id, c)
+        if pred:
+            if predicates:
+                predicates = simplify(Or(predicateds, pred))
+            else:
+                predicates = pred
+    return predicates
+
+
+def insert_new_constraints(store, rip, block_id, pre_constraint, constraint):
+    new_constraint = constraint
+    if pre_constraint:
+        predicateds = None
+        pre_constraint = utils.remove_multiple_spaces(pre_constraint)
+        pre_constraint = pre_constraint.lower()
+        for p_constraint in pre_constraint: 
+            pred = parse_predicates(store, rip, block_id, p_constraint)
+            if pred:
+                if predicateds:
+                    predicateds = simplify(And(predicateds, pred))
+                else:
+                    predicateds = pred
+        if predicateds:
+            new_constraint = Constraint(constraint, predicateds)
+    return new_constraint
+

@@ -24,6 +24,7 @@ from .common import utils
 from .common import global_var
 from .disassembler import helper
 from .disassembler.disasm_factory import Disasm_Factory
+from .symbolic import sym_helper
 from .cfg.cfg import CFG
 from .cfg.cfg_context_free import CFG_Context_Free
 
@@ -41,15 +42,18 @@ def construct_cfg(disasm_path, disasm_asm):
     function_addr_table = global_var.elf_info.function_addr_table
     # print(address_sym_table)
     # print(sym_table)
+    # print(disasm_asm.address_ext_func_map)
     # print(global_var.elf_info.sym_mem_info_table)
     # for func_name in function_addr_table:
     #     if func_name != 'main':
     func_name = '_start'
     start_address = function_addr_table[func_name]
+    constraint_config_file = os.path.join(utils.PROJECT_DIR, utils.PREDEFINED_CONSTRAINT_FILE)
+    pre_constraint = sym_helper.parse_predefined_constraint(constraint_config_file)
     if utils.CONTEXT_SENSITIVE:
-        cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+        cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint)
     else:
-        cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order)
+        cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order, disasm_asm.address_ext_func_map)
     callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
