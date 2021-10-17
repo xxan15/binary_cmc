@@ -16,6 +16,7 @@
 
 import re
 import random
+from z3 import *
 
 from ..common import lib
 from ..common import utils
@@ -178,6 +179,14 @@ def reconstruct_jt_target_addresses(trace_list, blk_idx, sym_store_list, address
                 sym_store.rip = rip
                 semantics.parse_semantics(sym_store.store, rip, inst, blk.block_id)
     return None, None
+
+
+def get_unified_sym_name(address_sym_table, address):
+    res = ''
+    if address in address_sym_table:
+        sym_name = address_sym_table[address][0]
+        res = sym_name.split('@', 1)[0].strip()
+    return res
 
 
 def get_real_length(mem_len_map, arg):
@@ -409,13 +418,19 @@ def get_sym_val(store, rip, src, block_id):
     return res
 
 
-def preprocess_constraint(constraint):
-    res = constraint
+def preprocess_constraint(store, rip, block_id, ext_name, constraint):
+    res = None
     if 'fresh heap pointer' in constraint:
-        op = re.search(r'[<!=>]+', constraint).group(0)
-        arg = constraint.split(op, 1)[0].strip()
-        res = utils.MIN_HEAP_ADDR + '<=' + arg + '<=' + utils.MAX_HEAP_ADDR
+        # op = re.search(r'[<!=>]+', constraint).group(0)
+        # arg = constraint.split(op, 1)[0].strip()
+        # res = utils.MIN_HEAP_ADDR + '<=' + arg + '<=' + utils.MAX_HEAP_ADDR
+        # mem_size = sym_engine.get_sym(store, rip, 'rdi', block_id) if ext_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi', block_id)
+        mem_size = sym_helper.bit_vec_val_sym(utils.MAX_MALLOC_SIZE)
+        ext_handler.ext_gen_fresh_heap_pointer(store, rip, ext_name, block_id, mem_size)
+    else:
+        res = constraint
     return res
+
 
 def parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs):
     lhs = get_sym_val(store, rip, lhs, block_id)
@@ -425,60 +440,61 @@ def parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs):
     return pred
 
 
-def parse_single_predicate(store, rip, block_id, constraint):
+def parse_single_predicate(store, rip, block_id, ext_name, constraint):
     predicates = None
-    constraint = preprocess_constraint(constraint)
-    logic_ops = re.findall(r'[<!=>]+', constraint)
-    if len(logic_ops) == 1:
-        operands = []
-        rest = constraint
-        for logic_op in logic_ops:
-            lhs, rest = rest.split(logic_op, 1)
-            operands.sppend(lhs.strip())
-        operands.append(rest.strip())
-        index = 0
-        for logic_op in logic_ops:
-            pred = parse_basic_pred(store, rip, block_id, logic_op, operands[index], operands[index+1])
-            if pred:
-                if predicates:
-                    predicates = simplify(And(predicateds, pred))
-                else:
-                    predicates = pred
-            index += 1
-    elif len(logic_ops) > 1:
-        logic_op = logic_ops[0]
-        lhs, rhs = constraint.split(logic_op)
-        predicates = parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs)
+    constraint = preprocess_constraint(store, rip, block_id, ext_name, constraint)
+    if constraint:
+        logic_ops = re.findall(r'[<!=>]+', constraint)
+        if len(logic_ops) > 1:
+            operands = []
+            rest = constraint
+            for logic_op in logic_ops:
+                lhs, rest = rest.split(logic_op, 1)
+                operands.append(lhs.strip())
+            operands.append(rest.strip())
+            index = 0
+            for logic_op in logic_ops:
+                pred = parse_basic_pred(store, rip, block_id, logic_op, operands[index], operands[index+1])
+                if pred is not None:
+                    if predicates is not None:
+                        predicates = simplify(And(predicates, pred))
+                    else:
+                        predicates = pred
+                index += 1
+        elif len(logic_ops) == 1:
+            logic_op = logic_ops[0]
+            lhs, rhs = constraint.split(logic_op)
+            predicates = parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs)
     return predicates
 
 
-def parse_predicates(store, rip, block_id, constraint):
+def parse_predicates(store, rip, block_id, ext_name, constraint):
     constraint_list = constraint.split('or')
     predicates = None
     for c in constraint_list:
-        pred = parse_single_predicate(store, rip, block_id, c)
-        if pred:
-            if predicates:
-                predicates = simplify(Or(predicateds, pred))
+        pred = parse_single_predicate(store, rip, block_id, ext_name, c)
+        if pred is not None:
+            if predicates is not None:
+                predicates = simplify(Or(predicates, pred))
             else:
                 predicates = pred
     return predicates
 
 
-def insert_new_constraints(store, rip, block_id, pre_constraint, constraint):
+def insert_new_constraints(store, rip, block_id, ext_name, pre_constraint, constraint):
     new_constraint = constraint
     if pre_constraint:
-        predicateds = None
-        pre_constraint = utils.remove_multiple_spaces(pre_constraint)
-        pre_constraint = pre_constraint.lower()
+        predicates = None
         for p_constraint in pre_constraint: 
-            pred = parse_predicates(store, rip, block_id, p_constraint)
-            if pred:
-                if predicateds:
-                    predicateds = simplify(And(predicateds, pred))
+            p_constraint = utils.remove_multiple_spaces(p_constraint)
+            p_constraint = p_constraint.lower()
+            pred = parse_predicates(store, rip, block_id, ext_name, p_constraint)
+            if pred is not None:
+                if predicates is not None:
+                    predicates = simplify(And(predicates, pred))
                 else:
-                    predicateds = pred
-        if predicateds:
-            new_constraint = Constraint(constraint, predicateds)
+                    predicates = pred
+        if predicates is not None:
+            new_constraint = Constraint(constraint, predicates)
     return new_constraint
 

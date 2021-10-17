@@ -61,9 +61,9 @@ def insert_termination_symbol(store, rip, block_id):
 
 def ext__libc_start_main(store, rip, main_address, block_id, inv_names):
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
-    for inv_name in inv_names:
-        if inv_name in dests:
-            dests.remove(inv_name)
+    # for inv_name in inv_names:
+    #     if inv_name in dests:
+    #         dests.remove(inv_name)
     set_reg_val(store, rip, 'rax', main_address, block_id)
     set_regs_sym(store, rip, dests, block_id)
     sym_engine.set_sym(store, rip, 'rbp', sym_engine.get_sym(store, main_address, 'rcx', block_id), block_id)
@@ -71,7 +71,29 @@ def ext__libc_start_main(store, rip, main_address, block_id, inv_names):
     insert_termination_symbol(store, rip, block_id)
     
 
-def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names):
+def ext_gen_fresh_heap_pointer(store, rip, ext_func_name, block_id, mem_size):
+    heap_addr = store[lib.HEAP_ADDR]
+    mem_addr = sym_helper.bit_vec_val_sym(heap_addr)
+    sym_engine.set_sym(store, rip, 'rax', mem_addr, block_id)
+    if sym_helper.sym_is_int_or_bitvecnum(mem_size):
+        mem_size = mem_size.as_long()
+    else:
+        mem_size = utils.MAX_MALLOC_SIZE
+    if mem_size == 0:
+        sys.exit('The allocation size for ' + ext_func_name + ' function cannot be zero')
+    mem_val = sym_helper.bottom(mem_size) if ext_func_name is not 'calloc' else sym_helper.bit_vec_val_sym(0, mem_size)
+    heap_addr += mem_size
+    utils.MAX_HEAP_ADDR = max(utils.MAX_HEAP_ADDR, heap_addr)
+    sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
+    dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
+    set_regs_sym(store, rip, dests, block_id)
+    clear_flags(store)
+    store[lib.HEAP_ADDR] = heap_addr
+    
+
+def ext_alloc_mem_call(store, rip, ext_func_name, block_id):
+    heap_addr = store[lib.HEAP_ADDR]
+    utils.logger.info(heap_addr)
     mem_size = sym_engine.get_sym(store, rip, 'rdi', block_id) if ext_func_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi', block_id)
     mem_addr = sym_helper.bit_vec_val_sym(heap_addr)
     sym_engine.set_sym(store, rip, 'rax', mem_addr, block_id)
@@ -86,12 +108,9 @@ def ext_alloc_mem_call(store, rip, heap_addr, ext_func_name, block_id, inv_names
     utils.MAX_HEAP_ADDR = max(utils.MAX_HEAP_ADDR, heap_addr)
     sym_engine.set_mem_sym(store, mem_addr, mem_val, mem_size)
     dests = regs_str_to_list('rcx, rdx, rsi, rdi, r8, r9, r10, r11')
-    for inv_name in inv_names:
-        if inv_name in dests:
-            dests.remove(inv_name)
     set_regs_sym(store, rip, dests, block_id)
     clear_flags(store)
-    return heap_addr
+    store[lib.HEAP_ADDR] = heap_addr
 
 
 def ext_free_mem_call(store, rip, block_id):
@@ -107,11 +126,8 @@ def ext_free_mem_call(store, rip, block_id):
     return succeed
 
 
-def ext_func_call(store, rip, block_id, inv_names, mem_preserve_assumption):
+def ext_func_call(store, rip, block_id, mem_preserve_assumption):
     dests = lib.CALLEE_NOT_SAVED_REGS
-    for inv_name in inv_names:
-        if inv_name in dests:
-            dests.remove(inv_name)
     if not mem_preserve_assumption:
         sym_engine.pollute_all_mem_content(store, block_id)
     set_regs_sym(store, rip, dests, block_id)

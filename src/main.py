@@ -41,6 +41,8 @@ def construct_cfg(disasm_path, disasm_asm):
         address_sym_table[address] = address_label_map[address]
     function_addr_table = global_var.elf_info.function_addr_table
     # print(address_sym_table)
+    # for address in address_sym_table:
+    #     print(type(address))
     # print(sym_table)
     # print(disasm_asm.address_ext_func_map)
     # print(global_var.elf_info.sym_mem_info_table)

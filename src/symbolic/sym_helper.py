@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 import itertools
 from z3 import *
 from ..common import lib
@@ -356,11 +357,12 @@ def parse_predefined_constraint(constraint_config_file):
     with open(constraint_config_file, 'r') as f:
         lines = f.readlines()
         for line in lines:
+            line = line.replace('\t', ' ')
             line_split = line.strip().split(' ', 1)
-            ext_func_name = line_split[0]
+            ext_func_name = line_split[0].strip()
             constraint = line_split[1].strip()
             if ext_func_name in res:
-                res[ext_func_name].apend(constraint)
+                res[ext_func_name].append(constraint)
             else:
                 res[ext_func_name] = [constraint]
     return res
