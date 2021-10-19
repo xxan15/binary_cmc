@@ -128,8 +128,8 @@ def reset_mem_content_pollute(store, block_id):
     sym_memory.reset_mem_content_pollute(store, block_id)
 
 
-def pollute_all_mem_content(store, block_id):
-    sym_memory.pollute_all_mem_content(store, block_id)
+# def pollute_all_mem_content(store, block_id):
+#     sym_memory.pollute_all_mem_content(store, block_id)
 
 def set_mem_sym(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN):
     sym_memory.set_mem_sym(store, address, sym, block_id, length)

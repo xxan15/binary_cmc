@@ -128,8 +128,8 @@ def ext_free_mem_call(store, rip, block_id):
 
 def ext_func_call(store, rip, block_id, mem_preserve_assumption):
     dests = lib.CALLEE_NOT_SAVED_REGS
-    if not mem_preserve_assumption:
-        sym_engine.pollute_all_mem_content(store, block_id)
+    # if not mem_preserve_assumption:
+    #     sym_engine.pollute_all_mem_content(store, block_id)
     set_regs_sym(store, rip, dests, block_id)
     clear_flags(store)
     

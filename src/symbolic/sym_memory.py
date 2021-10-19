@@ -174,7 +174,7 @@ def pollute_all_mem_content(store, block_id):
                 store[lib.MEM][addr] = [sym_helper.gen_sym(store[lib.MEM][addr][0].size()), block_id]
         else:
             int_addr = sym_helper.int_from_sym(addr)
-            if int_addr >= global_var.elf_info.data_start_addr and int_addr < utils.MAX_HEAP_ADDR:
+            if int_addr >= utils.MIN_HEAP_ADDR and int_addr < utils.MAX_HEAP_ADDR:
                 if sym_helper.sym_is_int_or_bitvecnum(store[lib.MEM][addr][0]):
                     store[lib.MEM][addr] = [sym_helper.gen_sym(store[lib.MEM][addr][0].size()), block_id]
 
@@ -209,6 +209,7 @@ def check_mem_addr_overlapping(store, address, byte_len, store_key=lib.MEM):
                     prev_sym = store[store_key][curr_address][0]
                     prev_len = prev_sym.size() // 8
                     if (offset < 0 and prev_len > -offset) or offset > 0:
+                    # if offset > 0:
                         overlapping = True
                         utils.output_logger.error('Error: Buffer overflow when writing to the address ' + hex(int_address) + ' while memory content at address ' + hex(curr_address.as_long()) + ' already exists')
                         store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
@@ -247,7 +248,43 @@ def set_mem_sym_val(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN, s
             store[store_key][address] = [sym, block_id]
     else:
         store[store_key][address] = [sym, block_id]
-                
+
+
+# def set_mem_sym_val(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM): 
+#     byte_len = length // 8
+#     if check_mem_addr_overlapping(store, address, byte_len, store_key): return
+#     if address in store[store_key]:
+#         prev_sym = store[store_key][address]
+#         prev_len = prev_sym.size() // 8
+#         if byte_len < prev_len:
+#             rest_sym = sym_helper.extract_bytes(prev_len, byte_len, prev_sym)
+#             curr_sym = simplify(Concat(rest_sym, sym))
+#             store[store_key][address] = [curr_sym, block_id]
+#             # curr_address = simplify(address + byte_len)
+#             # store[store_key][curr_address] = [simplify(sym_helper.extract_bytes(prev_len, byte_len, prev_sym)), block_id]
+#         else:
+#             store[store_key][address] = [sym, block_id]
+#     else:
+#         store[store_key][address] = [sym, block_id]
+#         for offset in range(-7, byte_len):
+#             if offset != 0:
+#                 curr_address = simplify(address + offset)
+#                 if curr_address in store[store_key]:
+#                     prev_sym = store[store_key][curr_address]
+#                     prev_len = prev_sym.size() // 8
+#                     if offset < 0 and prev_len > -offset:
+#                         store[store_key][curr_address] = [simplify(sym_helper.extract_bytes(-offset, 0, prev_sym)), block_id]
+#                         if prev_len > -offset + byte_len:
+#                             new_address = address + byte_len
+#                             store[store_key][new_address] = [simplify(sym_helper.extract_bytes(prev_len, -offset + byte_len, prev_sym)), block_id]
+#                     # elif offset > 0:
+#                     #     sym_helper.remove_memory_content(store, curr_address)
+#                     #     if prev_len - byte_len + offset > 0:
+#                     #         new_address = simplify(address + byte_len)
+#                     #         new_sym = simplify(sym_helper.extract_bytes(prev_len, byte_len - offset, prev_sym))
+#                     #         store[store_key][new_address] = [new_sym, block_id]
+#                     #         break
+
 
 def is_mem_addr_in_stdout(store, address):
     res = None
@@ -270,17 +307,54 @@ def set_mem_sym(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN):
         if tmp is not None:
             set_mem_sym_val(store, tmp, sym, block_id, length, lib.STDOUT)
         else:
-            pollute_all_mem_content(store, block_id)
+            # pollute_all_mem_content(store, block_id)
             store[lib.MEM][address] =[sym, block_id]
             utils.logger.error('\nWarning: Potential buffer overflow with symbolic memory address ' + str(address))
             store[lib.NEED_TRACE_BACK] = True
     else:
         if check_buffer_overflow(store, address, length): return
         set_mem_sym_val(store, address, sym, block_id, length)
-        pollute_mem_w_sym_address(store, block_id)
+        # pollute_mem_w_sym_address(store, block_id)
 
             
-    
+
+# def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM):
+#     byte_len = length // 8
+#     res = None
+#     start_address = None
+#     for offset in range(8):
+#         curr_address = simplify(address - offset)
+#         if curr_address in store[store_key]:
+#             start_address = curr_address
+#             break
+#     if start_address is not None:
+#         sym = store[store_key][start_address]
+#         sym_len = sym.size() // 8
+#         if sym_len > offset:
+#             right_bound = min(sym_len, byte_len + offset)
+#             first_sym = sym_helper.extract_bytes(right_bound, offset, sym)
+#             if right_bound - offset < byte_len:
+#                 temp = [first_sym]
+#                 tmp_len = right_bound - offset
+#                 while tmp_len < byte_len:
+#                     next_address = simplify(address + tmp_len)
+#                     if next_address in store[store_key]:
+#                         next_sym = store[store_key][next_address]
+#                         next_len = next_sym.size() // 8
+#                         r_bound = min(next_len, byte_len - tmp_len)
+#                         curr = sym_helper.extract_bytes(r_bound, 0, next_sym)
+#                         temp.append(curr)
+#                         tmp_len += r_bound
+#                     else:
+#                         break
+#                 if tmp_len == byte_len:
+#                     temp.reverse()
+#                     res = simplify(Concat(temp))
+#             else:
+#                 res = simplify(first_sym)
+#     return res
+
+
 def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM):
     res = None
     if address in store[store_key]:
@@ -307,10 +381,11 @@ def read_mem_error_report(store, int_address):
         utils.logger.error('Error: Use after free at address ' + hex(int_address) + ' which is located in heap while there is no record in the global memory state')
         store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
     elif utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        utils.output_logger.error('Error: Null pointer dereference at address ' + hex(int_address))
-        #  + ' which is located above the maximum address for the heap section')
-        utils.logger.error('Error: Null pointer dereference at address ' + hex(int_address) + ' which is located above the maximum address for the heap section')
-        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
+        pass
+        # utils.output_logger.error('Error: Null pointer dereference at address ' + hex(int_address))
+        # #  + ' which is located above the maximum address for the heap section')
+        # utils.logger.error('Error: Null pointer dereference at address ' + hex(int_address) + ' which is located above the maximum address for the heap section')
+        # store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
 
 
 def read_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):
@@ -365,14 +440,10 @@ def get_mem_sym_block_id(store, address):
         res = store[lib.MEM][address][1]
     else:
         int_address = address.as_long()
-        # if int_address in global_var.elf_info.sym_mem_info_table:
-        #     val = global_var.elf_info.sym_mem_info_table[int_address]
         if addr_in_rodata_section(int_address): 
             res = utils.INIT_BLOCK_NO
         elif addr_in_data_section(int_address):
             res = store[lib.MEM_CONTENT_POLLUTED]
-        else:
-            read_mem_error_report(store, int_address)
     return res
 
 

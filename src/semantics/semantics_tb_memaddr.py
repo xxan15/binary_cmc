@@ -141,28 +141,33 @@ def mov(store, sym_names, dest, src):
     global concrete_val, halt_point
     src_names = sym_names
     # if check_source_is_sym(store, rip, dest, sym_names):
-    if src in lib.REG_NAMES:
-        if dest.endswith(']'):
-            addr = sym_engine.get_effective_address(store, rip, dest)
-            dest_reg = str(addr)
-        else:
-            dest_reg = smt_helper.get_root_reg(dest)
-        if dest_reg in src_names:
-            src_names.remove(dest_reg)
-        # remove_reg_from_sym_srcs(dest, src_names)
-        src_names.append(smt_helper.get_root_reg(src))
-        # return list(set(src_names))
-        # src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
-    elif src.endswith(']'):
-        smt_helper.remove_reg_from_sym_srcs(dest, src_names)
-        new_srcs, is_reg_bottom = get_bottom_source(src, store, rip)
-        if is_reg_bottom:
-            src_names = src_names + new_srcs
-        else:
-            addr = sym_engine.get_effective_address(store, rip, src)
-            src_names = src_names + [str(addr)]
-            if str(addr) not in store[lib.MEM]: 
-                halt_point = True
+    if not utils.imm_start_pat.match(src):
+        if src in lib.REG_NAMES:
+            if dest.endswith(']'):
+                addr = sym_engine.get_effective_address(store, rip, dest)
+                dest_reg = str(addr)
+            else:
+                dest_reg = smt_helper.get_root_reg(dest)
+            if dest_reg in src_names:
+                src_names.remove(dest_reg)
+            # remove_reg_from_sym_srcs(dest, src_names)
+            src_names.append(smt_helper.get_root_reg(src))
+            # return list(set(src_names))
+            # src_names = smt_helper.add_new_reg_src(sym_names, dest, src)
+        elif src.endswith(']'):
+            smt_helper.remove_reg_from_sym_srcs(dest, src_names)
+            new_srcs, is_reg_bottom = get_bottom_source(src, store, rip)
+            if is_reg_bottom:
+                src_names = src_names + new_srcs
+            else:
+                addr = sym_engine.get_effective_address(store, rip, src)
+                if addr_points_to_external_lib(addr):
+                    halt_point = True
+                src_names = src_names + [str(addr)]
+                # if str(addr) not in store[lib.MEM]: 
+                #     halt_point = True
+    else:
+        concrete_val = True
     return list(set(src_names))
 
 

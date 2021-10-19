@@ -250,23 +250,23 @@ def ramdom_concretize_sym(conc_res, sym_vals, sym_lens, count):
 def concretize_sym_arg(sym_vals, sym_lens, constraint):
     conc_res = {}
     random.seed()
-    sym_val_strs = [str(sym_val) for sym_val in sym_vals]
-    sym_exist_in_constraint = False
-    predicates = constraint.get_predicates()
-    m_list = sym_helper.repeated_check_pred_satisfiable(predicates, utils.REBUILD_BRANCHES_NUM)
-    if m_list:
-        for m in m_list:
-            for d in m.decls():
-                d_name = d.name()
-                if d_name in sym_val_strs:
-                    sym_exist_in_constraint = True
-                    idx = sym_val_strs.index(d_name)
-                    sym_val = sym_vals[idx]
-                    if sym_val in conc_res:
-                        conc_res[sym_val].append(m[d])
-                    else:
-                        conc_res[sym_val] = [m[d]]
-            if not sym_exist_in_constraint: break
+    # sym_val_strs = [str(sym_val) for sym_val in sym_vals]
+    # sym_exist_in_constraint = False
+    # predicates = constraint.get_predicates()
+    # m_list = sym_helper.repeated_check_pred_satisfiable(predicates, utils.REBUILD_BRANCHES_NUM)
+    # if m_list:
+    #     for m in m_list:
+    #         for d in m.decls():
+    #             d_name = d.name()
+    #             if d_name in sym_val_strs:
+    #                 sym_exist_in_constraint = True
+    #                 idx = sym_val_strs.index(d_name)
+    #                 sym_val = sym_vals[idx]
+    #                 if sym_val in conc_res:
+    #                     conc_res[sym_val].append(m[d])
+    #                 else:
+    #                     conc_res[sym_val] = [m[d]]
+    #         if not sym_exist_in_constraint: break
     ramdom_concretize_sym(conc_res, sym_vals, sym_lens, utils.REBUILD_BRANCHES_NUM)
     return conc_res
 
