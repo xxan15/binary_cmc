@@ -235,48 +235,7 @@ def extract_bk_content(args:str, left = '(', right = ')')->List[str]:
     return result
 
 
-# input: '(123) 45 (678(42) 235) 56', '(', ')', ' '
-# output: ['(123)', '45', '(678(42) 235)', '56']
-def split_sep_bk(data:str, sep:str, left = '(', right = ')')->List[str]:
-    sep_first = sep[0]
-    sep_len = len(sep)
-    result = []
-    curr = ''
-    to_continue = False
-    idx = 0
-    length = len(data)
-    bk_count = 0
-    while idx < length:
-        c = data[idx]
-        if c == left:
-            bk_count += 1
-            curr += c
-            to_continue = True
-            idx += 1
-        elif c == right:
-            curr += c
-            bk_count -= 1
-            if bk_count == 0:
-                to_continue = False
-            idx += 1
-        elif c == sep_first and len(data[idx:]) >= sep_len and data[idx: idx + sep_len] == sep:
-            if to_continue:
-                curr += c
-                idx += 1
-            else:
-                curr = curr.strip()
-                if curr != '':
-                    result.append(curr)
-                curr = ''
-                idx += sep_len
-        else:
-            curr += c
-            idx += 1
-    result.append(curr.strip())
-    return result
-
-
-# input: '(123) 45 (678(42) 235) 56 [78 9]', ['(', '['], [')', ']'], ' '
+# input: '(123) 45 (678(42) 235) 56 [78 9]', ' ', ['(', '['], [')', ']']
 # output: ['(123)', '45', '(678(42) 235)', '56', '[78 9]']
 def split_sep_bks(data, sep, left = ['(', '[', '{'], right = [')', ']', '}']):
     sep_first = sep[0]
@@ -318,10 +277,6 @@ def split_sep_bks(data, sep, left = ['(', '[', '{'], right = [')', ']', '}']):
             idx += 1
     result.append(curr.strip())
     return result
-
-
-def split_sep(data, sep):
-    return split_sep_bk(data, sep, '[', ']')
 
 
 # Extract the arguments of the first element from a tuple represented as a string

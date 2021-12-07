@@ -208,11 +208,11 @@ def check_mem_addr_overlapping(store, address, byte_len, store_key=lib.MEM):
                 if curr_address in store[store_key]:
                     prev_sym = store[store_key][curr_address][0]
                     prev_len = prev_sym.size() // 8
-                    if (offset < 0 and prev_len > -offset) or offset > 0:
-                    # if offset > 0:
+                    # if (offset < 0 and prev_len > -offset) or offset > 0:
+                    if offset > 0:
                         overlapping = True
-                        utils.output_logger.error('Error: Buffer overflow when writing to the address ' + hex(int_address) + ' while memory content at address ' + hex(curr_address.as_long()) + ' already exists')
-                        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
+                        # utils.output_logger.error('Error: Buffer overflow when writing to the address ' + hex(int_address) + ' while memory content at address ' + hex(curr_address.as_long()) + ' already exists')
+                        # store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
                         break
     return overlapping
 
@@ -225,12 +225,12 @@ def check_buffer_overflow(store, address, length):
     if addr_in_data_section(int_address) or addr_in_heap(int_address):
         overflow = check_mem_addr_overlapping(store, address, byte_len)
     # Address is located between the heap and stack
-    elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        overflow = True
-        utils.output_logger.error('Error: Buffer overflow at address ' + hex(int_address))
-        #  + ' which is located between the heap and stack')
-        utils.logger.error('Error: Buffer overflow at address ' + hex(int_address) + ' which is located between the heap and stack')
-        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
+    # elif stack_top and utils.MAX_HEAP_ADDR <= int_address < stack_top:
+    #     overflow = True
+    #     # utils.output_logger.error('Error: Buffer overflow at address ' + hex(int_address))
+    #     #  + ' which is located between the heap and stack')
+    #     # utils.logger.error('Error: Buffer overflow at address ' + hex(int_address) + ' which is located between the heap and stack')
+    #     store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
     return overflow
 
 
@@ -312,7 +312,7 @@ def set_mem_sym(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN):
             utils.logger.error('\nWarning: Potential buffer overflow with symbolic memory address ' + str(address))
             store[lib.NEED_TRACE_BACK] = True
     else:
-        if check_buffer_overflow(store, address, length): return
+        # if check_buffer_overflow(store, address, length): return
         set_mem_sym_val(store, address, sym, block_id, length)
         # pollute_mem_w_sym_address(store, block_id)
 
@@ -364,28 +364,28 @@ def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN, store_key=lib.MEM):
             res = simplify(Extract(length - 1, 0, sym))
         elif sym_len == length:
             res = sym
-        else:
-            int_address = address.as_long()
-            utils.output_logger.error('Error: Buffer overflow at address ' + hex(int_address))
-            #  + ' which exceeds the boundary of the memory content')
-            utils.logger.error('Error: Buffer overflow at address ' + hex(int_address) + ' which exceeds the boundary of the memory content')
-            store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
+        # else:
+        #     int_address = address.as_long()
+        #     utils.output_logger.error('Error: Buffer overflow at address ' + hex(int_address))
+        #     #  + ' which exceeds the boundary of the memory content')
+        #     utils.logger.error('Error: Buffer overflow at address ' + hex(int_address) + ' which exceeds the boundary of the memory content')
+        #     store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
     return res
 
 
 def read_mem_error_report(store, int_address):
     stack_top = sym_helper.top_stack_addr(store)
     if addr_in_heap(int_address):
-        utils.output_logger.error('Error: Use after free at address ' + hex(int_address))
+        # utils.output_logger.error('Error: Use after free at address ' + hex(int_address))
         #  + ' which is located in heap while there is no record in the global memory state')
-        utils.logger.error('Error: Use after free at address ' + hex(int_address) + ' which is located in heap while there is no record in the global memory state')
+        # utils.logger.error('Error: Use after free at address ' + hex(int_address) + ' which is located in heap while there is no record in the global memory state')
         store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
     elif utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        pass
+        # pass
         # utils.output_logger.error('Error: Null pointer dereference at address ' + hex(int_address))
         # #  + ' which is located above the maximum address for the heap section')
         # utils.logger.error('Error: Null pointer dereference at address ' + hex(int_address) + ' which is located above the maximum address for the heap section')
-        # store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
+        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
 
 
 def read_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):

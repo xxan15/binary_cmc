@@ -120,9 +120,9 @@ def ext_free_mem_call(store, rip, block_id):
         sym_helper.remove_memory_content(store, mem_addr)
     elif sym_helper.sym_is_int_or_bitvecnum(mem_addr):
         succeed = False
-        utils.logger.error('Error: Use after free at address ' + str(mem_addr) + ' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
-        utils.output_logger.error('Error: Use after free at address ' + str(mem_addr) +' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
-        store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
+        # utils.logger.error('Error: Use after free at address ' + str(mem_addr) + ' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        # utils.output_logger.error('Error: Use after free at address ' + str(mem_addr) +' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.FREE_AFTER_FREE
     return succeed
 
 

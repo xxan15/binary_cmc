@@ -357,13 +357,15 @@ def parse_predefined_constraint(constraint_config_file):
     with open(constraint_config_file, 'r') as f:
         lines = f.readlines()
         for line in lines:
-            line = line.replace('\t', ' ')
-            line_split = line.strip().split(' ', 1)
-            ext_func_name = line_split[0].strip()
-            constraint = line_split[1].strip()
-            if ext_func_name in res:
-                res[ext_func_name].append(constraint)
-            else:
-                res[ext_func_name] = [constraint]
+            line = line.strip()
+            if line:
+                line = line.replace('\t', ' ')
+                line_split = line.strip().split(' ', 1)
+                ext_func_name = line_split[0].strip()
+                constraint = line_split[1].strip()
+                if ext_func_name in res:
+                    res[ext_func_name].append(constraint)
+                else:
+                    res[ext_func_name] = [constraint]
     return res
 

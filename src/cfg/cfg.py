@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from logging import error
 import re
 from ..common.inst_element import Inst_Elem
 from ..common import utils
@@ -630,11 +631,12 @@ class CFG(object):
         return res
 
 
-    def _print_tree_path_info(self, node):
+    def _print_tree_path_info(self, init_sym_store, init_node):
         print_info = []
-        blk, sym_names, _ = node.data
-        suffix = self._add_explain_suffix(blk.sym_store.store, blk.sym_store.rip, blk.inst)
-        p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(blk.address) + ': ' + blk.inst + suffix
+        node = init_node
+        block, sym_names, _ = node.data
+        init_suffix = self._add_explain_suffix(block.sym_store.store, block.sym_store.rip, block.inst)
+        p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(block.address) + ': ' + block.inst + init_suffix
         print_info.append(p_info)
         # print_info.append(blk.sym_store.pp_store())
         while node:
@@ -645,8 +647,10 @@ class CFG(object):
             # print_info.append(prev_blk.sym_store.pp_store())
             node = node.parent
         print_info.reverse()
-        res = '\n'.join(print_info) + '\n'
-        utils.logger.debug(res)
+        res = init_sym_store.store[lib.POINTER_RELATED_ERROR].name.capitalize()
+        res += ' if: ' + init_suffix.strip() + '@' + hex(block.address) + ' allocated size is not sufficient\n'
+        res += '\n'.join(print_info) + '\n'
+        utils.logger.info(res)
         utils.output_logger.info(res)
         
 
@@ -660,13 +664,13 @@ class CFG(object):
         return node
 
 
-    def _trace_back_pointer_related_error(self, block, sym_store, address, inst, sym_names):
+    def _trace_back_pointer_related_error(self, block, init_sym_store, address, inst, sym_names):
         # store, rip = sym_store.store, sym_store.rip
         tb_halt_point = False
         node_stack = []
         trace_list = []
         src_names = None
-        bid_sym_list = self._retrieve_bid_sym_list(sym_store.store, sym_store.rip, sym_names)
+        bid_sym_list = self._retrieve_bid_sym_list(init_sym_store.store, init_sym_store.rip, sym_names)
         for curr_block_id, curr_sym_name in bid_sym_list:
             node = self._update_node_with_bid(curr_block_id, curr_sym_name, block)
             if node:
@@ -696,8 +700,8 @@ class CFG(object):
                 # print(inst)
                 # print(sym_store.pp_store())
                 src_names, func_call_point, tb_halt_point, concrete_val = semantics_tb_memaddr.parse_sym_src(self.address_ext_func_map, self.address_inst_map, self.address_sym_table, p_sym_store.store, sym_store.rip, inst, [sym_name])
-                utils.logger.info(hex(block.address) + ': ' + block.inst)
-                utils.logger.info(src_names)
+                # utils.logger.info(hex(block.address) + ': ' + block.inst)
+                # utils.logger.info(src_names)
                 bid_sym_list = self._retrieve_bid_sym_list(p_sym_store.store, p_sym_store.rip, src_names)
                 if func_call_point or tb_halt_point:
                     trace_list.append(node)
@@ -733,7 +737,7 @@ class CFG(object):
                                 # return
         if func_call_point or tb_halt_point:
             for node in trace_list:
-                self._print_tree_path_info(node)
+                self._print_tree_path_info(init_sym_store, node)
 
 
     def _detect_reg_in_memaddr_rep(self, arg):
@@ -747,6 +751,7 @@ class CFG(object):
 
 
     def _retrieve_source_for_memaddr(self, inst, common):
+        sym_names = []
         if common:
             inst_split = inst.strip().split(' ', 1)
             inst_args = utils.parse_inst_args(inst_split)
@@ -757,22 +762,28 @@ class CFG(object):
                     break
         else:
             sym_names = ['rdi']
+        if sym_names: pass
+        else:
+            print(inst)
         return sym_names
 
 
 
     def _terminate_path_w_pointer_related_errors(self, block, sym_store, address, inst, common=True):
-        utils.output_logger.info('Pointer-related error at ' + hex(address) + ': ' + inst)
+        # utils.output_logger.info('Pointer-related error at ' + hex(address) + ': ' + inst)
         # print('Pointer-related error at ' + hex(address) + ': ' + inst)
         sym_names = self._retrieve_source_for_memaddr(inst, common)
-        # print('_terminate_path_w_pointer_related_errors')
-        # print(sym_names)
-        self._trace_back_pointer_related_error(block, sym_store, address, inst, sym_names)
-        # NUM_OF_PATHS
-        self.cmc_exec_info[0] += 1
-        # NUM_OF_NEGATIVES
-        self.cmc_exec_info[2] += 1
-        self._update_pointer_related_error_info(sym_store.store)
+        if sym_names:
+            # print('_terminate_path_w_pointer_related_errors')
+            # print(sym_names)
+            self._trace_back_pointer_related_error(block, sym_store, address, inst, sym_names)
+            # NUM_OF_PATHS
+            self.cmc_exec_info[0] += 1
+            # NUM_OF_NEGATIVES
+            self.cmc_exec_info[2] += 1
+            self._update_pointer_related_error_info(sym_store.store)
+        else:
+            print(sym_store.store[lib.POINTER_RELATED_ERROR].name)
 
 
     def _update_function_inedges_for_internal_call(self, sym_store, inst, new_address):
