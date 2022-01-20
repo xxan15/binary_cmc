@@ -154,7 +154,7 @@ def pop(store, sym_names, dest):
     smt_helper.remove_reg_from_sym_srcs(dest, src_names)
     new_srcs = [sym_rsp]
     src_names = src_names + new_srcs
-    mem_len_map[sym_rsp] = lib.DEFAULT_REG_LEN
+    mem_len_map[sym_rsp] = utils.MEM_ADDR_SIZE
     return src_names
 
 
@@ -234,7 +234,7 @@ def call(store, sym_names):
     sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
     func_call_point = True
     for sym_name in sym_not_in_stack:
-        length = lib.DEFAULT_REG_LEN
+        length = utils.MEM_ADDR_SIZE
         if sym_name not in lib.REG_NAMES:
             length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):
@@ -249,7 +249,7 @@ def jmp_to_external_func(store, sym_names):
     sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
     func_call_point = True
     for sym_name in sym_not_in_stack:
-        length = lib.DEFAULT_REG_LEN
+        length = utils.MEM_ADDR_SIZE
         if sym_name not in lib.REG_NAMES:
             length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):
@@ -292,7 +292,7 @@ INSTRUCTION_SEMANTICS_MAP = {
 }
 
 
-def parse_sym_src(address_ext_func_map, address_inst_map, store, curr_rip, inst, sym_names):
+def parse_sym_src(address_ext_func_map, dll_func_info, address_inst_map, store, curr_rip, inst, sym_names):
     global rip, func_call_point, halt_point, mem_len_map
     rip = curr_rip
     func_call_point, halt_point = False, False
@@ -311,14 +311,11 @@ def parse_sym_src(address_ext_func_map, address_inst_map, store, curr_rip, inst,
         src_names = cmov(store, sym_names, inst, *inst_args)
     elif inst_name.startswith('rep'):
         inst = inst_split[1].strip()
-        src_names, func_call_point, halt_point, mem_len_map = parse_sym_src(address_ext_func_map, address_inst_map, store, curr_rip, inst, sym_names)
+        src_names, func_call_point, halt_point, mem_len_map = parse_sym_src(address_ext_func_map, dll_func_info, address_inst_map, store, curr_rip, inst, sym_names)
     elif utils.check_jmp_with_address(inst):
         jump_address_str = inst.split(' ', 1)[1].strip()
         new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
-        if new_address in address_ext_func_map:
-            if utils.CONTEXT_SENSITIVE:
-                func_call_point = jmp_to_external_func(store, sym_names)
-            else:
-                func_call_point = call(store, sym_names)
+        if new_address in address_ext_func_map or new_address in dll_func_info:
+            func_call_point = jmp_to_external_func(store, sym_names)
     return src_names, func_call_point, halt_point, mem_len_map
 

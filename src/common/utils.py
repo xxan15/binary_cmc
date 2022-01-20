@@ -30,9 +30,9 @@ MAX_LOOP_COUNT = 5
 MAX_TRACEBACK_COUNT = 50
 MAX_INST_ADDR_GAP = 25
 
-MAX_MALLOC_SIZE = 16711568
-MIN_HEAP_ADDR = 0x10000000
-MAX_HEAP_ADDR = MIN_HEAP_ADDR
+# MAX_MALLOC_SIZE = 16711568
+# MIN_HEAP_ADDR = 0x10000000
+# MAX_HEAP_ADDR = MIN_HEAP_ADDR
 
 INIT_STACK_FRAME_POINTER = 2**48-9
 MAX_DEVIATION = 5
@@ -40,12 +40,36 @@ SEGMENT_REG_INIT_VAL = 0
 CMC_EXEC_RES_COUNT = 8
 
 MAX_ARGC_NUM = 10
-REBUILD_BRANCHES_NUM = 5
+REBUILD_BRANCHES_NUM = 2
 
 INIT_BLOCK_NO = -1
 TB_DEFAULT_BLOCK_NO = -2
 
-CONTEXT_SENSITIVE = True
+MEM_ADDR_SIZE = 32
+
+ADDR_SIZE_SP_MAP = {
+    16: 'sp',
+    32: 'esp',
+    64: 'rsp'
+}
+INIT_STACK_FRAME_POINTER = {
+    16: 2**12-3,
+    32: 2**24-5,
+    64: 2**48-9
+}
+
+MIN_STACK_FRAME_POINTER = INIT_STACK_FRAME_POINTER[MEM_ADDR_SIZE]
+
+HEAP_ADDR_INFO = {
+    16: 0x4ff,
+    32: 0x8fffff,
+    64: 0x10000000
+}
+
+MAX_MALLOC_SIZE = 1671
+MIN_HEAP_ADDR = HEAP_ADDR_INFO[MEM_ADDR_SIZE]
+MAX_HEAP_ADDR = MIN_HEAP_ADDR
+
 
 ASSEMBLY_FILE_NAME = 'test.s'
 PREDEFINED_CONSTRAINT_FILE = 'ext_env.config'
@@ -347,8 +371,15 @@ def replace_multiple(expr, os, ns):
 
 
 def execute_command(cmd):
-    out = subprocess.check_output(cmd, shell=True)
-    return out.decode("utf-8").strip()
+    res = ''
+    try:
+        out = subprocess.check_output(cmd, shell=True ,stderr=subprocess.STDOUT)
+        res = out.decode("utf-8").strip()
+    except subprocess.CalledProcessError as exc:
+        pass
+    else:
+        pass
+    return res
 
 
 def write_file(file_path, data):
@@ -493,7 +524,22 @@ def get_mem_sym_length(sym_name):
     return res
 
 
-def get_sym_length(sym_name, length=lib.DEFAULT_REG_LEN):
+# def get_sym_length(sym_name, length=MEM_ADDR_SIZE):
+#     res = length
+#     if sym_name in lib.REG64_NAMES: res = 64
+#     elif sym_name in lib.REG_INFO_DICT:
+#         _, _, res = lib.REG_INFO_DICT[sym_name]
+#     elif sym_name.endswith(']') or ' ptr ' in sym_name:
+#         res = get_mem_sym_length(sym_name)
+#     elif ':' in sym_name:     #rax:rdx
+#         regs = sym_name.split(':')
+#         left_len = get_sym_length(regs[0])
+#         right_len = get_sym_length(regs[1])
+#         res = left_len + right_len
+#     return res
+
+
+def get_sym_length(sym_name, length=MEM_ADDR_SIZE):
     res = length
     if sym_name in lib.REG64_NAMES: res = 64
     elif sym_name in lib.REG_INFO_DICT:
@@ -501,12 +547,16 @@ def get_sym_length(sym_name, length=lib.DEFAULT_REG_LEN):
     elif sym_name.endswith(']') or ' ptr ' in sym_name:
         res = get_mem_sym_length(sym_name)
     elif ':' in sym_name:     #rax:rdx
-        regs = sym_name.split(':')
-        left_len = get_sym_length(regs[0])
-        right_len = get_sym_length(regs[1])
-        res = left_len + right_len
+        if 's:' not in sym_name:
+            regs = sym_name.split(':')
+            left_len = get_sym_length(regs[0])
+            right_len = get_sym_length(regs[1])
+            res = left_len + right_len
+        else:
+            new_sym = sym_name.split(':', 1)[1].strip()
+            if new_sym:
+                res = get_sym_length(new_sym)
     return res
-
 
 def get_signed_integer(num, bits_len):
     mask = (2 ** bits_len) - 1

@@ -25,7 +25,7 @@ cnt = 0
 mem_cnt = 0
 stdout_mem_cnt = 0
 
-STDOUT_ADDR = BitVec('stdout', lib.DEFAULT_REG_LEN)
+STDOUT_ADDR = BitVec('stdout', utils.MEM_ADDR_SIZE)
 
 def cnt_init():
     global cnt
@@ -33,7 +33,7 @@ def cnt_init():
     cnt = 0
     mem_cnt = 0
 
-def gen_sym(length=lib.DEFAULT_REG_LEN):
+def gen_sym(length=utils.MEM_ADDR_SIZE):
     global cnt
     if cnt == 23: cnt += 1
     expr = utils.generate_sym_expr(cnt)
@@ -41,26 +41,27 @@ def gen_sym(length=lib.DEFAULT_REG_LEN):
     cnt += 1
     return res
 
-def gen_mem_sym(length=lib.DEFAULT_REG_LEN):
+def gen_mem_sym(length=utils.MEM_ADDR_SIZE):
     global mem_cnt
     expr = utils.generate_sym_expr(mem_cnt)
     res = BitVec('m#' + expr, length)
     mem_cnt += 1
     return res
     
-def gen_stdout_mem_sym(length=lib.DEFAULT_REG_LEN):
+def gen_stdout_mem_sym(length=utils.MEM_ADDR_SIZE):
     global stdout_mem_cnt
     # expr = utils.generate_sym_expr(stdout_mem_cnt)
     res = BitVec('stdout', length) + BitVecVal(stdout_mem_cnt, length)
     stdout_mem_cnt += 1
     return res
 
-def gen_seg_reg_sym(name, length=lib.DEFAULT_REG_LEN):
+def gen_seg_reg_sym(name, length=utils.MEM_ADDR_SIZE):
     res = BitVec('_' + name, length)
     return res
 
 def substitute_sym_val(arg, prev_val, new_val):
-    return simplify(substitute(arg, (prev_val, new_val)))
+    res = substitute(arg, (prev_val, new_val))
+    return simplify(res)
 
 
 def models(formula, max=10):
@@ -84,14 +85,14 @@ def models(formula, max=10):
                     block.append(z3_decl(*args) != model.eval(z3_decl(*args)))
             solver.add(Or(block))
 
-def gen_sym_x(length=lib.DEFAULT_REG_LEN):
+def gen_sym_x(length=utils.MEM_ADDR_SIZE):
     res = BitVec('x', length)
     return res
     
-def bottom(length=lib.DEFAULT_REG_LEN):
+def bottom(length):
     return BitVec('Bottom', length)
 
-def gen_spec_sym(name, length=lib.DEFAULT_REG_LEN):
+def gen_spec_sym(name, length=utils.MEM_ADDR_SIZE):
     return BitVec(name, length)
 
 def is_bit_vec_num(sym):
@@ -266,7 +267,7 @@ def concat_sym(*args):
     return Concat(args)
 
 
-def bit_vec_val_sym(val, length=lib.DEFAULT_REG_LEN):
+def bit_vec_val_sym(val, length=utils.MEM_ADDR_SIZE):
     return BitVecVal(val, length)
 
 def neg(sym):
@@ -286,7 +287,7 @@ def update_sym_expr(expr, new_expr, rel='or'):
     return res
 
 def is_term_address(address):
-    return is_equal(address, BitVec('x', lib.DEFAULT_REG_LEN))
+    return is_equal(address, BitVec('x', utils.MEM_ADDR_SIZE))
 
 
 def remove_memory_content(store, mem_address):
@@ -368,4 +369,32 @@ def parse_predefined_constraint(constraint_config_file):
                 else:
                     res[ext_func_name] = [constraint]
     return res
+
+
+def addr_in_rodata_section(int_addr):
+    return global_var.binary_info.rodata_start_addr <= int_addr < global_var.binary_info.rodata_end_addr
+
+
+def addr_in_data_section(int_addr):
+    return global_var.binary_info.data_start_addr <= int_addr < global_var.binary_info.data_end_addr
+
+
+def addr_in_text_section(int_addr):
+    return global_var.binary_info.text_start_addr <= int_addr < global_var.binary_info.text_end_addr
+
+
+def addr_in_bin_header(int_addr):
+    return int_addr < global_var.binary_info.max_bin_header_address
+
+
+def addr_in_heap(int_addr):
+    return utils.MIN_HEAP_ADDR <= int_addr < utils.MAX_HEAP_ADDR
+
+
+def addr_in_heap_section(int_addr):
+    return utils.MIN_HEAP_ADDR <= int_addr < utils.MAX_HEAP_ADDR
+
+
+def addr_in_stack_section(int_addr):
+    return utils.MIN_STACK_FRAME_POINTER <= int_addr < utils.INIT_STACK_FRAME_POINTER[utils.MEM_ADDR_SIZE]
 

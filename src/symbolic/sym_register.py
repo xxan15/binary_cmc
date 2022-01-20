@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sys
 from z3 import *
 from ..common import utils
 from ..common import lib
@@ -34,7 +35,8 @@ def get_register_sym(store, name):
     if name in lib.REG_INFO_DICT:
         p_name, start_idx, length = lib.REG_INFO_DICT[name]
         p_sym = store[lib.REG][p_name][0]
-        if p_sym == sym_helper.bottom(): 
+        p_length = p_sym.size()
+        if p_sym == sym_helper.bottom(p_length): 
             sym = sym_helper.bottom(length)
         else:
             sym = bitwise_sub(p_sym, start_idx, length)
@@ -57,7 +59,7 @@ def get_reg_sym_block_id(store, name):
 
 def bitwise_extend_parent(p_sym, sym, start_idx, length):
     res = None
-    if sym == sym_helper.bottom(length): res = sym_helper.bottom()
+    if sym == sym_helper.bottom(length): res = sym_helper.bottom(lib.DEFAULT_REG_LEN)
     elif length == 32:
         res = ZeroExt(32, sym)
     elif length == 8 and start_idx != 0:
@@ -74,11 +76,3 @@ def set_register_sym(store, name, sym, block_id):
         store[lib.REG][p_name] = [bitwise_extend_parent(p_sym, sym, start_idx, length), block_id]
     elif name in lib.REG64_NAMES:
         store[lib.REG][name] = [simplify(sym), block_id]
-
-
-def get_segment_reg_val(store, segment_reg):
-    res = 0
-    if segment_reg in lib.SEG_REGS:
-        res = store[segment_reg][segment_reg]
-    return res
-

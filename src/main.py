@@ -26,36 +26,34 @@ from .disassembler import helper
 from .disassembler.disasm_factory import Disasm_Factory
 from .symbolic import sym_helper
 from .cfg.cfg import CFG
-from .cfg.cfg_context_free import CFG_Context_Free
 
 
 CHECK_RESULTS = ['', '$\\times$']
 
 def construct_cfg(disasm_path, disasm_asm):
-    main_address = global_var.elf_info.main_address
-    sym_table = global_var.elf_info.sym_table
-    address_sym_table = global_var.elf_info.address_sym_table
-    # sym_mem_info_table = global_var.elf_info.sym_mem_info_table
+    main_address = global_var.binary_info.main_address
+    sym_table = global_var.binary_info.sym_table
+    address_sym_table = global_var.binary_info.address_sym_table
+    # sym_mem_info_table = global_var.binary_info.sym_mem_info_table
     address_label_map = disasm_asm.address_label_map
     for address in address_label_map:
         address_sym_table[address] = address_label_map[address]
-    function_addr_table = global_var.elf_info.function_addr_table
+    # function_addr_table = global_var.binary_info.function_addr_table
     # print(address_sym_table)
     # for address in address_sym_table:
     #     print(type(address))
     # print(sym_table)
     # print(disasm_asm.address_ext_func_map)
-    # print(global_var.elf_info.sym_mem_info_table)
+    # print(global_var.binary_info.sym_mem_info_table)
     # for func_name in function_addr_table:
     #     if func_name != 'main':
     func_name = '_start'
-    start_address = function_addr_table[func_name]
+    start_address = global_var.binary_info.entry_address
+    main_address = global_var.binary_info.main_address
     constraint_config_file = os.path.join(utils.PROJECT_DIR, utils.PREDEFINED_CONSTRAINT_FILE)
     pre_constraint = sym_helper.parse_predefined_constraint(constraint_config_file)
-    if utils.CONTEXT_SENSITIVE:
-        cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint)
-    else:
-        cfg = CFG_Context_Free(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.func_call_order, disasm_asm.address_ext_func_map)
+    # print(global_var.binary_info.dll_func_info)
+    cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint, global_var.binary_info.dll_func_info)
     callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
@@ -75,8 +73,8 @@ def close_logger():
 def write_results(disasm_asm, cfg):
     num_of_verified_functions = len(cfg.func_call_order)
     num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
-    # reachable_address_num = cfg.reachable_addresses_num()
-    # utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
+    reachable_address_num = cfg.reachable_addresses_num()
+    utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
     utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
     utils.output_logger.info('# of sound paths: ' + str(num_of_positives))
@@ -85,7 +83,7 @@ def write_results(disasm_asm, cfg):
 
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
-    global_var.get_elf_info(exec_path)
+    global_var.get_binary_info(exec_path)
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
     disasm_factory = Disasm_Factory(disasm_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()

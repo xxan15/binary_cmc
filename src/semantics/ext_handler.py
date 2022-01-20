@@ -30,20 +30,23 @@ def regs_str_to_list(regs):
 def set_regs_bottom(store, rip, dests, block_id):
     dest_list = regs_str_to_list(dests)
     for dest in dest_list:
-        sym_engine.set_sym(store, rip, dest, sym_helper.bottom(), block_id)
+        dest_len = utils.get_sym_length(dest)
+        sym_engine.set_sym(store, rip, dest, sym_helper.bottom(dest_len), block_id)
 
 
 def set_regs_sym(store, rip, dests, block_id):
     for dest in dests:
-        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(), block_id)
+        length = utils.get_sym_length(dest)
+        sym_engine.set_sym(store, rip, dest, sym_helper.gen_sym(length), block_id)
         
 def set_segment_regs_sym(store, rip):
     dest_list = lib.SEG_REGS
     for dest in dest_list:
         if dest == 'ds':
-            sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(utils.SEGMENT_REG_INIT_VAL), 0)
+            sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(utils.SEGMENT_REG_INIT_VAL, utils.MEM_ADDR_SIZE), 0)
         else:
             sym_engine.set_sym(store, rip, dest, sym_helper.gen_seg_reg_sym(dest), 0)
+
 
 def set_reg_val(store, rip, dest, val, block_id):
     sym_engine.set_sym(store, rip, dest, sym_helper.bit_vec_val_sym(val), block_id)

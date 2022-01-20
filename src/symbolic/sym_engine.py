@@ -24,7 +24,7 @@ from . import sym_helper
 
 OPS_NEED_EXTENSION = {'<<', '>>', '>>>'}
 
-def get_sym(store, rip, src, block_id, length=lib.DEFAULT_REG_LEN):
+def get_sym(store, rip, src, block_id, length=utils.MEM_ADDR_SIZE):
     res = None
     if src in lib.REG_NAMES:   # rax
         res = sym_register.get_register_sym(store, src)
@@ -33,15 +33,18 @@ def get_sym(store, rip, src, block_id, length=lib.DEFAULT_REG_LEN):
         res = BitVecVal(val, length)
     elif 's:' in src:       #fs:rax
         src_split = src.split(':')
-        seg_reg = src_split[0].rsplit(' ', 1)[1].strip()
-        src = src_split[1].strip()
+        seg_reg = src_split[0].strip()
+        if ' ' in seg_reg:
+            seg_reg = seg_reg.rsplit(' ', 1)[1].strip()
+        # seg_reg_val = sym_register.get_segment_reg_val(store, seg_reg)
+        src_rest = src_split[1].strip()
         val = None
-        if src.endswith(']'):
-            val = sym_memory.get_effective_address(store, rip, src)
+        if src_rest.endswith(']'):
+            val = sym_memory.get_effective_address(store, rip, src_rest)
         else:
-            val = get_sym(store, rip, src, block_id, lib.DEFAULT_REG_LEN)
+            val = get_sym(store, rip, src_rest, block_id, utils.MEM_ADDR_SIZE)
         address = simplify(val)
-        res = sym_memory.get_seg_memory_val(store, address, seg_reg, length)
+        res = sym_memory.get_seg_memory_val(store, address, seg_reg, block_id, length)
     elif src.endswith(']'): # byte ptr [rbx+rax*1]
         address = sym_memory.get_effective_address(store, rip, src)
         res = sym_memory.get_memory_val(store, address, block_id, length)
@@ -75,7 +78,7 @@ def get_sym_block_id(store, rip, src):
 def get_register_sym(store, src):
     return sym_register.get_register_sym(store, src)
 
-def get_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):
+def get_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
     return sym_memory.get_memory_val(store, address, block_id, length)
 
 def set_sym(store, rip, dest, sym, block_id):
@@ -87,7 +90,9 @@ def set_sym(store, rip, dest, sym, block_id):
     elif 's:' in dest:       # fs:rax
         dest_len = utils.get_sym_length(dest)
         dest_split = dest.split(':')
-        seg_reg = dest_split[0].rsplit(' ', 1)[1].strip()
+        seg_reg = dest_split[0].strip()
+        if ' ' in seg_reg:
+            seg_reg = seg_reg.rsplit(' ', 1)[1].strip()
         # seg_reg_val = sym_register.get_segment_reg_val(store, seg_reg)
         dest_rest = dest_split[1].strip()
         val = None
@@ -120,7 +125,7 @@ def get_jump_table_address(store, arg, src_sym, src_val):
     return sym_memory.get_jump_table_address(store, arg, src_sym, src_val)
 
 
-def read_memory_val(store, address, block_id, length=lib.DEFAULT_REG_LEN):
+def read_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
     return sym_memory.read_memory_val(store, address, block_id, length)
 
 
@@ -131,11 +136,11 @@ def reset_mem_content_pollute(store, block_id):
 # def pollute_all_mem_content(store, block_id):
 #     sym_memory.pollute_all_mem_content(store, block_id)
 
-def set_mem_sym(store, address, sym, block_id, length=lib.DEFAULT_REG_LEN):
+def set_mem_sym(store, address, sym, block_id, length=utils.MEM_ADDR_SIZE):
     sym_memory.set_mem_sym(store, address, sym, block_id, length)
 
 
-def get_mem_sym(store, address, length=lib.DEFAULT_REG_LEN):
+def get_mem_sym(store, address, length=utils.MEM_ADDR_SIZE):
     return sym_memory.get_mem_sym(store, address, length)
 
 

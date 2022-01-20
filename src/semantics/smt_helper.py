@@ -44,9 +44,9 @@ def _set_flag_neg_val(store, flag_name, res):
 def set_mul_OF_CF_flags(store, val):
     reset_all_flags(store)
     if val == False:
-        set_OF_CF_flags(store, True)
+        set_OF_CF_flags(store, BoolVal(True))
     elif val == True:
-        set_OF_CF_flags(store, False)
+        set_OF_CF_flags(store, BoolVal(False))
 
 
 def set_OF_flag(store, rip, dest, src, res, block_id, op='+'):
@@ -65,7 +65,7 @@ def set_OF_flag(store, rip, dest, src, res, block_id, op='+'):
             src), sym_helper.is_neg(res))
         _set_flag_val(store, 'OF', simplify(Or(case1, case2)))
     else:
-        store[lib.FLAGS]['OF'] = False
+        store[lib.FLAGS]['OF'] = BoolVal(False)
 
 
 def set_CF_flag(store, rip, dest, src, block_id, op='+'):
@@ -74,7 +74,7 @@ def set_CF_flag(store, rip, dest, src, block_id, op='+'):
     elif op == '-':
         _set_sub_CF_flag(store, rip, dest, src, block_id)
     else:
-        store[lib.FLAGS]['CF'] = False
+        store[lib.FLAGS]['CF'] = BoolVal(False)
 
 
 def set_flag_direct(store, flag_name, value=None):
@@ -117,7 +117,7 @@ def set_OF_CF_flags(store, val):
 
 
 def set_test_OF_CF_flags(store):
-    set_OF_CF_flags(store, False)
+    set_OF_CF_flags(store, BoolVal(False))
 
 
 def reset_all_flags(store):
@@ -141,6 +141,8 @@ def parse_condition(store, cond):
     # utils.logger.info(rhs)
     if lhs == None or rhs == None:
         return None
+    # print(type(lhs))
+    # print(rhs)
     return sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
 
 
@@ -221,6 +223,10 @@ def get_jump_address(store, rip, operand):
     return res
 
 
+def get_sym_rsp(store, rip):
+    sym_rsp = sym_engine.get_sym(store, rip, utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], utils.MEM_ADDR_SIZE)
+    return sym_rsp
+
 # line: 'rax + rbx * 1 + 0'
 # line: 'rbp - 0x14'
 # line: 'rax'
@@ -232,7 +238,8 @@ def get_bottom_source(line, store, rip, mem_len_map):
         if lsi in lib.REG_NAMES:
             val = sym_engine.get_sym(store, rip, lsi, utils.INIT_BLOCK_NO)
             if not sym_helper.sym_is_int_or_bitvecnum(val):
-                res.append(lsi)
+                root_reg = get_root_reg(lsi)
+                res.append(root_reg)
                 is_reg_bottom = True
     if not is_reg_bottom:
         addr = sym_engine.get_effective_address(store, rip, line)
@@ -334,5 +341,7 @@ def sym_bin_op_na_flags(store, rip, op, dest, src, block_id):
 
 
 def push_val(store, rip, sym_val, block_id):
-    sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
+    operand_size = sym_val.size()
+    sym_rsp = sym_bin_op_na_flags(store, rip, '-', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(operand_size//8), block_id)
+    # sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_val, block_id)

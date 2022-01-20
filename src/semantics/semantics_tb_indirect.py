@@ -179,7 +179,7 @@ def cmp_op(store, sym_names, dest, src):
     if smt_helper.check_source_is_sym(store, rip, src, sym_names):
         dest, src = src, dest
     if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
-        sym_src = sym_engine.get_sym(store, rip, src, utils.TB_DEFAULT_BLOCK_NO)
+        sym_src = sym_engine.get_sym(store, rip, src, utils.MEM_ADDR_SIZE)
         if sym_helper.sym_is_int_or_bitvecnum(sym_src):
             src_names = [dest]
             need_stop = True

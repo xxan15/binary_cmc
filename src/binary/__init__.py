@@ -1,2 +1,2 @@
-from .elf_info import ELF_Info
-from .elf_content import ELF_Content
+from .binary_info import Binary_Info
+from .binary_content import Binary_Content

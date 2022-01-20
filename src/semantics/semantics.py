@@ -50,18 +50,65 @@ def lea(store, dest, src):
 
 
 def pop(store, dest):
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
+    dest_len = utils.get_sym_length(dest)
+    sym_rsp = smt_helper.get_sym_rsp(store, rip)
+    # sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is None:
         res = sym_helper.gen_sym()
     sym_engine.set_sym(store, rip, dest, res, block_id)
-    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(dest_len // 8), block_id)
+
+
+def popad(store):
+    pop(store, 'edi')
+    pop(store, 'esi')
+    pop(store, 'ebp')
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'esp', '4', block_id)
+    pop(store, 'ebx')
+    pop(store, 'edx')
+    pop(store, 'ecx')
+    pop(store, 'eax')
+
+
+def popa(store):
+    pop(store, 'di')
+    pop(store, 'si')
+    pop(store, 'bp')
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'sp', '2', block_id)
+    pop(store, 'bx')
+    pop(store, 'dx')
+    pop(store, 'cx')
+    pop(store, 'ax')
 
 
 def push(store, src):
-    sym_src = sym_engine.get_sym(store, rip, src, block_id)
+    src_len = utils.get_sym_length(src)
+    sym_src = sym_engine.get_sym(store, rip, src, block_id, src_len)
     smt_helper.push_val(store, rip, sym_src, block_id)
 
+def pushad(store):
+    sym_rsp = sym_engine.get_sym(store, rip, 'esp', block_id, 32)
+    push(store, 'eax')
+    push(store, 'ecx')
+    push(store, 'edx')
+    push(store, 'ebx')
+    push(store, str(sym_rsp))
+    push(store, 'ebp')
+    push(store, 'esi')
+    push(store, 'edi')
+
+
+def pusha(store):
+    sym_rsp = sym_engine.get_sym(store, rip, 'sp', block_id, 16)
+    push(store, 'ax')
+    push(store, 'cx')
+    push(store, 'dx')
+    push(store, 'bx')
+    push(store, str(sym_rsp))
+    push(store, 'bp')
+    push(store, 'si')
+    push(store, 'di')
 
 def call(store, dest):
     push(store, hex(rip))
@@ -72,14 +119,30 @@ def call_op(store, rip, block_id):
     smt_helper.push_val(store, rip, sym_src, block_id)
 
 
-def ret(store, block_id):
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
+def ret(store, inst, block_id):
+    sym_rsp = smt_helper.get_sym_rsp(store, rip)
+    # sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is not None:
         sym_helper.remove_memory_content(store, sym_rsp)
-    smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
-    if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
-        res = res.as_long()
+    # smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
+    smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(utils.MEM_ADDR_SIZE // 8), block_id)
+    # if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
+    #     res = res.as_long()
+    # return res
+    if inst.startswith('ret '):
+        arg = inst.strip().rsplit(' ', 1)[1].strip()
+        if utils.imm_start_pat.match(arg):
+            imm = int(arg, 16)
+            smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(imm), block_id)
+        else:
+            utils.logger.info('Invalid instruction format: ' + inst)
+            exit('Invalid instruction format: ' + inst)
+    if res != None:
+        if utils.MEM_ADDR_SIZE == 16:
+            res = simplify(res & 0x0000ffff)
+        if sym_helper.sym_is_int_or_bitvecnum(res):
+            res = res.as_long()
     return res
 
 
@@ -92,8 +155,15 @@ def xchg(store, dest, src):
 
 
 def leave(store):
-    mov(store, 'rsp', 'rbp')
-    pop(store, 'rbp')
+    if utils.MEM_ADDR_SIZE == 64:
+        mov(store, 'rsp', 'rbp')
+        pop(store, 'rbp')
+    elif utils.MEM_ADDR_SIZE == 32:
+        mov(store, 'esp', 'ebp')
+        pop(store, 'ebp')
+    elif utils.MEM_ADDR_SIZE == 16:
+        mov(store, 'sp', 'bp')
+        pop(store, 'bp')
 
 
 def cdqe(length):
@@ -401,7 +471,11 @@ INSTRUCTION_SEMANTICS_MAP = {
     'mov': mov,
     'lea': lea,
     'push': push,
+    'pusha': pusha,
+    'pushad': pushad,
     'pop': pop,
+    'popa': popa,
+    'popad': popad,
     'add': sym_bin_op('+'),
     'sub': sym_bin_op('-'),
     'xor': sym_bin_op('^'),

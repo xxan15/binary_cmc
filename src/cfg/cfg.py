@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from logging import error
+import sys
 import re
 from ..common.inst_element import Inst_Elem
 from ..common import utils
@@ -37,7 +38,7 @@ from ..symbolic import sym_engine
 
 
 class CFG(object):
-    def __init__(self, sym_table, address_sym_table, address_inst_map, address_next_map, start_address, main_address, func_name, address_ext_func_map, pre_constraint):
+    def __init__(self, sym_table, address_sym_table, address_inst_map, address_next_map, start_address, main_address, func_name, address_ext_func_map, pre_constraint, dll_func_info):
         self.block_set = {}
         self.block_stack = []
         self.address_block_map = {}
@@ -58,6 +59,7 @@ class CFG(object):
         self.external_mem_preservation = []
         self.sym_valueset_map = {}
         self.address_ext_func_map = address_ext_func_map
+        self.dll_func_info = dll_func_info
         # Reconstruct the flow path with the following parent block no and new presumptions
         self.function_inedges_map = {}
         self.function_inedges_map['_start'] = {}
@@ -144,6 +146,9 @@ class CFG(object):
             elif new_address in self.address_sym_table:
                 ext_func_name = cfg_helper.get_function_name_from_addr_sym_table(self.address_sym_table, new_address)
                 self.handle_external_function(new_address, ext_func_name, block, address, inst, sym_store, constraint)
+            elif new_address in self.dll_func_info:
+                ext_func_name = self.dll_func_info[new_address]
+                self.handle_external_function(new_address, ext_func_name, block, address, inst, sym_store, constraint)
             elif sym_helper.sym_is_int_or_bitvecnum(new_address) or str(new_address).startswith(utils.MEM_DATA_SEC_SUFFIX):
                 ext_func_name = str(new_address)
                 self.handle_external_function(new_address, ext_func_name, block, address, inst, sym_store, constraint)
@@ -200,6 +205,7 @@ class CFG(object):
                 mem_preserve_assumption = True if ext_func_address in self.external_mem_preservation else False
                 ext_handler.ext_func_call(store, rip, block.block_id, mem_preserve_assumption)
                 if ext_name in lib.TERMINATION_FUNCTIONS:
+                    self.handle_cmc_path_termination(sym_store.store)
                     utils.logger.info('The symbolic execution has been terminated at the path due to the call of the function ' + ext_name + '\n')
                     return
                 new_constraint = cfg_helper.insert_new_constraints(store, rip, block.block_id, ext_name, pre_constraint, constraint)
@@ -237,7 +243,7 @@ class CFG(object):
 
     def build_ret_branch(self, block, address, sym_store, constraint):
         block_id = None
-        new_address = semantics.ret(sym_store.store, block.block_id)
+        new_address = semantics.ret(sym_store.store, block.inst, block.block_id)
         if new_address != None:
             if sym_helper.sym_is_int_or_bitvecnum(new_address):
                 utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
@@ -258,8 +264,8 @@ class CFG(object):
                 if constraint is not None:
                     path_reachable = cfg_helper.check_path_reachability(constraint)
                     if path_reachable == False: return
-                # utils.logger.info('Cannot resolve the return address of ' + inst + ' at address ' + hex(address))
-                # sys.exit('Cannot resolve the return address of ' + inst + ' at address ' + hex(address))
+                utils.logger.info('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
+                sys.exit('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
             return block_id
 
     def handle_cmc_path_termination(self, store):
@@ -319,7 +325,7 @@ class CFG(object):
                 _, p_sym_store = self._get_parent_block_info(curr_blk)
                 if p_sym_store is None:
                     return lib.TRACE_BACK_RET_TYPE.TB_PARENT_BLOCK_DOES_NOT_EXIST
-                src_names, func_call_point, tb_halt_point, mem_len_map = semantics_tb_sym.parse_sym_src(self.address_ext_func_map, self.address_inst_map, p_sym_store.store, curr_rip, curr_inst, [curr_sym_name])
+                src_names, func_call_point, tb_halt_point, mem_len_map = semantics_tb_sym.parse_sym_src(self.address_ext_func_map, self.dll_func_info, self.address_inst_map, p_sym_store.store, curr_rip, curr_inst, [curr_sym_name])
                 self.mem_len_map.update(mem_len_map)
                 utils.logger.info(hex(curr_blk.address) + ': ' + curr_blk.inst)
                 utils.logger.info(src_names)
@@ -327,18 +333,20 @@ class CFG(object):
                     # tmp_list = blockid_sym_list.copy()
                     # tmp_list.append((curr_block_id, src_names[0]))
                     # tmp_list = self._update_blockid_sym_list(tmp_list, p_sym_store.store, curr_rip, src_names)
-                    # trace_list.append((curr_block_id, src_names[0]))
-                    blockid_sym_list.append((curr_block_id, src_names[0]))
-                    blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
+                    # blockid_sym_list.append((curr_block_id, src_names[0]))
+                    # blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
                     self._update_external_assumptions(curr_store, curr_rip, curr_inst, src_names)
+                    # utils.logger.info(curr_block_id)
+                    # utils.logger.info(src_names[0])
+                    trace_list.append(blockid_sym_list)
                     break
                 elif tb_halt_point:
-                    blockid_sym_list.append((curr_block_id, src_names[0]))
-                    blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
+                    # blockid_sym_list.append((curr_block_id, src_names[0]))
+                    # blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
                     # tmp_list = blockid_sym_list.copy()
                     # tmp_list.append((curr_block_id, src_names[0]))
                     # tmp_list = self._update_blockid_sym_list(tmp_list, p_sym_store.store, curr_rip, src_names)
-                    # trace_list.append(tmp_list)
+                    trace_list.append(blockid_sym_list)
                     break
                 elif trace_back.reach_traceback_halt_point(blockid_sym_list):
                     tb_halt_point = True
@@ -346,16 +354,21 @@ class CFG(object):
                     break
                 else:
                     blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
+            # else:
+            #     tb_halt_point = True
+            #     break
             count += 1
         if tb_halt_point or func_call_point:
             res = self._handle_sym_addr_w_concretize(blk, trace_list, sym_names)
-        else:
+        elif count >= utils.MAX_TRACEBACK_COUNT:
             res = lib.TRACE_BACK_RET_TYPE.TB_COUNT_EXCEEDS_LIMITATION
+        else:
+            res = lib.TRACE_BACK_RET_TYPE.TB_BLOCK_DOES_NOT_EXIST
         return res
 
 
     def _get_operand_size(self, inst, arg):
-        res = lib.DEFAULT_REG_LEN
+        res = utils.MEM_ADDR_SIZE
         inst_elem = Inst_Elem(inst)
         if len(inst_elem.inst_args) == 2:
             operand = inst_elem.inst_args[1]
@@ -389,8 +402,12 @@ class CFG(object):
         sym_vals = []
         sym_lens = []
         new_constraint = restart_blk.constraint
+        # utils.logger.info(restart_blk.inst)
+        # utils.logger.info(len(trace_list))
         for blockid_sym_list in trace_list:
+            # print(blockid_sym_list)
             for block_id, sym_arg in blockid_sym_list:
+                # print(sym_arg)
                 curr_block = self.block_set[block_id]
                 new_constraint = self._sym_src_from_mov_with_ext_env(curr_block, new_constraint)
                 sym_store = curr_block.sym_store
@@ -399,7 +416,7 @@ class CFG(object):
                 if sym_val not in self.sym_addr_valueset_map:
                     sym_vals.append(sym_val)
                     sym_lens.append(length)
-        utils.logger.info(sym_vals)
+        # utils.logger.info(sym_vals)
         concrete_res = cfg_helper.concretize_sym_arg(sym_vals, sym_lens, new_constraint)
         utils.logger.debug('The following symbolic values are concretized: ' + str(sym_vals))
         utils.logger.debug(concrete_res)
@@ -477,7 +494,10 @@ class CFG(object):
 
     # Add new (block_id, sym_name) pair to blockid_sym_list according to current src_names
     def _update_blockid_sym_list(self, blockid_sym_list, p_store, rip, src_names):
+        # utils.logger.info('_update_blockid_sym_list')
+        # utils.logger.info(blockid_sym_list)
         bid_sym_list = self._retrieve_bid_sym_list(p_store, rip, src_names)
+        # utils.logger.info(bid_sym_list)
         for b_id, sym_name in bid_sym_list:
             if (b_id, sym_name) not in blockid_sym_list:
                 blockid_sym_list = self._add_new_b_id_sym_pair(blockid_sym_list, b_id, sym_name)
@@ -666,6 +686,8 @@ class CFG(object):
 
     def _trace_back_pointer_related_error(self, block, init_sym_store, address, inst, sym_names):
         # store, rip = sym_store.store, sym_store.rip
+        utils.logger.info('Trace back for pointer-related error')
+        utils.logger.info(hex(address) + ': ' + block.inst)
         tb_halt_point = False
         node_stack = []
         trace_list = []
@@ -678,8 +700,8 @@ class CFG(object):
         while node_stack:
             node = node_stack.pop()
             block, sym_names, _ = node.data
-            # utils.output_logger.info(block.inst)
-            # utils.output_logger.info(sym_names)
+            utils.logger.info(hex(block.address) + ': ' + block.inst)
+            utils.logger.info(sym_names)
             sym_store, inst = block.sym_store, block.inst
             p_block_id, p_sym_store = self._get_parent_block_info(block)
             if p_sym_store is None:

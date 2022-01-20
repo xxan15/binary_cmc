@@ -276,7 +276,7 @@ def call(store, sym_names):
     sym_in_stack, sym_not_in_stack = jmp_op(sym_names)
     func_call_point = True
     for sym_name in sym_not_in_stack:
-        length = lib.DEFAULT_REG_LEN
+        length = utils.MEM_ADDR_SIZE
         if sym_name not in lib.REG_NAMES:
             length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):
@@ -291,7 +291,7 @@ def jmp_to_external_func(store, sym_names):
     _, sym_not_in_stack = jmp_op(sym_names)
     func_call_point = True
     for sym_name in sym_not_in_stack:
-        length = lib.DEFAULT_REG_LEN
+        length = utils.MEM_ADDR_SIZE
         # if sym_name not in lib.REG_NAMES:
         #     length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):

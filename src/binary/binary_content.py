@@ -14,18 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
 from ..common import utils
 
 
-class ELF_Content(object):
+class Binary_Content(object):
     def __init__(self, src_path):
         self.src_path = src_path
         self.address_bytes_map = {}
-        self.read_elf_contents()
+        self.read_binary_contents()
 
 
-    def read_elf_contents(self):
+    def read_binary_contents(self):
         idx = 0
         with open(self.src_path, 'rb') as f:
             bytes_read = f.read()

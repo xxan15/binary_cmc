@@ -195,6 +195,7 @@ def get_real_length(mem_len_map, arg):
         length = mem_len_map[arg]
     return length
 
+
 def construct_print_info(parent_id, parent_store, parent_rip, new_sym_store, rip, invariant_arguments):
     p_info = []
     stack_addr = []
@@ -214,7 +215,7 @@ def construct_print_info(parent_id, parent_store, parent_rip, new_sym_store, rip
     return print_info, stack_addr
 
 
-def get_inv_arg_val(store, rip, inv_arg, block_id, length=lib.DEFAULT_REG_LEN):
+def get_inv_arg_val(store, rip, inv_arg, block_id, length=utils.MEM_ADDR_SIZE):
     res = None
     if inv_arg in lib.REG_NAMES:
         res = sym_engine.get_sym(store, rip, inv_arg, block_id, length)
@@ -325,14 +326,18 @@ def retrieve_call_inst_func_name(func_call_blk, address_inst_map, address_sym_ta
 def cfg_init_parameter(store, sym_table):
     if lib.STDIN in sym_table:
         stdin_address = sym_table[lib.STDIN]
-        sym_address = sym_helper.bit_vec_val_sym(stdin_address)
-        store[lib.STDIN_ADDRESS] = sym_address
-        store[lib.STDIN_HANDLER] = sym_engine.get_memory_val(store, sym_address, utils.INIT_BLOCK_NO)
+        if isinstance(stdin_address, int):
+            stdin_address = sym_helper.bit_vec_val_sym(stdin_address)
+        store[lib.STDIN_ADDRESS] = stdin_address
+        store[lib.STDIN_HANDLER] = sym_engine.get_memory_val(store, stdin_address, utils.INIT_BLOCK_NO)
     if lib.STDOUT in sym_table:
         stdout_address = sym_table[lib.STDOUT]
-        sym_address = sym_helper.bit_vec_val_sym(stdout_address)
-        store[lib.STDOUT_ADDRESS] = sym_address
-        store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, sym_address, utils.INIT_BLOCK_NO)
+        # print(stdout_address)
+        # print(type(stdout_address))
+        if isinstance(stdout_address, int):
+            stdout_address = sym_helper.bit_vec_val_sym(stdout_address)
+        store[lib.STDOUT_ADDRESS] = stdout_address
+        store[lib.STDOUT_HANDLER] = sym_engine.get_memory_val(store, stdout_address, utils.INIT_BLOCK_NO)
 
 
 def retrieve_internal_call_inst_func_name(func_call_blk, address_inst_map, address_sym_table):
@@ -402,7 +407,10 @@ def get_function_name_from_addr_sym_table(address_sym_table, address):
 def start_init(store, rip, block_id):
     dests = lib.REG64_NAMES
     ext_handler.set_regs_sym(store, rip, dests, block_id)
-    sym_engine.set_sym(store, rip, 'rsp', sym_helper.bit_vec_val_sym(utils.INIT_STACK_FRAME_POINTER), block_id)
+    sp_name = utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE]
+    stack_frame_pointer = utils.INIT_STACK_FRAME_POINTER[utils.MEM_ADDR_SIZE]
+    sym_engine.set_sym(store, rip, sp_name, sym_helper.bit_vec_val_sym(stack_frame_pointer, utils.MEM_ADDR_SIZE), block_id)
+    # sym_engine.set_sym(store, rip, 'rsp', sym_helper.bit_vec_val_sym(utils.INIT_STACK_FRAME_POINTER), block_id)
     ext_handler.set_segment_regs_sym(store, rip)
     # utils.logger.debug('The following registers are set to symbolic value: ' + str(dests))
     ext_handler.clear_flags(store)
