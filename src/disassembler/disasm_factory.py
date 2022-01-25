@@ -14,12 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from src.disassembler.disasm_radare2 import Disasm_Radare2
 from .disasm_objdump import Disasm_Objdump
 from .disasm_angr import Disasm_Angr
+from .disasm_radare2 import Disasm_Radare2
 
 class Disasm_Factory(object):
-    def __init__(self, disasm_path, disasm_type='objdump'):
+    def __init__(self, disasm_path, exec_path=None, disasm_type='radare2'):
         self.disasm_type = disasm_type
+        self.exec_path = exec_path
         self.disasm_path = disasm_path
 
 
@@ -29,5 +32,7 @@ class Disasm_Factory(object):
                 return Disasm_Objdump(self.disasm_path)
             elif self.disasm_type == 'angr':
                 return Disasm_Angr(self.disasm_path)
+            elif self.disasm_type in ('r2', 'radare2'):
+                return Disasm_Radare2(self.disasm_path, self.exec_path)
         return None
 

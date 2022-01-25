@@ -85,7 +85,7 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
     global_var.get_binary_info(exec_path)
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
-    disasm_factory = Disasm_Factory(disasm_path, disasm_type)
+    disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
     # start_time = time.time()
     construct_cfg(disasm_path, disasm_asm)
@@ -126,7 +126,7 @@ def cmc_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, verbose=
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Concolic Model Checker')
-    parser.add_argument('-t', '--disasm_type', default='objdump', type=str, help='Disassembler')
+    parser.add_argument('-t', '--disasm_type', default='radare2', type=str, help='Disassembler')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run cmc_main in batch mode') 
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Benchmark library') 
     parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Elf shared object library') 

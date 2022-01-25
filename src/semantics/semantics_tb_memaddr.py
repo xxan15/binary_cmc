@@ -61,7 +61,8 @@ def check_source_is_sym(store, rip, src, syms):
         res = src in syms
     elif ':' in src:
         lhs, rhs = src.split(':')
-        res = check_source_is_sym(store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
+        res = check_source_is_sym(
+            store, rip, lhs, syms) or check_source_is_sym(store, rip, rhs, syms)
     elif src.endswith(']'):
         addr = sym_engine.get_effective_address(store, rip, src)
         res = str(addr) in syms
@@ -164,7 +165,7 @@ def mov(store, sym_names, dest, src):
                 if addr_points_to_external_lib(addr):
                     halt_point = True
                 src_names = src_names + [str(addr)]
-                # if str(addr) not in store[lib.MEM]: 
+                # if str(addr) not in store[lib.MEM]:
                 #     halt_point = True
     else:
         concrete_val = True
@@ -192,7 +193,8 @@ def push(store, sym_names, src):
 
 
 def pop(store, sym_names, dest):
-    sym_rsp = str(sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO))
+    sym_rsp = str(sym_engine.get_sym(
+        store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO))
     src_names = sym_names
     smt_helper.remove_reg_from_sym_srcs(dest, src_names)
     new_srcs = [sym_rsp]
@@ -230,7 +232,7 @@ def imul(store, sym_names, dest, src1=None, src2=None):
 def div_op(store, sym_names, src):
     bits_len = utils.get_sym_length(src)
     qreg, rreg, dest = lib.AUX_REG_INFO[bits_len]
-    src_names = sym_bin_op(store, sym_names, qreg + ':' +rreg, dest, src)
+    src_names = sym_bin_op(store, sym_names, qreg + ':' + rreg, dest, src)
     return src_names
 
 
@@ -242,21 +244,25 @@ def cmpxchg(store, sym_names, dest, src):
     src_names = sym_names
     bits_len = utils.get_sym_length(dest)
     a_reg = lib.AUX_REG_INFO[bits_len][0]
-    sym_lhs = sym_engine.get_sym(store, rip, a_reg, utils.TB_DEFAULT_BLOCK_NO, bits_len)
-    sym_rhs = sym_engine.get_sym(store, rip, dest, utils.TB_DEFAULT_BLOCK_NO, bits_len)
+    sym_lhs = sym_engine.get_sym(
+        store, rip, a_reg, utils.TB_DEFAULT_BLOCK_NO, bits_len)
+    sym_rhs = sym_engine.get_sym(
+        store, rip, dest, utils.TB_DEFAULT_BLOCK_NO, bits_len)
     eq = sym_helper.is_equal(sym_lhs, sym_rhs)
     if eq == True:
         src_names = mov_op(store, sym_names, dest, src)
     else:
         src_names = mov_op(store, sym_names, a_reg, dest)
     return src_names
-    
+
 
 def cmov(store, sym_names, inst, dest, src):
     src_names = sym_names
     res = smt_helper.parse_predicate(store, inst, True, 'cmov')
-    if res == False: pass
-    else: src_names = mov_op(store, sym_names, dest, src)
+    if res == False:
+        pass
+    else:
+        src_names = mov_op(store, sym_names, dest, src)
     return src_names
 
 
@@ -281,7 +287,8 @@ def call(store, sym_names):
             length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):
             sym_name = '[' + sym_name + ']'
-            val = sym_engine.get_sym(store, rip, sym_name, utils.TB_DEFAULT_BLOCK_NO, length)
+            val = sym_engine.get_sym(
+                store, rip, sym_name, utils.TB_DEFAULT_BLOCK_NO, length)
             if sym_helper.is_bv_sym_var(val):
                 func_call_point = False
     return func_call_point
@@ -296,7 +303,8 @@ def jmp_to_external_func(store, sym_names):
         #     length = mem_len_map[sym_name]
         if utils.imm_start_pat.match(sym_name):
             sym_name = '[' + sym_name + ']'
-            val = sym_engine.get_sym(store, rip, sym_name, utils.TB_DEFAULT_BLOCK_NO, length)
+            val = sym_engine.get_sym(
+                store, rip, sym_name, utils.TB_DEFAULT_BLOCK_NO, length)
             if sym_helper.is_bv_sym_var(val):
                 func_call_point = False
         elif sym_name in lib.REG64_NAMES:
@@ -348,13 +356,15 @@ def parse_sym_src(address_extfunc_tbl, address_inst_tbl, address_sym_tbl, store,
         inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
         inst_args = utils.parse_inst_args(inst_split)
         src_names = inst_op(store, sym_names, *inst_args)
-    elif inst_name in ('nop', 'hlt'): pass
+    elif inst_name in ('nop', 'hlt'):
+        pass
     elif inst_name.startswith('cmov'):
         inst_args = utils.parse_inst_args(inst_split)
         src_names = cmov(store, sym_names, inst, *inst_args)
     elif inst_name.startswith('rep'):
         inst = inst_split[1].strip()
-        src_names, func_call_point, halt_point, concrete_val = parse_sym_src(address_ext_func_map, address_inst_map, address_sym_table, store, curr_rip, inst, sym_names)
+        src_names, func_call_point, halt_point, concrete_val = parse_sym_src(
+            address_ext_func_map, address_inst_map, address_sym_table, store, curr_rip, inst, sym_names)
     elif utils.check_jmp_with_address(inst):
         jump_address_str = inst.split(' ', 1)[1].strip()
         new_address = smt_helper.get_jump_address(store, rip, jump_address_str)
@@ -364,4 +374,3 @@ def parse_sym_src(address_extfunc_tbl, address_inst_tbl, address_sym_tbl, store,
             else:
                 func_call_point = call(store, sym_names)
     return src_names, func_call_point, halt_point, concrete_val
-

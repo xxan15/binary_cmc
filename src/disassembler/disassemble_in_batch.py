@@ -28,7 +28,7 @@ $ python -m src.disassembler.disassemble_in_batch -e benchmark/coreutils-build -
 INFIX = '.'
 
 def disassemble_single(exec_path, disasm_dir, disasm_type='objdump'):
-    global_var.get_elf_info(exec_path)
+    global_var.get_binary_info(exec_path)
     file_name = utils.get_file_name(exec_path)
     new_path = os.path.join(disasm_dir, file_name + INFIX + disasm_type)
     utils.make_dir(os.path.dirname(new_path))
@@ -37,7 +37,7 @@ def disassemble_single(exec_path, disasm_dir, disasm_type='objdump'):
 
 def disassemble_file_for_disassemblers(exec_path):
     for disasm_type in ['objdump', 'angr']:
-        global_var.get_elf_info(exec_path)
+        global_var.get_binary_info(exec_path)
         new_path = exec_path + INFIX + disasm_type
         helper.disassemble_to_asm(exec_path, new_path, disasm_type)
 

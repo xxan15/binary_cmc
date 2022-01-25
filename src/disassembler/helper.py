@@ -18,8 +18,43 @@ import re
 import os
 import sys
 import angr
+import r2pipe
 
 from ..common import utils
+
+
+UNEXPLORED_FUNCTION_LABELS = {'_init', '_fini', '__libc_csu_init', '__libc_csu_fini', 
+'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
+
+
+BYTE_LEN_REPS = {
+    'byte': 'byte', 
+    'dword': 'dword', 
+    'fword': 'fword', 
+    'qword': 'qword', 
+    'word': 'word', 
+    'tbyte': 'tbyte',
+    'tword': 'tbyte', 
+    'xword': 'tbyte',
+    'xmmword': 'xmmword'
+}
+
+
+BYTE_REP_PTR_MAP = {
+    'q': 'qword ptr',
+    'd': 'dword ptr',
+    'l': 'dword ptr',
+    'w': 'word ptr',
+    'b': 'byte ptr',
+    't': 'tbyte ptr'
+}
+
+BYTELEN_REP_MAP = {
+    64: 'qword ptr',
+    32: 'dword ptr',
+    16: 'word ptr',
+    8: 'byte ptr'
+}
 
 
 remote_addr_pat = re.compile('0x2[0-9a-fA-F]{5}')
@@ -29,10 +64,27 @@ def disassemble_to_asm(exec_path, disasm_path, disasm_type='objdump'):
     if disasm_type == 'objdump':
         cmd = 'objdump -M intel -d ' + exec_path + ' > ' + disasm_path
         utils.execute_command(cmd)
+    elif disasm_type == 'radare2':
+        disassemble_radare2(exec_path, disasm_path)
     elif disasm_type == 'angr':
         disassemble_angr(exec_path, disasm_path)
     else:
         raise Exception('The assembly file has not been generated')
+
+
+def disassemble_radare2(exec_path, asm_path):
+    res = ''
+    r = r2pipe.open(exec_path)
+    r.cmd('e asm.lines=false')
+    r.cmd('e asm.syntax = intel')
+    s_info = r.cmd('iS')
+    sec_size_table = parse_r2_section_info(s_info)
+    for sec_name in (('.plt', '.plt.got', '.text')):
+        if sec_name in sec_size_table:
+            r.cmd('s section.' + sec_name)
+            res += r.cmd('pD ' + str(sec_size_table[sec_name]))
+    with open(asm_path, 'w+') as f:
+        f.write(res)
 
 
 def disassemble_angr(exec_path, asm_path):
@@ -45,6 +97,24 @@ def disassemble_angr(exec_path, asm_path):
             node.block.pp()
         print('\n')
     sys.stdout.close()
+
+
+# [Sections]
+# Nm Paddr       Size Vaddr      Memsz Perms Name
+# ...
+# 14 0x00001510 13070 0x00001510 13070 -r-x .text
+# 15 0x00004820     9 0x00004820     9 -r-x .fini
+def parse_r2_section_info(section_info):
+    lines = section_info.split('\n')
+    sec_size_table = {}
+    for line in lines:
+        line_split = utils.remove_multiple_spaces(line).split(' ')
+        if len(line_split) == 7:
+            if utils.imm_pat.match(line_split[1]):
+                name = line_split[-1]
+                address = utils.imm_str_to_int(line_split[1])
+                sec_size_table[name] = utils.imm_str_to_int(line_split[2])
+    return sec_size_table
 
 
 def convert_to_hex(line):
@@ -159,6 +229,23 @@ def rewrite_absolute_address_to_relative(arg, rip):
         res = hex(utils.imm_str_to_int(arg))
     return res
 
+
+def add_ptr_suffix_arg(arg):
+    res = arg
+    if arg.endswith(']') and ' ptr ' not in arg:
+        b_len_rep = arg.split(' ', 1)[0].strip()
+        if b_len_rep in BYTE_LEN_REPS:
+            res = re.sub(b_len_rep, BYTE_LEN_REPS[b_len_rep] + ' ptr', arg)
+    return res
+
+
+def add_or_remove_ptr_rep_arg(inst_name, arg):
+    res = arg
+    if inst_name.startswith('rep') and ('cmpsb' in inst_name or 'scasb' in inst_name) and ']' in arg:
+        res = '[' + arg.rsplit('[', 1)[1].strip()
+    else:
+        res = add_ptr_suffix_arg(arg)
+    return res
 
 def convert_to_hex_rep(arg):
     res = arg
