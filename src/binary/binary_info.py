@@ -42,6 +42,8 @@ class Binary_Info(object):
         self.text_base_addr = None
         self.text_end_addr = -sys.maxsize - 1
         self.max_bin_header_address = -sys.maxsize - 1
+        self.file_type = None
+        self.ImageBase = 0x000000
         self.dll_func_info = {}
         self.read_binary_info()
 
@@ -56,8 +58,9 @@ class Binary_Info(object):
         relocation = utils.execute_command('objdump -R ' + self.src_path)
         self._parse_relocation(relocation)
         self._reverse_sym_table()
-        external_info = utils.execute_command('objdump -x ' + self.src_path)
-        self._parse_external_info(external_info)
+        if self.file_type and self.file_type.startswith('pei-'):
+            external_info = utils.execute_command('objdump -x ' + self.src_path)
+            self._parse_external_info(external_info)
 
 
     def get_entry_address(self):
@@ -69,7 +72,9 @@ class Binary_Info(object):
         lines = binary_header.split('\n')
         for line in lines:
             line = line.strip()
-            if line and line.startswith('start address '):
+            if 'file format ' in line:
+                self.file_type = line.split('file format ', 1)[1].strip()
+            elif line and line.startswith('start address '):
                 self.entry_address = int(line.rsplit(' ', 1)[1], 16)
         if self.entry_address == None:
             utils.logger.info('The executable file cannot be correctly disassembled')
@@ -95,7 +100,7 @@ class Binary_Info(object):
                     self.data_start_addr = section_address
                     self.data_base_addr = section_address - section_offset
                     self.data_end_addr = section_address + section_size + 1
-                elif section_name == '.rodata':
+                elif section_name in ('.rodata', '.idata'):
                     self.rodata_start_addr = section_address
                     self.rodata_base_addr = section_address - section_offset
                     self.rodata_end_addr = section_address + section_size + 1
@@ -200,9 +205,11 @@ class Binary_Info(object):
                         line_split = line.split(' ')
                         ext_name = line_split[-1]
                         if ext_name != '<none>':
-                            addr = base_addr + first_chunk + dll_count * 4
-                            sym_addr = sym_helper.gen_spec_sym('mem@' + hex(addr), utils.MEM_ADDR_SIZE)
-                            self.dll_func_info[sym_addr] = ext_name
+                            ext_name = 'dll_' + ext_name
+                            vma = int(line_split[0], 16)
+                            # addr = base_addr + first_chunk + dll_count * 4
+                            # sym_addr = sym_helper.gen_spec_sym('mem@' + hex(addr), utils.MEM_ADDR_SIZE)
+                            self.dll_func_info[vma] = ext_name
                         dll_count += 1
                 elif vma_addr_parsed:
                     if import_table_pattern.match(line):
@@ -214,7 +221,9 @@ class Binary_Info(object):
                         else:
                             first_chunk = int(line_split[-1], 16)
                         vma_count += 1
-                if 'There is an import table in ' in line:
+                if line.startswith('ImageBase'):
+                    self.ImageBase = int(line.split()[1].strip(), 16)
+                elif 'There is an import table in ' in line:
                     start_address = int(line.rsplit(' ', 1)[1], 16)
                 elif line.startswith('The Import Tables '):
                     vma_addr_parsed = True

@@ -166,9 +166,13 @@ VERIFIED_FUNC_INFO = 'verified_func_info'
 TO_BE_VERIFIED_ARGS = 'to_be_verified_args'
 MEM_CONTENT_POLLUTED = 'mem_content_polluted'
 HEAP_ADDR = 'heap_addr'
+FUNC_CALL_STACK = 'func_call_stack'
 
-STATE_NAMES = {REG, MEM, FLAGS, FS, CS, DS, ES, GS, AUX_MEM, STDOUT}
+STATE_NAMES = {REG, MEM, FLAGS, FS, CS, DS, ES, GS, AUX_MEM, STDOUT, FUNC_CALL_STACK}
 RECORD_STATE_NAMES = [REG, MEM]
+
+CODE_SEGMENTS = ('.plt.got', '.plt', '.text')
+DATA_SEGMENTS = ('.rodata', '.idata', '.data', '.bss')
 
 TERMINATION_FUNCTIONS = {
     "__stack_chk_fail",

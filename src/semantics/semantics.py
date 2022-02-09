@@ -111,10 +111,12 @@ def pusha(store):
     push(store, 'di')
 
 def call(store, dest):
+    store[lib.FUNC_CALL_STACK].append(rip)
     push(store, hex(rip))
 
 
 def call_op(store, rip, block_id):
+    store[lib.FUNC_CALL_STACK].append(rip)
     sym_src = sym_engine.get_sym(store, rip, hex(rip), block_id)
     smt_helper.push_val(store, rip, sym_src, block_id)
 
@@ -143,7 +145,10 @@ def ret(store, inst, block_id):
             res = simplify(res & 0x0000ffff)
         if sym_helper.sym_is_int_or_bitvecnum(res):
             res = res.as_long()
-    return res
+    alter_res = None
+    if store[lib.FUNC_CALL_STACK]:
+        alter_res = store[lib.FUNC_CALL_STACK].pop()
+    return res, alter_res
 
 
 def xchg(store, dest, src):

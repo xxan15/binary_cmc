@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from ..common import utils
-
 
 class Binary_Content(object):
     def __init__(self, src_path):
@@ -59,4 +59,12 @@ class Binary_Content(object):
         for i in range(num):
             res = self.read_bytes(i, 1)
             print(res)
+
+
+if __name__ == '__main__':
+    src_path = os.path.join(utils.PROJECT_DIR, 'benchmark/pe_benchmarks/HOSTNAME.EXE')
+    bin_content = Binary_Content(src_path)
+    address = 0x40406c - 4204544
+    length = 4
+    print(bin_content.read_byte_sequence(address, length))
 

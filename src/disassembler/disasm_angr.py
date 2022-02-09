@@ -25,6 +25,8 @@ class Disasm_Angr(Disasm):
         self.asm_path = asm_path
         self.address_inst_map = {}
         self.address_next_map = {}
+        self.address_label_map = {}
+        self.address_ext_func_map = {}
         self.read_asm_info()
         self.valid_address_no = len(self.address_inst_map)
 
@@ -42,7 +44,7 @@ class Disasm_Angr(Disasm):
                     address, inst = self._parse_line(line)
                     if inst:
                         inst = self.format_inst(address, inst)
-                        self.address_inst_map[address] = inst
+                        self.address_inst_map[address] = inst.strip()
         inst_addresses = sorted(list(self.address_inst_map.keys()))
         inst_num = len(inst_addresses)
         for idx, address in enumerate(inst_addresses):
@@ -67,7 +69,7 @@ class Disasm_Angr(Disasm):
 
     def _format_arg(self, address, inst_name, arg):
         res = helper.convert_to_hex_rep(arg)
-        res = helper.normalize_angr_ghidra_arg(res)
+        res = helper.normalize_arg_byte_len_rep(res)
         return res
 
     def _rewrite_inst(self, inst):

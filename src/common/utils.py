@@ -403,14 +403,6 @@ def convert_dot_to_png(file_path):
     execute_command(cmd)
 
 
-def bytes_to_hex(bytes):
-    res = ''
-    for bs in bytes[::-1]:
-        n = '{0:02x}'.format(bs)
-        res += n
-    return res
-
-
 def replace_dot_in_func_name(name):
     res = name.replace('.', '_dot_')
     res = res.replace('@', '_at_')
@@ -430,6 +422,14 @@ def bytes_to_int(bytes):
         n = '{0:02x}'.format(bs)
         res += n
     return int(res, 16)
+
+
+def bytes_to_hex(bytes):
+    res = ''
+    for bs in bytes:
+        n = '{0:02x}'.format(bs)
+        res += n
+    return res
 
 
 def dump_str_to_file(content, file_path):

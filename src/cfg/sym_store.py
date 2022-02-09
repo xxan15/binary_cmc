@@ -31,6 +31,8 @@ class Sym_Store:
             for name in lib.STATE_NAMES:
                 if name == lib.AUX_MEM:
                     self.store[name] = set()
+                elif name == lib.FUNC_CALL_STACK:
+                    self.store[name] = []
                 else:
                     self.store[name] = {}
             self.store[lib.HEAP_ADDR] = utils.MIN_HEAP_ADDR

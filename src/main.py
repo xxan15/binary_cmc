@@ -54,8 +54,8 @@ def construct_cfg(disasm_path, disasm_asm):
     pre_constraint = sym_helper.parse_predefined_constraint(constraint_config_file)
     # print(global_var.binary_info.dll_func_info)
     cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint, global_var.binary_info.dll_func_info)
-    callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
-    cfg.draw_callgraph(callgraph_path)
+    # callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
+    # cfg.draw_callgraph(callgraph_path)
     write_results(disasm_asm, cfg)
 
 
@@ -126,7 +126,7 @@ def cmc_specified(file_names, elf_lib_dir, disasm_lib_dir, disasm_type, verbose=
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Concolic Model Checker')
-    parser.add_argument('-t', '--disasm_type', default='radare2', type=str, help='Disassembler')
+    parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run cmc_main in batch mode') 
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Benchmark library') 
     parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Elf shared object library') 

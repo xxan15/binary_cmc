@@ -193,19 +193,19 @@ def pollute_mem_w_sym_address(store, block_id):
 def check_mem_addr_overlapping(store, address, byte_len, store_key=lib.MEM):
     overlapping = False
     if sym_helper.is_bit_vec_num(address):
-        int_address = address.as_long()
-        for offset in range(-7, byte_len):
-            if offset != 0:
-                curr_address = simplify(address + offset)
-                if curr_address in store[store_key]:
-                    prev_sym = store[store_key][curr_address][0]
-                    prev_len = prev_sym.size() // 8
-                    # if (offset < 0 and prev_len > -offset) or offset > 0:
-                    if offset > 0:
-                        overlapping = True
-                        # utils.output_logger.error('Error: Buffer overflow when writing to the address ' + hex(int_address) + ' while memory content at address ' + hex(curr_address.as_long()) + ' already exists')
-                        # store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
-                        break
+        # int_address = address.as_long()
+        for offset in range(1, byte_len):
+            # if offset != 0:
+            curr_address = simplify(address + offset)
+            if curr_address in store[store_key]:
+                # prev_sym = store[store_key][curr_address][0]
+                # prev_len = prev_sym.size() // 8
+                # # if (offset < 0 and prev_len > -offset) or offset > 0:
+                # if offset > 0:
+                overlapping = True
+                # utils.output_logger.error('Error: Buffer overflow when writing to the address ' + hex(int_address) + ' while memory content at address ' + hex(curr_address.as_long()) + ' already exists')
+                # store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW
+                break
     return overlapping
 
     
@@ -385,6 +385,7 @@ def read_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
     if sym_helper.is_bit_vec_num(address):
         val = None
         int_address = address.as_long()
+        # utils.logger.info(address)
         if sym_helper.addr_in_rodata_section(int_address):
             rodata_base_addr = global_var.binary_info.rodata_base_addr
             val = global_var.binary_content.read_bytes(int_address - rodata_base_addr, length // 8)
@@ -403,6 +404,7 @@ def read_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
             # It is not accessible statically
             res = BitVec(utils.MEM_DATA_SEC_SUFFIX + hex(int_address), length)
         store[lib.MEM][address] = [res, utils.INIT_BLOCK_NO]
+        # utils.logger.info(res)
     else:
         res = sym_helper.gen_mem_sym(length)
         store[lib.MEM][address] = [res, block_id]

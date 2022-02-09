@@ -75,7 +75,7 @@ class CFG(object):
         cfg_helper.start_init(sym_store.store, start_address, utils.INIT_BLOCK_NO)
         cfg_helper.cfg_init_parameter(sym_store.store, self.sym_table)
         self.build_cfg(start_address, sym_store, constraint)
-        # self.pp_unreachable_instrs()
+        self.pp_unreachable_instrs()
 
     
     def build_cfg(self, start_address, sym_store, constraint):
@@ -131,7 +131,7 @@ class CFG(object):
         
 
     def construct_branch(self, block, address, inst, sym_store, constraint):
-        if inst == 'ret' or inst.endswith(' ret'):
+        if inst == 'ret' or inst.endswith(' ret') or inst.startswith('ret '):
             self.build_ret_branch(block, address, sym_store, constraint)
         else:
             jump_address_str = inst.split(' ', 1)[1].strip()
@@ -193,7 +193,6 @@ class CFG(object):
             self._cfg_create_new_thread(ext_func_address, ext_func_name, block, address, inst, sym_store, constraint, inv_names, pre_constraint)
         else:
             if ext_func_name.startswith(('malloc', 'calloc', 'realloc')):
-                utils.logger.info(ext_func_name)
                 ext_handler.ext_alloc_mem_call(store, rip, ext_name, block.block_id)
                 new_constraint = cfg_helper.insert_new_constraints(store, rip, block.block_id, ext_name, pre_constraint, constraint)
             elif ext_func_name.startswith(('free')):
@@ -216,14 +215,15 @@ class CFG(object):
                 
 
     def handle_unresolved_indirect_jumps(self, block, address, inst, constraint, new_address):
-        if inst.startswith('jmp ') and not inst.endswith(']'):
+        # if inst.startswith('jmp ') and not inst.endswith(']'):
+        if inst.startswith('jmp '):
             trace_list = []
             if block.address in self.address_jt_entries_map:
                 inst_dest, target_addresses = self.address_jt_entries_map[block.address]
                 self._reconstruct_new_branches(block, inst_dest, target_addresses)
                 res = lib.TRACE_BACK_RET_TYPE.JT_SUCCEED
             else:
-                res, _ = self.trace_back(block, [inst.split(' ', 1)[1].strip()], trace_list)
+                res, _ = self.trace_back_indirect(block, [inst.split(' ', 1)[1].strip()], trace_list)
             if res != lib.TRACE_BACK_RET_TYPE.JT_SUCCEED:
                 if constraint is not None:
                     path_reachable = cfg_helper.check_path_reachability(constraint)
@@ -237,26 +237,48 @@ class CFG(object):
                 if path_reachable == False: 
                     utils.logger.info('The path is infeasible at the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address) + '\n')
                     return
+            self.mem_len_map = {}
+            inst_split = inst.strip().split(' ', 1)
+            inst_args = utils.parse_inst_args(inst_split)
+            sym_store = block.sym_store
+            new_srcs, _ = smt_helper.get_bottom_source(inst_args[0], sym_store.store, sym_store.rip, self.mem_len_map)
+            self.trace_back_sym_addr(block, new_srcs)
             utils.logger.info('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
             # sys.exit('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
 
 
+    def exec_ret_operation(self, block, address, sym_store, constraint, new_address):
+        block_id = None
+        utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
+        if new_address in self.address_inst_map:
+            if new_address not in self.ret_call_address_map:
+                call_target = self._get_prev_inst_target(new_address)
+                if call_target:
+                    self.ret_call_address_map[new_address] = call_target
+            new_func_name = cfg_helper.find_out_func_name_with_addr_in_range(self.func_start_addr_name_map, new_address)
+            sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
+            block_id = self.jump_to_block(block, new_address, sym_store, constraint)
+        else:
+            self.jump_to_dummy(block)
+        return block_id
+
     def build_ret_branch(self, block, address, sym_store, constraint):
         block_id = None
-        new_address = semantics.ret(sym_store.store, block.inst, block.block_id)
+        new_address, alter_address = semantics.ret(sym_store.store, block.inst, block.block_id)
         if new_address != None:
             if sym_helper.sym_is_int_or_bitvecnum(new_address):
-                utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
-                if new_address in self.address_inst_map:
-                    if new_address not in self.ret_call_address_map:
-                        call_target = self._get_prev_inst_target(new_address)
-                        if call_target:
-                            self.ret_call_address_map[new_address] = call_target
-                    new_func_name = cfg_helper.find_out_func_name_with_addr_in_range(self.func_start_addr_name_map, new_address)
-                    sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
-                    block_id = self.jump_to_block(block, new_address, sym_store, constraint)
-                else:
-                    self.jump_to_dummy(block)
+                block_id = self.exec_ret_operation(block, address, sym_store, constraint, new_address)
+                # utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
+                # if new_address in self.address_inst_map:
+                #     if new_address not in self.ret_call_address_map:
+                #         call_target = self._get_prev_inst_target(new_address)
+                #         if call_target:
+                #             self.ret_call_address_map[new_address] = call_target
+                #     new_func_name = cfg_helper.find_out_func_name_with_addr_in_range(self.func_start_addr_name_map, new_address)
+                #     sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
+                #     block_id = self.jump_to_block(block, new_address, sym_store, constraint)
+                # else:
+                #     self.jump_to_dummy(block)
             elif sym_helper.is_term_address(new_address):
                 self.jump_to_dummy(block)
                 self.handle_cmc_path_termination(sym_store.store)
@@ -264,8 +286,12 @@ class CFG(object):
                 if constraint is not None:
                     path_reachable = cfg_helper.check_path_reachability(constraint)
                     if path_reachable == False: return
-                utils.logger.info('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
-                sys.exit('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
+                else:
+                    if alter_address != None:
+                        block_id = self.exec_ret_operation(block, address, sym_store, constraint, alter_address)
+                    else:
+                        utils.logger.info('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
+                        sys.exit('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
             return block_id
 
     def handle_cmc_path_termination(self, store):
@@ -312,6 +338,7 @@ class CFG(object):
         sym_store = blk.sym_store
         store, rip = sym_store.store, sym_store.rip
         tb_halt_point = False
+        func_call_point = False
         count, blockid_sym_list = 0, []
         src_names = None
         blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, store, rip, sym_names)
@@ -327,7 +354,7 @@ class CFG(object):
                     return lib.TRACE_BACK_RET_TYPE.TB_PARENT_BLOCK_DOES_NOT_EXIST
                 src_names, func_call_point, tb_halt_point, mem_len_map = semantics_tb_sym.parse_sym_src(self.address_ext_func_map, self.dll_func_info, self.address_inst_map, p_sym_store.store, curr_rip, curr_inst, [curr_sym_name])
                 self.mem_len_map.update(mem_len_map)
-                utils.logger.info(hex(curr_blk.address) + ': ' + curr_blk.inst)
+                utils.logger.info('block id ' + str(curr_block_id) + ':' + hex(curr_blk.address) + ': ' + curr_blk.inst)
                 utils.logger.info(src_names)
                 if func_call_point:
                     # tmp_list = blockid_sym_list.copy()
@@ -358,6 +385,17 @@ class CFG(object):
             #     tb_halt_point = True
             #     break
             count += 1
+        return count, tb_halt_point, func_call_point, trace_list, sym_names
+        # if tb_halt_point or func_call_point:
+        #     res = self._handle_sym_addr_w_concretize(blk, trace_list, sym_names)
+        # elif count >= utils.MAX_TRACEBACK_COUNT:
+        #     res = lib.TRACE_BACK_RET_TYPE.TB_COUNT_EXCEEDS_LIMITATION
+        # else:
+        #     res = lib.TRACE_BACK_RET_TYPE.TB_BLOCK_DOES_NOT_EXIST
+        # return res
+
+
+    def handle_sym_memwrite_addr(self, blk, count, tb_halt_point, func_call_point, trace_list, sym_names):
         if tb_halt_point or func_call_point:
             res = self._handle_sym_addr_w_concretize(blk, trace_list, sym_names)
         elif count >= utils.MAX_TRACEBACK_COUNT:
@@ -365,6 +403,7 @@ class CFG(object):
         else:
             res = lib.TRACE_BACK_RET_TYPE.TB_BLOCK_DOES_NOT_EXIST
         return res
+
 
 
     def _get_operand_size(self, inst, arg):
@@ -533,7 +572,7 @@ class CFG(object):
         return store
             
 
-    def trace_back(self, blk, sym_names, trace_list):
+    def trace_back_indirect(self, blk, sym_names, trace_list):
         utils.logger.info('Resolve indirect jump address')
         for _ in range(utils.MAX_TRACEBACK_COUNT):
             p_store = self._get_parent_store(blk)
@@ -617,7 +656,8 @@ class CFG(object):
         # utils.logger.info(inst_args[0])
         self.mem_len_map = {}
         new_srcs, _ = smt_helper.get_bottom_source(inst_args[0], sym_store.store, sym_store.rip, self.mem_len_map)
-        res = self.trace_back_sym_addr(block, new_srcs)
+        count, tb_halt_point, func_call_point, trace_list, sym_names = self.trace_back_sym_addr(block, new_srcs)
+        res = self.handle_sym_memwrite_addr(block, count, tb_halt_point, func_call_point, trace_list, sym_names)
         if res != lib.TRACE_BACK_RET_TYPE.SYMADDR_SUCCEED:
             if constraint is not None:
                 path_reachable = cfg_helper.check_path_reachability(constraint)
@@ -684,7 +724,7 @@ class CFG(object):
         return node
 
 
-    def _trace_back_pointer_related_error(self, block, init_sym_store, address, inst, sym_names):
+    def _locate_pointer_related_error(self, block, init_sym_store, address, inst, sym_names):
         # store, rip = sym_store.store, sym_store.rip
         utils.logger.info('Trace back for pointer-related error')
         utils.logger.info(hex(address) + ': ' + block.inst)
@@ -798,7 +838,7 @@ class CFG(object):
         if sym_names:
             # print('_terminate_path_w_pointer_related_errors')
             # print(sym_names)
-            self._trace_back_pointer_related_error(block, sym_store, address, inst, sym_names)
+            self._locate_pointer_related_error(block, sym_store, address, inst, sym_names)
             # NUM_OF_PATHS
             self.cmc_exec_info[0] += 1
             # NUM_OF_NEGATIVES
