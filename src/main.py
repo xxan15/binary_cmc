@@ -15,6 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # python -m src.main -l micro-benchmark -e micro-benchmark -f filename
+# python -m src.main -l benchmark/coreutils-angr -e benchmark/coreutils-build/src -f pwd
+# python -m src.main -l benchmark/pe_benchmarks -e benchmark/pe_benchmarks -f ARP.EXE
 
 import os
 import time
@@ -53,6 +55,7 @@ def construct_cfg(disasm_path, disasm_asm):
     constraint_config_file = os.path.join(utils.PROJECT_DIR, utils.PREDEFINED_CONSTRAINT_FILE)
     pre_constraint = sym_helper.parse_predefined_constraint(constraint_config_file)
     # print(global_var.binary_info.dll_func_info)
+    print(disasm_asm.valid_address_no)
     cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint, global_var.binary_info.dll_func_info)
     # callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     # cfg.draw_callgraph(callgraph_path)
@@ -71,14 +74,16 @@ def close_logger():
 
 
 def write_results(disasm_asm, cfg):
-    num_of_verified_functions = len(cfg.func_call_order)
+    # num_of_verified_functions = len(cfg.func_call_order)
     num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
     reachable_address_num = cfg.reachable_addresses_num()
+    utils.output_logger.info('# of instructions: ' + str(disasm_asm.valid_address_no))
     utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
-    utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
+    # utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
-    utils.output_logger.info('# of sound paths: ' + str(num_of_positives))
+    # utils.output_logger.info('# of sound paths: ' + str(num_of_positives))
     utils.output_logger.info('# of unsound paths: ' + str(num_of_negatives))
+    utils.output_logger.info('# of unresolved indirects: ' + str(cfg.num_of_unresolved_indirects))
     
 
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
@@ -128,19 +133,15 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Concolic Model Checker')
     parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run cmc_main in batch mode') 
-    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Benchmark library') 
-    parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Elf shared object library') 
+    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-angr', type=str, help='Benchmark library') 
+    parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build/src', type=str, help='Elf shared object library') 
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Whether to print log information on the screen')
     parser.add_argument('-c', '--bmc_bound', default=25, type=int, help='The default value of the BMC bound')
-    parser.add_argument('-s', '--context_sensitive', default=True, action='store_false', help='The model checker is executed under a context-sensitive environment')
     args = parser.parse_args()
     utils.MAX_VISIT_COUNT = args.bmc_bound
-    utils.CONTEXT_SENSITIVE = args.context_sensitive
     disasm_type = args.disasm_type
     log_dir = args.log_dir
-    if disasm_type != 'objdump' and 'objdump' in args.log_dir:
-        log_dir = log_dir.replace('objdump', disasm_type)
     disasm_lib_dir = os.path.join(utils.PROJECT_DIR, log_dir)
     elf_lib_dir = os.path.join(utils.PROJECT_DIR, args.elf_dir)
     if args.batch:

@@ -123,14 +123,17 @@ def ext_free_mem_call(store, rip, block_id):
         sym_helper.remove_memory_content(store, mem_addr)
     elif sym_helper.sym_is_int_or_bitvecnum(mem_addr):
         succeed = False
-        # utils.logger.error('Error: Use after free at address ' + str(mem_addr) + ' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
-        # utils.output_logger.error('Error: Use after free at address ' + str(mem_addr) +' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
-        store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.FREE_AFTER_FREE
+        # utils.logger.error('Error: Free after free at address ' + str(mem_addr) + ' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        # utils.output_logger.error('Error: Free after free at address ' + str(mem_addr) +' while memory content at address ' + str(mem_addr) + ' is freed while there is no record in the global memory state')
+        # store[lib.POINTER_RELATED_ERROR] = lib.MEMORY_RELATED_ERROR_TYPE.FREE_AFTER_FREE
     return succeed
 
 
-def ext_func_call(store, rip, block_id, mem_preserve_assumption):
+def ext_func_call(store, rip, block_id, inv_names, mem_preserve_assumption):
     dests = lib.CALLEE_NOT_SAVED_REGS
+    # for inv_name in inv_names:
+    #     if inv_name in dests:
+    #         dests.remove(inv_name)
     # if not mem_preserve_assumption:
     #     sym_engine.pollute_all_mem_content(store, block_id)
     set_regs_sym(store, rip, dests, block_id)

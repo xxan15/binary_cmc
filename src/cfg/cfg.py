@@ -70,6 +70,8 @@ class CFG(object):
         self.cmc_exec_info = [0] * utils.CMC_EXEC_RES_COUNT
         self.func_call_order = ['_start', 'main']
         self.func_start_addr_name_map = {}
+        self.num_of_resolved_indirects = 0
+        self.num_of_unresolved_indirects = 0
         constraint = None
         sym_helper.cnt_init()
         cfg_helper.start_init(sym_store.store, start_address, utils.INIT_BLOCK_NO)
@@ -85,7 +87,14 @@ class CFG(object):
         while self.block_stack:
             curr = self.block_stack.pop()
             utils.logger.debug('%s: %s' % (hex(curr.address), curr.inst))
-            # utils.logger.debug(curr.sym_store.pp_store())
+            # if curr.address == 0x40256d:
+            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
+            # elif curr.address == 0x4024fe:
+            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
+            # elif curr.address == 0x402659:
+            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
+            # elif curr.address in (0x4024ff, 0x402512, 0x402578):
+            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
             address, inst, sym_store, constraint = curr.address, curr.inst, curr.sym_store, curr.constraint
             if inst and inst.startswith('bnd '):
                 inst = inst.strip().split(' ', 1)[1]
@@ -115,18 +124,24 @@ class CFG(object):
                 if counter < utils.MAX_LOOP_COUNT:
                     self.loop_trace_counter[(address, new_address)] += 1
                     self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
+                else:
+                    utils.logger.info('The path is terminated since the loop upperbound is hit')
+                    self.handle_cmc_path_termination(sym_store.store)
             else:
+                # utils.logger.info('jump_to_block_w_new_constraint no in loop counter')
                 exists_loop = cfg_helper.detect_loop(block, address, new_address, self.block_set)
                 if exists_loop:
                     self.loop_trace_counter[(address, new_address)] = 1
                 self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
         else:
+            # utils.logger.info('jump_to_block_w_new_constraint')
             self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
             
 
     def jump_to_block_w_new_constraint(self, block, inst, new_address, sym_store, constraint, val):
         new_constraint = self.add_new_constraint(sym_store.store, constraint, inst, val)
         new_inst = self.address_inst_map[new_address]
+        # utils.logger.info('add new block')
         self.add_new_block(block, new_address, new_inst, sym_store, new_constraint)
         
 
@@ -150,6 +165,8 @@ class CFG(object):
                 ext_func_name = self.dll_func_info[new_address]
                 self.handle_external_function(new_address, ext_func_name, block, address, inst, sym_store, constraint)
             elif sym_helper.sym_is_int_or_bitvecnum(new_address) or str(new_address).startswith(utils.MEM_DATA_SEC_SUFFIX):
+                # new_srcs = self._retrieve_sym_srcs(block)
+                # self.trace_back_sym_addr(block, new_srcs)
                 ext_func_name = str(new_address)
                 self.handle_external_function(new_address, ext_func_name, block, address, inst, sym_store, constraint)
                 utils.logger.debug('Jump to an undefined external address ' + str(new_address) + ' at address ' + hex(address))
@@ -198,11 +215,11 @@ class CFG(object):
             elif ext_func_name.startswith(('free')):
                 succeed = ext_handler.ext_free_mem_call(store, rip, block.block_id)
                 if not succeed: 
-                    self._terminate_path_w_pointer_related_errors(block, sym_store, address, inst, False)
+                    # self._terminate_path_w_pointer_related_errors(block, sym_store, address, inst, False)
                     return
             else:
                 mem_preserve_assumption = True if ext_func_address in self.external_mem_preservation else False
-                ext_handler.ext_func_call(store, rip, block.block_id, mem_preserve_assumption)
+                ext_handler.ext_func_call(store, rip, block.block_id, inv_names, mem_preserve_assumption)
                 if ext_name in lib.TERMINATION_FUNCTIONS:
                     self.handle_cmc_path_termination(sym_store.store)
                     utils.logger.info('The symbolic execution has been terminated at the path due to the call of the function ' + ext_name + '\n')
@@ -228,28 +245,30 @@ class CFG(object):
                 if constraint is not None:
                     path_reachable = cfg_helper.check_path_reachability(constraint)
                     if path_reachable == False: return
+                self.num_of_unresolved_indirects += 1
+                self.handle_cmc_path_termination(block.sym_store.store)
                 utils.logger.info('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
                 utils.logger.info(trace_back.pp_tb_debug_info(res, address, inst))
                 # sys.exit('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
+            else:
+                self.num_of_resolved_indirects += 1
         else:
             if constraint is not None:
                 path_reachable = cfg_helper.check_path_reachability(constraint)
                 if path_reachable == False: 
                     utils.logger.info('The path is infeasible at the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address) + '\n')
                     return
-            self.mem_len_map = {}
-            inst_split = inst.strip().split(' ', 1)
-            inst_args = utils.parse_inst_args(inst_split)
-            sym_store = block.sym_store
-            new_srcs, _ = smt_helper.get_bottom_source(inst_args[0], sym_store.store, sym_store.rip, self.mem_len_map)
+            new_srcs = self._retrieve_sym_srcs(block)
             self.trace_back_sym_addr(block, new_srcs)
+            self.num_of_unresolved_indirects += 1
             utils.logger.info('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
+            self.handle_cmc_path_termination(block.sym_store.store)
             # sys.exit('Cannot resolve the jump address ' + sym_helper.string_of_address(new_address) + ' of ' + inst + ' at address ' + hex(address))
 
 
     def exec_ret_operation(self, block, address, sym_store, constraint, new_address):
         block_id = None
-        utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
+        # utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
         if new_address in self.address_inst_map:
             if new_address not in self.ret_call_address_map:
                 call_target = self._get_prev_inst_target(new_address)
@@ -262,26 +281,17 @@ class CFG(object):
             self.jump_to_dummy(block)
         return block_id
 
+
     def build_ret_branch(self, block, address, sym_store, constraint):
         block_id = None
         new_address, alter_address = semantics.ret(sym_store.store, block.inst, block.block_id)
         if new_address != None:
             if sym_helper.sym_is_int_or_bitvecnum(new_address):
                 block_id = self.exec_ret_operation(block, address, sym_store, constraint, new_address)
-                # utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
-                # if new_address in self.address_inst_map:
-                #     if new_address not in self.ret_call_address_map:
-                #         call_target = self._get_prev_inst_target(new_address)
-                #         if call_target:
-                #             self.ret_call_address_map[new_address] = call_target
-                #     new_func_name = cfg_helper.find_out_func_name_with_addr_in_range(self.func_start_addr_name_map, new_address)
-                #     sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
-                #     block_id = self.jump_to_block(block, new_address, sym_store, constraint)
-                # else:
-                #     self.jump_to_dummy(block)
             elif sym_helper.is_term_address(new_address):
                 self.jump_to_dummy(block)
                 self.handle_cmc_path_termination(sym_store.store)
+            # Return address is symbolic
             else:
                 if constraint is not None:
                     path_reachable = cfg_helper.check_path_reachability(constraint)
@@ -289,7 +299,10 @@ class CFG(object):
                 else:
                     if alter_address != None:
                         block_id = self.exec_ret_operation(block, address, sym_store, constraint, alter_address)
+                        self.num_of_resolved_indirects += 1
                     else:
+                        self.num_of_unresolved_indirects += 1
+                        self.handle_cmc_path_termination(sym_store.store)
                         utils.logger.info('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
                         sys.exit('Cannot resolve the return address of ' + block.inst + ' at address ' + hex(address))
             return block_id
@@ -302,13 +315,14 @@ class CFG(object):
             # NUM_OF_NEGATIVES
             self.cmc_exec_info[2] += 1
             self._update_pointer_related_error_info(store)
+            utils.logger.info('The symbolic execution has been terminated at the path with pointer-related error\n')
         else:
             # NUM_OF_POSITIVES
             self.cmc_exec_info[1] += 1
             # Sound cases
             self.cmc_exec_info[7] += 1
             # utils.output_logger.info('Function ' + verified_func_name + ' is verified at specific path.\n')
-        utils.logger.info('The symbolic execution has been terminated at the path\n')
+            utils.logger.info('The symbolic execution has been terminated at the path\n')
 
 
     def handle_unbounded_jump_table_w_tb(self, trace_list, src_names, boundary, blk):
@@ -354,25 +368,13 @@ class CFG(object):
                     return lib.TRACE_BACK_RET_TYPE.TB_PARENT_BLOCK_DOES_NOT_EXIST
                 src_names, func_call_point, tb_halt_point, mem_len_map = semantics_tb_sym.parse_sym_src(self.address_ext_func_map, self.dll_func_info, self.address_inst_map, p_sym_store.store, curr_rip, curr_inst, [curr_sym_name])
                 self.mem_len_map.update(mem_len_map)
-                utils.logger.info('block id ' + str(curr_block_id) + ':' + hex(curr_blk.address) + ': ' + curr_blk.inst)
+                utils.logger.info('Block id ' + str(curr_block_id) + ': ' + hex(curr_blk.address) + '  ' + curr_blk.inst)
                 utils.logger.info(src_names)
                 if func_call_point:
-                    # tmp_list = blockid_sym_list.copy()
-                    # tmp_list.append((curr_block_id, src_names[0]))
-                    # tmp_list = self._update_blockid_sym_list(tmp_list, p_sym_store.store, curr_rip, src_names)
-                    # blockid_sym_list.append((curr_block_id, src_names[0]))
-                    # blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
                     self._update_external_assumptions(curr_store, curr_rip, curr_inst, src_names)
-                    # utils.logger.info(curr_block_id)
-                    # utils.logger.info(src_names[0])
                     trace_list.append(blockid_sym_list)
                     break
                 elif tb_halt_point:
-                    # blockid_sym_list.append((curr_block_id, src_names[0]))
-                    # blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
-                    # tmp_list = blockid_sym_list.copy()
-                    # tmp_list.append((curr_block_id, src_names[0]))
-                    # tmp_list = self._update_blockid_sym_list(tmp_list, p_sym_store.store, curr_rip, src_names)
                     trace_list.append(blockid_sym_list)
                     break
                 elif trace_back.reach_traceback_halt_point(blockid_sym_list):
@@ -626,6 +628,7 @@ class CFG(object):
         block_id = block.block_id
         self.block_set[block_id] = block
         if update_sym_store and inst and not utils.check_branch_inst_wo_call(inst) and not inst.startswith('cmov'):
+            # utils.logger.info('add new block with instruction: ' + inst)
             semantics.parse_semantics(sym_store.store, sym_store.rip, inst, block_id)
         if sym_store.store[lib.NEED_TRACE_BACK]:
             self._handle_symbolized_mem_addr_w_traceback(block, address, inst, sym_store, constraint)
@@ -650,12 +653,18 @@ class CFG(object):
         return new_constraint
 
 
-    def _handle_symbolized_mem_addr_w_traceback(self, block, address, inst, sym_store, constraint):
-        inst_split = inst.strip().split(' ', 1)
-        inst_args = utils.parse_inst_args(inst_split)
-        # utils.logger.info(inst_args[0])
+
+    def _retrieve_sym_srcs(self, block):
         self.mem_len_map = {}
+        inst_split = block.inst.strip().split(' ', 1)
+        inst_args = utils.parse_inst_args(inst_split)
+        sym_store = block.sym_store
         new_srcs, _ = smt_helper.get_bottom_source(inst_args[0], sym_store.store, sym_store.rip, self.mem_len_map)
+        return new_srcs
+
+
+    def _handle_symbolized_mem_addr_w_traceback(self, block, address, inst, sym_store, constraint):
+        new_srcs = self._retrieve_sym_srcs(block)
         count, tb_halt_point, func_call_point, trace_list, sym_names = self.trace_back_sym_addr(block, new_srcs)
         res = self.handle_sym_memwrite_addr(block, count, tb_halt_point, func_call_point, trace_list, sym_names)
         if res != lib.TRACE_BACK_RET_TYPE.SYMADDR_SUCCEED:
@@ -664,56 +673,10 @@ class CFG(object):
                 if path_reachable == False: return
             print_info = trace_back.pp_tb_debug_info(res, address, inst)
             utils.logger.info(print_info)
-            utils.output_logger.info(print_info)
+            # utils.output_logger.info(print_info)
             # Unresolved symbolic memory address
             self.cmc_exec_info[6] += 1
-
-
-    def _add_explain_suffix(self, store, rip, inst):
-        res = ''
-        if utils.check_jmp_with_address(inst):
-            jmp_addr_str = inst.split(' ', 1)[1].strip()
-            if utils.imm_start_pat.match(jmp_addr_str):
-                jmp_addr = utils.imm_str_to_int(jmp_addr_str)
-                sym = cfg_helper.get_unified_sym_name(self.address_sym_table, jmp_addr)
-                if sym:
-                    res = '  <' + sym + '>'
-        elif inst.startswith('mov '):
-            inst_elem = Inst_Elem(inst)
-            dest = inst_elem.inst_args[1]
-            if dest.endswith(']'):
-                address = sym_engine.get_effective_address(store, rip, dest)
-                if sym_helper.is_bit_vec_num(address):
-                    address = address.as_long()
-                    sym_name = cfg_helper.get_unified_sym_name(self.address_sym_table, address)
-                    if sym_name:
-                        res = '  <' + sym_name + '>'
-        return res
-
-
-    def _print_tree_path_info(self, init_sym_store, init_node):
-        print_info = []
-        node = init_node
-        block, sym_names, _ = node.data
-        init_suffix = self._add_explain_suffix(block.sym_store.store, block.sym_store.rip, block.inst)
-        p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(block.address) + ': ' + block.inst + init_suffix
-        print_info.append(p_info)
-        # print_info.append(blk.sym_store.pp_store())
-        while node:
-            blk, sym_names, prev_blk = node.data
-            suffix = self._add_explain_suffix(prev_blk.sym_store.store, prev_blk.sym_store.rip, prev_blk.inst)
-            p_info = 'Trace back to ' + str(sym_names) + ' after ' + hex(prev_blk.address) + ': ' + prev_blk.inst + suffix
-            print_info.append(p_info)
-            # print_info.append(prev_blk.sym_store.pp_store())
-            node = node.parent
-        print_info.reverse()
-        res = init_sym_store.store[lib.POINTER_RELATED_ERROR].name.capitalize()
-        res += ' if: ' + init_suffix.strip() + '@' + hex(block.address) + ' allocated size is not sufficient\n'
-        res += '\n'.join(print_info) + '\n'
-        utils.logger.info(res)
-        utils.output_logger.info(res)
         
-
 
     def _update_node_with_bid(self, block_id, sym_name, prev_blk):
         node = None
@@ -737,33 +700,28 @@ class CFG(object):
             node = self._update_node_with_bid(curr_block_id, curr_sym_name, block)
             if node:
                 node_stack.append(node)
+        utils.logger.info(sym_names)
         while node_stack:
             node = node_stack.pop()
             block, sym_names, _ = node.data
-            utils.logger.info(hex(block.address) + ': ' + block.inst)
-            utils.logger.info(sym_names)
+            # utils.logger.info(sym_names)
+            # utils.logger.info(hex(block.address) + ': ' + block.inst)
             sym_store, inst = block.sym_store, block.inst
-            p_block_id, p_sym_store = self._get_parent_block_info(block)
+            _, p_sym_store = self._get_parent_block_info(block)
             if p_sym_store is None:
                 # utils.output_logger.info('Parent block does not exist')
                 # print('parent block is null')
                 # print(block.block_id)
                 # print(block.parent_id)
                 return
-            # p_block = self.block_set[p_block_id]
-            # if p_block.address == block.address:
-            #     print('concretization point')
-            #     print('Trace back to ' + ' at the initial state')
-            #     self._print_tree_path_info(node)
-            #     return
             for sym_name in sym_names:
                 # print('loop begins')
                 # print(sym_name)
                 # print(inst)
                 # print(sym_store.pp_store())
                 src_names, func_call_point, tb_halt_point, concrete_val = semantics_tb_memaddr.parse_sym_src(self.address_ext_func_map, self.address_inst_map, self.address_sym_table, p_sym_store.store, sym_store.rip, inst, [sym_name])
-                # utils.logger.info(hex(block.address) + ': ' + block.inst)
-                # utils.logger.info(src_names)
+                utils.logger.info(hex(block.address) + ': ' + block.inst)
+                utils.logger.info(src_names)
                 bid_sym_list = self._retrieve_bid_sym_list(p_sym_store.store, p_sym_store.rip, src_names)
                 if func_call_point or tb_halt_point:
                     trace_list.append(node)
@@ -799,7 +757,8 @@ class CFG(object):
                                 # return
         if func_call_point or tb_halt_point:
             for node in trace_list:
-                self._print_tree_path_info(init_sym_store, node)
+                cfg_helper.print_tree_path_info(init_sym_store, node, self.address_sym_table)
+        utils.logger.info('\n\n')
 
 
     def _detect_reg_in_memaddr_rep(self, arg):
@@ -808,7 +767,7 @@ class CFG(object):
         for asi in arg_split:
             asi = asi.strip()
             if asi in lib.REG_NAMES:
-                res.append(asi)
+                res.append(smt_helper.get_root_reg(asi))
         return res
 
 
@@ -832,20 +791,25 @@ class CFG(object):
 
 
     def _terminate_path_w_pointer_related_errors(self, block, sym_store, address, inst, common=True):
-        # utils.output_logger.info('Pointer-related error at ' + hex(address) + ': ' + inst)
+        utils.output_logger.info('Terminate path with pointer-related error at ' + hex(address) + ': ' + inst)
         # print('Pointer-related error at ' + hex(address) + ': ' + inst)
         sym_names = self._retrieve_source_for_memaddr(inst, common)
         if sym_names:
-            # print('_terminate_path_w_pointer_related_errors')
+            # utils.logger.info('terminate_path_w_pointer_related_errors')
             # print(sym_names)
             self._locate_pointer_related_error(block, sym_store, address, inst, sym_names)
-            # NUM_OF_PATHS
+            # number of paths
             self.cmc_exec_info[0] += 1
-            # NUM_OF_NEGATIVES
+            # number of negative paths
             self.cmc_exec_info[2] += 1
             self._update_pointer_related_error_info(sym_store.store)
         else:
-            print(sym_store.store[lib.POINTER_RELATED_ERROR].name)
+            # print(sym_store.store[lib.POINTER_RELATED_ERROR].name)
+            # number of paths
+            self.cmc_exec_info[0] += 1
+            # number of negative paths
+            self.cmc_exec_info[2] += 1
+            self._update_pointer_related_error_info(sym_store.store)
 
 
     def _update_function_inedges_for_internal_call(self, sym_store, inst, new_address):

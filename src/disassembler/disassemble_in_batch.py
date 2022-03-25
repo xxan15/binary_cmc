@@ -22,7 +22,7 @@ from ..common import global_var
 from . import helper
 
 '''
-$ python -m src.disassembler.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-objdump -b 1
+$ python -m src.disassembler.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-angr -b 1
 '''
 
 INFIX = '.'
@@ -49,9 +49,9 @@ def disassemble_bin_files(files, disasm_dir, disasm_type='objdump'):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Disassembly Soundness Verification')
-    parser.add_argument('-t', '--disasm_type', default='objdump', type=str, help='Disassembler')
+    parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler')
     parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
-    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Disassembled folder name')
+    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-angr', type=str, help='Disassembled folder name')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-b', '--batch', default=1, type=int, help='Benchmark file name')
     args = parser.parse_args()

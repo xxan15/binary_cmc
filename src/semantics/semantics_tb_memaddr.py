@@ -43,7 +43,7 @@ def get_bottom_source(line, store, rip):
     for lsi in line_split:
         lsi = lsi.strip()
         if lsi in lib.REG_NAMES:
-            res.append(lsi)
+            res.append(smt_helper.get_root_reg(lsi))
             val = sym_engine.get_sym(store, rip, lsi, utils.INIT_BLOCK_NO)
             if not sym_helper.sym_is_int_or_bitvecnum(val):
                 is_reg_bottom = True
@@ -51,6 +51,21 @@ def get_bottom_source(line, store, rip):
         addr = sym_engine.get_effective_address(store, rip, line)
         res.append(str(addr))
     return res, is_reg_bottom
+
+
+# line: 'rax + rbx * 1 + 0'
+# line: 'rbp - 0x14'
+# line: 'rax'
+def get_val_source(store, rip, src):
+    res = None
+    if src in lib.REG_INFO_DICT:
+        res = smt_helper.get_root_reg(src)
+    elif src in lib.REG_NAMES:
+        res = src
+    elif src.endswith(']'):
+        addr = sym_engine.get_effective_address(store, rip, src)
+        res = str(addr)
+    return res
 
 
 def check_source_is_sym(store, rip, src, syms):
@@ -175,26 +190,34 @@ def mov(store, sym_names, dest, src):
 def lea(store, sym_names, dest, src):
     global concrete_val
     src_names = sym_names
-    if dest in src_names:
-        src_names.remove(dest)
-        new_srcs, _ = get_bottom_source(src, store, rip)
-        src_names = src_names + new_srcs
+    dest_root = smt_helper.get_root_reg(dest)
+    if dest_root in src_names:
+        src_names.remove(dest_root)
+        addr = sym_engine.get_effective_address(store, rip, src)
+        if sym_helper.sym_is_int_or_bitvecnum(addr):
+            pass
+        else:
+            new_srcs, _ = get_bottom_source(src, store, rip)
+            src_names = src_names + new_srcs
     return list(set(src_names))
 
 
 def push(store, sym_names, src):
     src_names = sym_names
-    sym_rsp = sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO)
-    prev_rsp = str(sym_helper.sym_op('-', sym_rsp, 8))
-    if prev_rsp in sym_names:
-        src_names.remove(prev_rsp)
-    src_names.append(src)
+    if sym_names[0] == 'rsp':
+        src_names = []
+    else:
+        sym_rsp = sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO)
+        prev_rsp = str(sym_helper.sym_op('-', sym_rsp, utils.MEM_ADDR_SIZE // 8))
+        if prev_rsp in sym_names:
+            src_names.remove(prev_rsp)
+        src_names.append(get_val_source(store, rip, src))
+            # smt_helper.get_root_reg(src))
     return src_names
 
 
 def pop(store, sym_names, dest):
-    sym_rsp = str(sym_engine.get_sym(
-        store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO))
+    sym_rsp = str(sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO))
     src_names = sym_names
     smt_helper.remove_reg_from_sym_srcs(dest, src_names)
     new_srcs = [sym_rsp]

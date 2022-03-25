@@ -110,9 +110,24 @@ def pusha(store):
     push(store, 'si')
     push(store, 'di')
 
+
+def pushf(store):
+    eflags = smt_helper.construct_eflag_val(store)
+    if utils.MEM_ADDR_SIZE == 64:
+        push(store, hex(eflags & 0x00FCFFFF))
+    elif utils.MEM_ADDR_SIZE == 32:
+        push(store, hex(eflags & 0x00FCFFFF))
+    else:
+        push(store, hex(eflags & 0xFFFF))
+
+
 def call(store, dest):
+    # sym_rsp = smt_helper.get_sym_rsp(store, rip)
+    # utils.logger.info(sym_rsp)
     store[lib.FUNC_CALL_STACK].append(rip)
     push(store, hex(rip))
+    # sym_rsp = smt_helper.get_sym_rsp(store, rip)
+    # utils.logger.info(sym_rsp)
 
 
 def call_op(store, rip, block_id):
@@ -478,6 +493,9 @@ INSTRUCTION_SEMANTICS_MAP = {
     'push': push,
     'pusha': pusha,
     'pushad': pushad,
+    'pushf': pushf,
+    'pushfd': pushf,
+    'pushfq': pushf,
     'pop': pop,
     'popa': popa,
     'popad': popad,

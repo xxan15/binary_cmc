@@ -45,7 +45,7 @@ REBUILD_BRANCHES_NUM = 2
 INIT_BLOCK_NO = -1
 TB_DEFAULT_BLOCK_NO = -2
 
-MEM_ADDR_SIZE = 32
+MEM_ADDR_SIZE = 64
 
 ADDR_SIZE_SP_MAP = {
     16: 'sp',
@@ -500,11 +500,11 @@ def generate_sym_expr(num):
 
 def check_branch_inst(inst):
     inst_name = inst.strip().split(' ', 1)[0]
-    return inst_name in lib.JMP_INST or inst.endswith(' ret')
+    return inst_name in lib.JMP_INST or inst.endswith(' ret') or inst.startswith('ret ')
 
 def check_branch_inst_wo_call(inst):
     inst_name = inst.strip().split(' ', 1)[0]
-    return inst_name in lib.JMP_INST_WITHOUT_CALL or inst.endswith(' ret')
+    return inst_name in lib.JMP_INST_WITHOUT_CALL or inst.endswith(' ret') or inst.startswith('ret ')
 
 def check_not_single_branch_inst(inst):
     inst_name = inst.strip().split(' ', 1)[0]

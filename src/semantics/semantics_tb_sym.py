@@ -132,8 +132,13 @@ def mov(store, sym_names, dest, src):
 def lea(store, sym_names, dest, src):
     global mem_len_map
     src_names = sym_names
-    if dest in src_names:
-        src_names.remove(dest)
+    dest_root = smt_helper.get_root_reg(dest)
+    if dest_root in src_names:
+        src_names.remove(dest_root)
+        # addr = sym_engine.get_effective_address(store, rip, src)
+        # if sym_helper.sym_is_int_or_bitvecnum(addr):
+        #     pass
+        # else:
         new_srcs, _ = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
         src_names = src_names + new_srcs
     return list(set(src_names))
@@ -142,10 +147,10 @@ def lea(store, sym_names, dest, src):
 def push(store, sym_names, src):
     src_names = sym_names
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO)
-    prev_rsp = str(sym_helper.sym_op('-', sym_rsp, 8))
+    prev_rsp = str(sym_helper.sym_op('-', sym_rsp, utils.MEM_ADDR_SIZE // 8))
     if prev_rsp in sym_names:
         src_names.remove(prev_rsp)
-    src_names.append(src)
+    src_names.append(smt_helper.get_root_reg(src))
     return src_names
 
 def pop(store, sym_names, dest):

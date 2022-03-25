@@ -19,6 +19,7 @@ import random
 from z3 import *
 
 from ..common import lib
+from ..common import Inst_Elem
 from ..common import utils
 from .constraint import Constraint
 from .sym_store import Sym_Store
@@ -417,6 +418,8 @@ def start_init(store, rip, block_id):
     sym_src = sym_helper.gen_sym()
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_src, block_id)
+    ext_handler.insert_termination_symbol(store, rip, block_id)
+    ext_handler.insert_termination_symbol(store, rip, block_id)
     
 
 def get_sym_val(store, rip, src, block_id):
@@ -506,3 +509,48 @@ def insert_new_constraints(store, rip, block_id, ext_name, pre_constraint, const
             new_constraint = Constraint(constraint, predicates)
     return new_constraint
 
+
+
+def add_explain_suffix(store, rip, inst, address_sym_table):
+    res = ''
+    if utils.check_jmp_with_address(inst):
+        jmp_addr_str = inst.split(' ', 1)[1].strip()
+        if utils.imm_start_pat.match(jmp_addr_str):
+            jmp_addr = utils.imm_str_to_int(jmp_addr_str)
+            sym = get_unified_sym_name(address_sym_table, jmp_addr)
+            if sym:
+                res = '  <' + sym + '>'
+    elif inst.startswith('mov '):
+        inst_elem = Inst_Elem(inst)
+        dest = inst_elem.inst_args[1]
+        if dest.endswith(']'):
+            address = sym_engine.get_effective_address(store, rip, dest)
+            if sym_helper.is_bit_vec_num(address):
+                address = address.as_long()
+                sym_name = get_unified_sym_name(address_sym_table, address)
+                if sym_name:
+                    res = '  <' + sym_name + '>'
+    return res
+
+
+def print_tree_path_info(init_sym_store, init_node, address_sym_table):
+    print_info = []
+    node = init_node
+    block, sym_names, _ = node.data
+    init_suffix = add_explain_suffix(block.sym_store.store, block.sym_store.rip, block.inst, address_sym_table)
+    p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(block.address) + ': ' + block.inst + init_suffix
+    print_info.append(p_info)
+    # print_info.append(blk.sym_store.pp_store())
+    while node:
+        blk, sym_names, prev_blk = node.data
+        suffix = add_explain_suffix(prev_blk.sym_store.store, prev_blk.sym_store.rip, prev_blk.inst, address_sym_table)
+        p_info = 'Trace back to ' + str(sym_names) + ' after ' + hex(prev_blk.address) + ': ' + prev_blk.inst + suffix
+        print_info.append(p_info)
+        # print_info.append(prev_blk.sym_store.pp_store())
+        node = node.parent
+    print_info.reverse()
+    res = init_sym_store.store[lib.POINTER_RELATED_ERROR].name.capitalize()
+    res += ' if: ' + init_suffix.strip() + '@' + hex(block.address) + ' allocated size is not sufficient\n'
+    res += '\n'.join(print_info) + '\n'
+    utils.logger.info(res)
+    utils.output_logger.info(res)

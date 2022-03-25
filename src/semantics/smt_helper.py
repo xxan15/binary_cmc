@@ -345,3 +345,20 @@ def push_val(store, rip, sym_val, block_id):
     sym_rsp = sym_bin_op_na_flags(store, rip, '-', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(operand_size//8), block_id)
     # sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_val, block_id)
+
+
+def construct_eflag_val(store):
+    eflags = 0x00000000
+    if store[lib.FLAGS]['CF'] == True:
+        eflags |= 0x00000001
+    if store[lib.FLAGS]['PF'] == True:
+        eflags |= 0x00000004
+    if store[lib.FLAGS]['ZF'] == True:
+        eflags |= 0x00000040
+    if store[lib.FLAGS]['SF'] == True:
+        eflags |= 0x00000080
+    if store[lib.FLAGS]['OF'] == True:
+        eflags |= 0x00000800
+    return eflags
+
+
