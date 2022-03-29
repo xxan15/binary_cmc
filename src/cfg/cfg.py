@@ -117,32 +117,35 @@ class CFG(object):
             self.construct_conditional_jump_block(block, address, inst, new_address, sym_store, constraint, True)
             
 
-    def construct_conditional_jump_block(self, block, address, inst, new_address, sym_store, constraint, val):
+    def construct_conditional_jump_block(self, block, address, inst, new_address, sym_store, constraint, val, need_new_constraint=True):
         if address in self.address_block_map:
             if (address, new_address) in self.loop_trace_counter:
                 counter = self.loop_trace_counter[(address, new_address)]
                 if counter < utils.MAX_LOOP_COUNT:
                     self.loop_trace_counter[(address, new_address)] += 1
-                    self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
+                    self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val, need_new_constraint)
                 else:
                     utils.logger.info('The path is terminated since the loop upperbound is hit')
                     self.handle_cmc_path_termination(sym_store.store)
             else:
+                # self.loop_trace_counter[(address, new_address)] = 1
                 # utils.logger.info('jump_to_block_w_new_constraint no in loop counter')
                 exists_loop = cfg_helper.detect_loop(block, address, new_address, self.block_set)
                 if exists_loop:
                     self.loop_trace_counter[(address, new_address)] = 1
-                self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
+                self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val, need_new_constraint)
         else:
             # utils.logger.info('jump_to_block_w_new_constraint')
-            self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val)
+            self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val, need_new_constraint)
             
 
-    def jump_to_block_w_new_constraint(self, block, inst, new_address, sym_store, constraint, val):
-        new_constraint = self.add_new_constraint(sym_store.store, constraint, inst, val)
+    def jump_to_block_w_new_constraint(self, block, inst, new_address, sym_store, constraint, val, need_new_constraint=True):
+        new_constraint = constraint
+        if need_new_constraint:
+            new_constraint = self.add_new_constraint(sym_store.store, constraint, inst, val)
         new_inst = self.address_inst_map[new_address]
-        # utils.logger.info('add new block')
-        self.add_new_block(block, new_address, new_inst, sym_store, new_constraint)
+        block_id = self.add_new_block(block, new_address, new_inst, sym_store, new_constraint)
+        return block_id
         
 
     def construct_branch(self, block, address, inst, sym_store, constraint):
@@ -187,9 +190,13 @@ class CFG(object):
                         sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
                     self.jump_to_block(block, new_address, sym_store, constraint)
             else:
-                if inst.startswith('call '):
-                    sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
-                self.jump_to_block(block, new_address, sym_store, constraint)
+                if inst.startswith('jmp '):
+                    self.construct_conditional_jump_block(block, address, inst, new_address, sym_store, constraint, True, False)
+                else:
+                    if inst.startswith('call '):
+                        sym_store.store[lib.VERIFIED_FUNC_INFO] = (new_address, new_func_name)
+                    self.jump_to_block(block, new_address, sym_store, constraint)
+
 
 
     def handle_external_function(self, ext_func_address, ext_func_name, block, address, inst, sym_store, constraint):

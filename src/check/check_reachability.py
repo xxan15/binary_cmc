@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# python -m src.check.check_reachability -t idapro -l benchmark/pe_benchmarks -d benchmark/pe_benchmarks -f HOSTNAME.EXE
+# python -m src.check.check_reachability -l benchmark/pe_benchmarks -d benchmark/pe_benchmarks -f HOSTNAME.EXE
 
 import os
 import re
@@ -178,17 +178,13 @@ def check(log_path, angr_path, idapro_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Concolic model checker results checking')
-    parser.add_argument('-t', '--disasm_type', default='objdump', type=str, help='Disassembler type')
+    parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler type')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-d', '--disasm_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Disassembled folder name')
     args = parser.parse_args()
     disasm_type = args.disasm_type
     log_dir = args.log_dir
-    # if disasm_type != 'objdump' and 'objdump' in args.log_dir:
-        # log_dir = log_dir.replace('objdump', disasm_type)
     log_path = os.path.join(utils.PROJECT_DIR, os.path.join(log_dir, args.file_name + '.log'))
     disasm_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.disasm_dir, args.file_name))
-    # print(log_path)
-    # print(disasm_path)
-    check(log_path, disasm_path + '.angr', disasm_path + '.idapro')
+    check(log_path, disasm_path + '.' + disasm_type, disasm_path + '.idapro')

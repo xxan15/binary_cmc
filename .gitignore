@@ -1,2 +1,7 @@
 *.pyc
-
+*.aux
+*.dot
+*.png
+*.log
+*.bak
+*.objdump

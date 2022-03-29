@@ -18,7 +18,6 @@ import re
 import os
 import sys
 import angr
-import r2pipe
 from src.common import global_var
 
 from ..common import utils
@@ -60,32 +59,13 @@ BYTELEN_REP_MAP = {
 simple_operator_pat = re.compile(r'(\+|-|\*)')
 remote_addr_pat = re.compile('0x2[0-9a-fA-F]{5}')
 
+
 def disassemble_to_asm(exec_path, disasm_path, disasm_type='objdump'):
     if os.path.exists(disasm_path): return
-    if disasm_type == 'objdump':
-        cmd = 'objdump -M intel -d ' + exec_path + ' > ' + disasm_path
-        utils.execute_command(cmd)
-    elif disasm_type == 'radare2':
-        disassemble_radare2(exec_path, disasm_path)
-    elif disasm_type == 'angr':
+    if disasm_type == 'angr':
         disassemble_angr(exec_path, disasm_path)
     else:
         raise Exception('The assembly file has not been generated')
-
-
-def disassemble_radare2(exec_path, asm_path):
-    res = ''
-    r = r2pipe.open(exec_path)
-    r.cmd('e asm.lines=false')
-    r.cmd('e asm.syntax = intel')
-    s_info = r.cmd('iS')
-    sec_size_table = parse_r2_section_info(s_info)
-    for sec_name in (('.plt', '.plt.got', '.text')):
-        if sec_name in sec_size_table:
-            r.cmd('s section.' + sec_name)
-            res += r.cmd('pD ' + str(sec_size_table[sec_name]))
-    with open(asm_path, 'w+') as f:
-        f.write(res)
 
 
 def disassemble_angr(exec_path, asm_path):
@@ -99,24 +79,6 @@ def disassemble_angr(exec_path, asm_path):
             node.block.pp()
         print('\n')
     sys.stdout.close()
-
-
-# [Sections]
-# Nm Paddr       Size Vaddr      Memsz Perms Name
-# ...
-# 14 0x00001510 13070 0x00001510 13070 -r-x .text
-# 15 0x00004820     9 0x00004820     9 -r-x .fini
-def parse_r2_section_info(section_info):
-    lines = section_info.split('\n')
-    sec_size_table = {}
-    for line in lines:
-        line_split = utils.remove_multiple_spaces(line).split(' ')
-        if len(line_split) == 7:
-            if utils.imm_pat.match(line_split[1]):
-                name = line_split[-1]
-                address = utils.imm_str_to_int(line_split[1])
-                sec_size_table[name] = utils.imm_str_to_int(line_split[2])
-    return sec_size_table
 
 
 def convert_to_hex(line):

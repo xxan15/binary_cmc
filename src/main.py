@@ -138,11 +138,12 @@ if __name__=='__main__':
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Whether to print log information on the screen')
     parser.add_argument('-c', '--bmc_bound', default=25, type=int, help='The default value of the BMC bound')
+    parser.add_argument('-s', '--mem_addr_size', default=64, type=int, help='The default value of the memory address size')
     args = parser.parse_args()
     utils.MAX_VISIT_COUNT = args.bmc_bound
+    utils.MEM_ADDR_SIZE = args.mem_addr_size
     disasm_type = args.disasm_type
-    log_dir = args.log_dir
-    disasm_lib_dir = os.path.join(utils.PROJECT_DIR, log_dir)
+    disasm_lib_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
     elf_lib_dir = os.path.join(utils.PROJECT_DIR, args.elf_dir)
     if args.batch:
         cmc_batch(elf_lib_dir, disasm_lib_dir, disasm_type, args.verbose)

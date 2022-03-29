@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .disasm_objdump import Disasm_Objdump
 from .disasm_angr import Disasm_Angr
-from .disasm_radare2 import Disasm_Radare2
 from.disasm_idapro import Disasm_IDAPro
 
 class Disasm_Factory(object):
@@ -28,12 +26,8 @@ class Disasm_Factory(object):
 
     def get_disasm(self):
         if self.disasm_type:
-            if self.disasm_type == 'objdump':
-                return Disasm_Objdump(self.disasm_path)
-            elif self.disasm_type == 'angr':
+            if self.disasm_type == 'angr':
                 return Disasm_Angr(self.disasm_path)
-            elif self.disasm_type in ('r2', 'radare2'):
-                return Disasm_Radare2(self.disasm_path, self.exec_path)
             elif self.disasm_type == 'idapro':
                 return Disasm_IDAPro(self.disasm_path)
         return None

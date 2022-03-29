@@ -120,16 +120,16 @@ def detect_loop(block, address, new_address, block_set):
     parent_id = block.parent_id
     prev_address = None
     while parent_id:
-        if parent_id in block_set:
-            parent_blk = block_set[parent_id]
-            p_address = parent_blk.address
-            if p_address == address:
-                if prev_address and prev_address == new_address:
-                    exists_loop = True
-                    break
-            parent_id = parent_blk.parent_id
-            prev_address = p_address
-        else: break
+        # if parent_id in block_set:
+        parent_blk = block_set[parent_id]
+        p_address = parent_blk.address
+        if p_address == address:
+            if prev_address and prev_address == new_address:
+                exists_loop = True
+                break
+        parent_id = parent_blk.parent_id
+        prev_address = p_address
+        # else: break
     return exists_loop
 
 

@@ -30,10 +30,6 @@ MAX_LOOP_COUNT = 5
 MAX_TRACEBACK_COUNT = 50
 MAX_INST_ADDR_GAP = 25
 
-# MAX_MALLOC_SIZE = 16711568
-# MIN_HEAP_ADDR = 0x10000000
-# MAX_HEAP_ADDR = MIN_HEAP_ADDR
-
 INIT_STACK_FRAME_POINTER = 2**48-9
 MAX_DEVIATION = 5
 SEGMENT_REG_INIT_VAL = 0
@@ -45,7 +41,7 @@ REBUILD_BRANCHES_NUM = 2
 INIT_BLOCK_NO = -1
 TB_DEFAULT_BLOCK_NO = -2
 
-MEM_ADDR_SIZE = 64
+MEM_ADDR_SIZE = 32
 
 ADDR_SIZE_SP_MAP = {
     16: 'sp',
@@ -74,7 +70,6 @@ MAX_HEAP_ADDR = MIN_HEAP_ADDR
 ASSEMBLY_FILE_NAME = 'test.s'
 PREDEFINED_CONSTRAINT_FILE = 'ext_env.config'
 
-DISASM_TYPES = ['objdump', 'radare2', 'angr']
 INVALID_SECTION_LABELS = {'_init', '_fini', '__libc_csu_init', '__libc_csu_fini', 'frame_dummy', 'register_tm_clones', 'deregister_tm_clones', '__do_global_dtors_aux'}
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(os.path.realpath(__file__)))))
