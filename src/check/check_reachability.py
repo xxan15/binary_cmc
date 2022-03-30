@@ -202,11 +202,13 @@ def read_parameters(output_path):
                     neg_path_cnt = int(line.rsplit(' ', 1)[1])
                 elif '# of unresolved indirects' in line:
                     indirects_cnt = int(line.rsplit(' ', 1)[1])
+                elif 'Execution time ' in line:
+                    exec_time = float(line.rsplit(' ', 1)[1])
     res_list.append(reached_cnt)
     res_list.append(path_cnt)
     res_list.append(neg_path_cnt)
     res_list.append(indirects_cnt)
-    return res_list
+    return res_list, exec_time
 
 
 def neat_main(graph, new_log_path, output_path):
@@ -214,7 +216,7 @@ def neat_main(graph, new_log_path, output_path):
     cond_jump_unreached_cnt, implicit_called_cnt, unreached_entries_cnt = 0, 0, 0
     c_blk_cnt, i_blk_cnt, u_blk_cnt = 0, 0, 0
     unreached_count, blk_count = normalize_unreachable(new_log_path, graph)
-    para_list = read_parameters(output_path)
+    para_list, exec_time = read_parameters(output_path)
     para_list.append(unreached_count)
     para_list.append(blk_count)
     para_list.append(cond_jump_unreached_cnt)
@@ -223,6 +225,7 @@ def neat_main(graph, new_log_path, output_path):
     para_list.append(i_blk_cnt)
     para_list.append(unreached_entries_cnt)
     para_list.append(u_blk_cnt)
+    para_list.append(exec_time)
     return para_list
 
 
@@ -328,7 +331,9 @@ def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
     binary_info = Binary_Info(exec_path)
     disasm_asm = Disasm_Angr(angr_path)
     _start_segment_address = binary_info.entry_address
-    inst_addresses, block_start_addrs = collect_valid_addr_set(idapro_path)
+    inst_addresses = list(disasm_asm.address_inst_map.keys())
+    inst_addresses.sort()
+    _, block_start_addrs = collect_valid_addr_set(idapro_path)
     unexplored_address_list = collect_unreached_addrs(log_path, inst_addresses)
     # print(disasm_asm.address_inst_map)
     # print(block_start_addrs)

@@ -92,10 +92,10 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
     disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
-    # start_time = time.time()
+    start_time = time.time()
     construct_cfg(disasm_path, disasm_asm)
-    # exec_time = time.time() - start_time
-    # utils.logger.info(exec_time)
+    exec_time = time.time() - start_time
+    utils.output_logger.info('Execution time (s): ' + exec_time)
     close_logger()
 
 
