@@ -45,11 +45,8 @@ def is_located_at_code_segments(line):
 
 
 def append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph):
-    global _start_segment_address
-    res = ''
+    # res = ''
     cnt = 0
-    # if graph.is_reachable(_start_segment_address, start_address):
-    #     print_info += utils.u_hex(start_address) + ': ' + address_inst_map[start_address] + '\n'
     if start_address in inst_addresses:
         s_idx = inst_addresses.index(start_address)
         if end_address in inst_addresses:
@@ -59,9 +56,9 @@ def append_all_addresses(start_address, end_address, inst_addresses, address_ins
                 inst = address_inst_map[address]
                 if not (inst.startswith('nop ') or inst == 'nop'):
                     cnt += 1
-                    res += utils.u_hex(address) + ': ' + inst + '\n'
-    res += '\n'
-    return res, cnt
+                    # res += utils.u_hex(address) + ': ' + inst + '\n'
+    # res += '\n'
+    return cnt
 
 
 def divide_to_block(new_content):
@@ -83,28 +80,8 @@ def divide_to_block(new_content):
     return start_address_list, end_address_list
 
 
-# def remove_implicit_called_functions(new_content, unreach_addresses, graph):
-#     res = ''
-#     start_address_list, end_address_list = divide_to_block(new_content)
-#     inst_addresses = graph.inst_addresses
-#     address_inst_map = graph.address_inst_map
-#     address_entries_map = graph.address_entries_map
-#     for start_address, end_address in zip(start_address_list, end_address_list):
-#         if start_address in graph.block_start_addrs:
-#             if start_address in address_entries_map:
-#                 if len(address_entries_map[start_address]) > 0:
-#                     for entry_address in address_entries_map[start_address]:
-#                         if entry_address not in unreach_addresses:
-#                             res += append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
-#                             break
-#         else:
-#             print(hex(start_address))
-#             res += append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
-#     return res
-
-
 def count_implicit_called_functions(new_content, unreach_addresses, graph):
-    global cond_jump_unreached_cnt, implicit_called_cnt
+    global cond_jump_unreached_cnt, c_blk_cnt, implicit_called_cnt, i_blk_cnt, unreached_entries_cnt, u_blk_cnt
     start_address_list, end_address_list = divide_to_block(new_content)
     inst_addresses = graph.inst_addresses
     address_inst_map = graph.address_inst_map
@@ -113,22 +90,27 @@ def count_implicit_called_functions(new_content, unreach_addresses, graph):
     for start_address, end_address in zip(start_address_list, end_address_list):
         if start_address in graph.block_start_addrs:
             if start_address in address_entries_map:
-                # if len(address_entries_map[start_address]) > 0:
-                for entry_address in address_entries_map[start_address]:
-                    # If the entry point to the address is reachable
-                    if entry_address not in unreach_addresses:
-                        reached_entry = True
-                        _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
-                        cond_jump_unreached_cnt += cnt
-                        break
-                if not reached_entry:
-                    pass
+                if len(address_entries_map[start_address]) > 0:
+                    for entry_address in address_entries_map[start_address]:
+                        # If the entry point to the address is reachable
+                        if entry_address not in unreach_addresses:
+                            reached_entry = True
+                            cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                            cond_jump_unreached_cnt += cnt
+                            c_blk_cnt += 1
+                            break
+                    if not reached_entry:
+                        cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                        unreached_entries_cnt += cnt
+                        u_blk_cnt += 1
             else:
-                _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
                 implicit_called_cnt += cnt
+                i_blk_cnt += 1
         else:
-            _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+            cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
             cond_jump_unreached_cnt += cnt
+            c_blk_cnt += 1
     
 
 def not_continuous(prev_address, address, graph):
@@ -145,10 +127,10 @@ def not_continuous(prev_address, address, graph):
     return False
 
 
+# Remove the real unreachable instructions from the results
 def remove_unreachable_inst(new_log_path, graph):
     inst_addresses = graph.inst_addresses
     block_start_addrs = graph.block_start_addrs
-    # inst_addresses, block_start_addrs = collect_valid_addr_set(idapro_path)
     res = ''
     unreach_addresses = []
     count = 0
@@ -161,11 +143,13 @@ def remove_unreachable_inst(new_log_path, graph):
         for line in lines:
             line = line.strip()
             if line:
+                # We read all the unreached instructions information from the .log file
                 if unreach:
                     address = line.split(':', 1)[0].strip()
                     address = int(address, 16)
                     if address in inst_addresses:
                         start_addr = find_start_addr(block_start_addrs, address)
+                        # If we already have the starting address of a block
                         if s_addr:
                             if start_addr != s_addr:
                                 res += '\n' + line + '\n'
@@ -176,22 +160,20 @@ def remove_unreachable_inst(new_log_path, graph):
                                 res += line + '\n'
                                 unreach_addresses.append(address)
                         else:
+                            # Set a new starting address for a block
                             s_addr = start_addr
                             res += line + '\n'
                             unreach_addresses.append(address)
                         count += 1
                 elif line.startswith(utils.LOG_UNREACHABLE_INDICATOR):
-                        unreach = True
+                    unreach = True
         if address:
+            unreach_addresses.append(address)
             res += line + '\n'
         blk_count += 1
-        # res += '\n# of unreached instructions: ' + str(count) + '\n'
-        # print(count)
-        # res += '# of unreached blocks: ' + str(blk_count) + '\n'
-        # print(blk_count)
     with open(new_log_path, 'w+') as f:
         f.write(res)
-    return res, unreach_addresses.append(address), count, blk_count
+    return res, unreach_addresses, count, blk_count
 
 
 def normalize_unreachable(new_log_path, graph):
@@ -202,6 +184,7 @@ def normalize_unreachable(new_log_path, graph):
     # print(new_content)
     # with open(new_log_path, 'w+') as f:
     #     f.write(new_content)
+    return unreached_count, blk_count
 
 
 def read_parameters(output_path):
@@ -227,10 +210,19 @@ def read_parameters(output_path):
 
 
 def neat_main(graph, new_log_path, output_path):
-    global cond_jump_unreached_cnt, implicit_called_cnt
-    cond_jump_unreached_cnt, implicit_called_cnt = 0, 0
-    normalize_unreachable(new_log_path, graph)
+    global cond_jump_unreached_cnt, c_blk_cnt, implicit_called_cnt, i_blk_cnt, unreached_entries_cnt, u_blk_cnt
+    cond_jump_unreached_cnt, implicit_called_cnt, unreached_entries_cnt = 0, 0, 0
+    c_blk_cnt, i_blk_cnt, u_blk_cnt = 0, 0, 0
+    unreached_count, blk_count = normalize_unreachable(new_log_path, graph)
     para_list = read_parameters(output_path)
+    para_list.append(unreached_count)
+    para_list.append(blk_count)
+    para_list.append(cond_jump_unreached_cnt)
+    para_list.append(c_blk_cnt)
+    para_list.append(implicit_called_cnt)
+    para_list.append(i_blk_cnt)
+    para_list.append(unreached_entries_cnt)
+    para_list.append(u_blk_cnt)
     return para_list
 
 
@@ -305,8 +297,7 @@ def find_start_addr(inst_addresses, address):
     return None
 
 # Collect all the addresses for the unreached instructions
-def collect_unreached_addrs(log_path, idapro_path):
-    inst_addresses, _ = collect_valid_addr_set(idapro_path)
+def collect_unreached_addrs(log_path, inst_addresses):
     unexplored_address_list = []
     with open(log_path, 'r') as f:
         unreach = False
@@ -338,13 +329,13 @@ def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
     disasm_asm = Disasm_Angr(angr_path)
     _start_segment_address = binary_info.entry_address
     inst_addresses, block_start_addrs = collect_valid_addr_set(idapro_path)
-    unexplored_address_list = collect_unreached_addrs(log_path, idapro_path)
+    unexplored_address_list = collect_unreached_addrs(log_path, inst_addresses)
     # print(disasm_asm.address_inst_map)
     # print(block_start_addrs)
     graph = Construct_Graph(log_path, disasm_asm.address_inst_map, inst_addresses, block_start_addrs, unexplored_address_list)
     para_list = neat_main(graph, new_log_path, output_path)
     if verbose:
-        print(print_info)
+        print(para_list)
     return para_list
 
 
