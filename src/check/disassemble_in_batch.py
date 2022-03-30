@@ -19,10 +19,10 @@ import argparse
 
 from ..common import utils
 from ..common import global_var
-from . import helper
+from ..disassembler import helper
 
 '''
-$ python -m src.disassembler.disassemble_in_batch -e benchmark/coreutils-build -l benchmark/coreutils-angr -b 1
+$ python -m src.check.disassemble_in_batch -e benchmark/coreutils-5.3.0-bin/bin -l benchmark/coreutils-5.3.0-angr -b 1
 '''
 
 INFIX = '.'
@@ -50,23 +50,23 @@ def disassemble_bin_files(files, disasm_dir, disasm_type='objdump'):
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Disassembly Soundness Verification')
     parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler')
-    parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
+    parser.add_argument('-e', '--exec_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-angr', type=str, help='Disassembled folder name')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-b', '--batch', default=1, type=int, help='Benchmark file name')
     args = parser.parse_args()
     if args.batch == 0:
-        exec_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.elf_dir, args.file_name))
+        exec_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.exec_dir, args.file_name))
         log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
         disassemble_single(exec_path, log_dir, args.disasm_type)    
     elif args.batch == 1:
-        dir_path = os.path.join(utils.PROJECT_DIR, args.elf_dir)
+        dir_path = os.path.join(utils.PROJECT_DIR, args.exec_dir)
         log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
         files = utils.get_executable_files(dir_path)
         for exec_path in files:
             print(exec_path.rsplit('/', 1)[1].strip())
         disassemble_bin_files(files, log_dir, args.disasm_type)
     elif args.batch == 2:
-        exec_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.elf_dir, args.file_name))
+        exec_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.exec_dir, args.file_name))
         disassemble_file_for_disassemblers(exec_path)
 

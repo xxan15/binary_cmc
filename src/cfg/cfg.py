@@ -178,7 +178,7 @@ class CFG(object):
                 
 
     def handle_internal_jumps(self, block, address, inst, sym_store, constraint, new_address, new_func_name):
-        # utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(new_address))
+        utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(new_address))
         if utils.check_not_single_branch_inst(inst):    # je xxx
             self.construct_conditional_branches(block, address, inst, new_address, sym_store, constraint)
         else:
@@ -275,7 +275,7 @@ class CFG(object):
 
     def exec_ret_operation(self, block, address, sym_store, constraint, new_address):
         block_id = None
-        # utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
+        utils.logger.info(hex(address) + ': the return address is {}'.format(hex(new_address)))
         if new_address in self.address_inst_map:
             if new_address not in self.ret_call_address_map:
                 call_target = self._get_prev_inst_target(new_address)

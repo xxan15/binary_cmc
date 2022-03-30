@@ -229,7 +229,7 @@ def get_file_dir(file_path):
 
 
 def get_file_name(path):
-    file_name = path.rsplit('/', 1)[1].split('.', 1)[0]
+    file_name = path.rsplit('/', 1)[1]
     return file_name
 
 
@@ -665,7 +665,8 @@ def insert_search(sorted_list, target):
 
 
 def get_executable_files(file_path):
-    cmd = 'ls -d -1 "' + file_path + '/"* | xargs file | grep "ELF 64-bit LSB shared object"'
+    cmd = 'ls -d -1 "' + file_path + '/"* | xargs file | grep -e "ELF 64-bit LSB shared object" -e " PE32 executable "'
+    # cmd = 'ls -d -1 "' + file_path + '/"* | xargs file | grep " PE32 executable "'
     out = execute_command(cmd)
     out_split = out.split('\n')
     files = []
