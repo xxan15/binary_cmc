@@ -175,10 +175,10 @@ def cmov(store, sym_names, inst, dest, src):
 
 def cmp_op(store, sym_names, dest, src):
     src_names = sym_names
-    global need_stop, boundary, still_tb
+    global need_stop, boundary, still_tb, mem_len_map
     if smt_helper.check_source_is_sym(store, rip, src, sym_names):
         dest, src = src, dest
-    if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names):
+    if smt_helper.check_cmp_dest_is_sym(store, rip, dest, sym_names, mem_len_map):
         sym_src = sym_engine.get_sym(store, rip, src, utils.MEM_ADDR_SIZE)
         if sym_helper.sym_is_int_or_bitvecnum(sym_src):
             src_names = [dest]

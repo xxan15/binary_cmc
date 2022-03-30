@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from logging import error
 import sys
 import re
 from ..common.inst_element import Inst_Elem
@@ -86,9 +85,9 @@ class CFG(object):
         self.add_new_block(None, start_address, start_inst, sym_store, constraint)
         while self.block_stack:
             curr = self.block_stack.pop()
-            utils.logger.debug('%s: %s' % (hex(curr.address), curr.inst))
+            # utils.logger.debug('%s: %s' % (hex(curr.address), curr.inst))
             # if curr.address == 0x40256d:
-            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
+                # utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
             # elif curr.address == 0x4024fe:
             #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
             # elif curr.address == 0x402659:
@@ -118,6 +117,7 @@ class CFG(object):
             
 
     def construct_conditional_jump_block(self, block, address, inst, new_address, sym_store, constraint, val, need_new_constraint=True):
+        utils.logger.debug('%s: %s' % (hex(address), inst))
         if address in self.address_block_map:
             if (address, new_address) in self.loop_trace_counter:
                 counter = self.loop_trace_counter[(address, new_address)]
@@ -137,7 +137,7 @@ class CFG(object):
         else:
             # utils.logger.info('jump_to_block_w_new_constraint')
             self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val, need_new_constraint)
-            
+
 
     def jump_to_block_w_new_constraint(self, block, inst, new_address, sym_store, constraint, val, need_new_constraint=True):
         new_constraint = constraint
@@ -182,7 +182,7 @@ class CFG(object):
         if utils.check_not_single_branch_inst(inst):    # je xxx
             self.construct_conditional_branches(block, address, inst, new_address, sym_store, constraint)
         else:
-            if new_address in self.address_block_map and new_address in self.address_sym_table and new_address in self.ret_call_address_map.values():
+            if new_address in self.address_block_map and new_address in self.ret_call_address_map.values(): # new_address in self.address_sym_table
                 if self._explored_func_block(sym_store, new_address):
                     self.build_ret_branch(block, new_address, sym_store, constraint)
                 else:
@@ -380,14 +380,14 @@ class CFG(object):
                 if func_call_point:
                     self._update_external_assumptions(curr_store, curr_rip, curr_inst, src_names)
                     trace_list.append(blockid_sym_list)
-                    break
+                    # break
                 elif tb_halt_point:
                     trace_list.append(blockid_sym_list)
-                    break
+                    # break
                 elif trace_back.reach_traceback_halt_point(blockid_sym_list):
                     tb_halt_point = True
                     self._update_external_assumptions(curr_store, curr_rip, curr_inst, src_names)
-                    break
+                    # break
                 else:
                     blockid_sym_list = self._update_blockid_sym_list(blockid_sym_list, p_sym_store.store, curr_rip, src_names)
             # else:
@@ -477,13 +477,8 @@ class CFG(object):
     def _reconstruct_new_branches_w_valueset(self, block, sym_vals, sym_names):
         sym_store = block.sym_store
         utils.logger.info('Reconstruct new branches with concretized value\n')
-        # print('_reconstruct_new_branches_w_valueset')
         for i in range(utils.REBUILD_BRANCHES_NUM):
             new_sym_store = Sym_Store(sym_store.store, sym_store.rip)
-            # print('Before')
-            # print(new_sym_store.pp_store())
-            # print('After')
-            # print(new_sym_store.pp_store())
             new_sym_store.store[lib.NEED_TRACE_BACK] = False
             new_sym_store.store[lib.POINTER_RELATED_ERROR] = None
             block_id = self._add_new_block(block, block.address, block.inst, new_sym_store, block.constraint, False)

@@ -362,7 +362,6 @@ def read_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
     if sym_helper.is_bit_vec_num(address):
         val = None
         int_address = address.as_long()
-        # utils.logger.info(address)
         if sym_helper.addr_in_rodata_section(int_address):
             rodata_base_addr = global_var.binary_info.rodata_base_addr
             val = global_var.binary_content.read_bytes(int_address - rodata_base_addr, length // 8)

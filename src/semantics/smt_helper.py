@@ -297,13 +297,13 @@ def check_sym_is_stack_addr(sym):
     return res
 
 
-def check_cmp_dest_is_sym(store, rip, dest, sym_names):
+def check_cmp_dest_is_sym(store, rip, dest, sym_names, mem_len_map):
     res = False
     if len(sym_names) == 1:
         if dest in lib.REG_NAMES:
             res = check_source_is_sym(store, rip, dest, sym_names)
         elif dest.endswith(']'):
-            new_srcs, is_reg_bottom = get_bottom_source(dest, store, rip)
+            new_srcs, is_reg_bottom = get_bottom_source(dest, store, rip, mem_len_map)
             if is_reg_bottom:
                 if len(new_srcs) == 1:
                     res = new_srcs[0] == sym_names[0]
@@ -343,7 +343,6 @@ def sym_bin_op_na_flags(store, rip, op, dest, src, block_id):
 def push_val(store, rip, sym_val, block_id):
     operand_size = sym_val.size()
     sym_rsp = sym_bin_op_na_flags(store, rip, '-', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(operand_size//8), block_id)
-    # sym_rsp = sym_bin_op_na_flags(store, rip, '-', 'rsp', '8', block_id)
     sym_engine.set_mem_sym(store, sym_rsp, sym_val, block_id)
 
 

@@ -15,8 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # python -m src.main -l micro-benchmark -e micro-benchmark -f filename
-# python -m src.main -l benchmark/coreutils-angr -e benchmark/coreutils-build/src -f pwd
-# python -m src.main -l benchmark/pe_benchmarks -e benchmark/pe_benchmarks -f ARP.EXE
+# python -m src.main -l benchmark/coreutils-angr -e benchmark/coreutils-build/src -s 32 -f pwd
+# python -m src.main -l benchmark/pe_benchmark -e benchmark/pe_benchmark -f ARP.EXE
 
 import os
 import time
@@ -55,7 +55,7 @@ def construct_cfg(disasm_path, disasm_asm):
     constraint_config_file = os.path.join(utils.PROJECT_DIR, utils.PREDEFINED_CONSTRAINT_FILE)
     pre_constraint = sym_helper.parse_predefined_constraint(constraint_config_file)
     # print(global_var.binary_info.dll_func_info)
-    print(disasm_asm.valid_address_no)
+    # print(disasm_asm.valid_address_no)
     cfg = CFG(sym_table, address_sym_table, disasm_asm.address_inst_map, disasm_asm.address_next_map, start_address, main_address, func_name, disasm_asm.address_ext_func_map, pre_constraint, global_var.binary_info.dll_func_info)
     # callgraph_path = disasm_path.rsplit('.', 1)[0].strip()
     # cfg.draw_callgraph(callgraph_path)
@@ -78,7 +78,7 @@ def write_results(disasm_asm, cfg):
     num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
     reachable_address_num = cfg.reachable_addresses_num()
     utils.output_logger.info('# of instructions: ' + str(disasm_asm.valid_address_no))
-    utils.output_logger.info('# of reachable instructions: ' + str(reachable_address_num))
+    utils.output_logger.info('# of reached instructions: ' + str(reachable_address_num))
     # utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
     # utils.output_logger.info('# of sound paths: ' + str(num_of_positives))

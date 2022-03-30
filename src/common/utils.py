@@ -115,6 +115,7 @@ def close_logger(log_name):
 delimits = {'(': ')', '[': ']', '{': '}'}
 exec_file_suffix = ['', '.so', '.o', '.os']
 float_pat = re.compile('^[0-9.]+$|^-[0-9.]+$')
+simple_operator_pat = re.compile(r'(\+|-|\*)')
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$')
 imm_start_pat = re.compile('^0x[0-9a-fA-F]+|^[0-9]+|^-[0-9]+|^-0x[0-9a-fA-F]+')
 imm_pat_wo_prefix = re.compile('^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
@@ -139,6 +140,13 @@ def imm_str_to_int(imm_str):
     else:
         res = int(imm_str)
     return res
+
+
+def convert_imm_endh_to_hex(imm):
+    tmp = imm.rsplit('h', 1)[0].strip()
+    res = hex(int(tmp, 16))
+    return res
+
 
 def make_dir(path):
     try:
@@ -517,6 +525,35 @@ def get_mem_sym_length(sym_name):
     elif sym_name.startswith('word '): res = 16
     elif sym_name.startswith('byte '):res = 8
     return res
+
+
+def rm_unused_spaces(content):
+    res = content.strip()
+    res = re.sub(r'[ ]*\+[ ]*', '+', res)
+    res = re.sub(r'[ ]*-[ ]*', '-', res)
+    res = re.sub(r'[ ]*\*[ ]*', '*', res)
+    res = res.replace('+-', '-')
+    return res
+    
+
+def init_ida_struct_info():
+    ida_struct_table = {}
+    ida_info_path = os.path.join(PROJECT_DIR, 'ida_struct.info')
+    with open(ida_info_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                line_split = line.split(':', 1)
+                if line_split[1]:
+                    item_name = line_split[0]
+                    offset_str, item_type = line_split[1].strip().split(',', 1)
+                    offset = int(offset_str.strip())
+                    ida_struct_table[struct_name][item_name] = (offset, item_type.strip())
+                else:
+                    struct_name = line_split[0]
+                    ida_struct_table[struct_name] = {}
+    return ida_struct_table
 
 
 # def get_sym_length(sym_name, length=MEM_ADDR_SIZE):

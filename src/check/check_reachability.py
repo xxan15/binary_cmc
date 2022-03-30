@@ -14,21 +14,224 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# python -m src.check.check_reachability -l benchmark/pe_benchmarks -d benchmark/pe_benchmarks -f HOSTNAME.EXE
+# python -m src.check.check_reachability -l benchmark/pe_benchmark -d benchmark/pe_benchmark -f HOSTNAME.EXE
+# python -m src.check.check_reachability -e benchmark/coreutils-5.3.0-bin/bin -l benchmark/coreutils-5.3.0-angr -i benchmark/coreutils-5.3.0-idapro -f basename.exe
 
 import os
 import re
 import argparse
 
+
 from ..common import lib
 from ..common import utils
+from ..binary.binary_info import Binary_Info
+from ..disassembler.disasm_angr import Disasm_Angr
+from ..disassembler.disasm_idapro import Disasm_IDAPro
+from .construct_graph import Construct_Graph
+
+target_dir = os.path.join(utils.PROJECT_DIR, 'temp')
 
 address_inst_pattern = re.compile('^[.a-zA-Z]+:[0-9a-zA-Z]+[ ]{17}[a-zA-Z]')
 
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$|^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
 
 variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+')
-non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public')
+
+non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
+
+
+def is_located_at_code_segments(line):
+    return line.startswith(lib.CODE_SEGMENTS)
+
+
+def append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph):
+    global _start_segment_address
+    res = ''
+    cnt = 0
+    # if graph.is_reachable(_start_segment_address, start_address):
+    #     print_info += utils.u_hex(start_address) + ': ' + address_inst_map[start_address] + '\n'
+    if start_address in inst_addresses:
+        s_idx = inst_addresses.index(start_address)
+        if end_address in inst_addresses:
+            e_idx = inst_addresses.index(end_address)
+            for idx in range(s_idx, e_idx + 1):
+                address = inst_addresses[idx]
+                inst = address_inst_map[address]
+                if not (inst.startswith('nop ') or inst == 'nop'):
+                    cnt += 1
+                    res += utils.u_hex(address) + ': ' + inst + '\n'
+    res += '\n'
+    return res, cnt
+
+
+def divide_to_block(new_content):
+    start_address_list = []
+    end_address_list = []
+    _exists = False
+    lines = new_content.split('\n')
+    for line in lines:
+        if line:
+            address_str, _ = line.strip().split(':', 1)
+            address = int(address_str, 16)
+            if not _exists:
+                start_address_list.append(address)
+                _exists = True
+        else:
+            if _exists:
+                end_address_list.append(address)
+            _exists = False
+    return start_address_list, end_address_list
+
+
+# def remove_implicit_called_functions(new_content, unreach_addresses, graph):
+#     res = ''
+#     start_address_list, end_address_list = divide_to_block(new_content)
+#     inst_addresses = graph.inst_addresses
+#     address_inst_map = graph.address_inst_map
+#     address_entries_map = graph.address_entries_map
+#     for start_address, end_address in zip(start_address_list, end_address_list):
+#         if start_address in graph.block_start_addrs:
+#             if start_address in address_entries_map:
+#                 if len(address_entries_map[start_address]) > 0:
+#                     for entry_address in address_entries_map[start_address]:
+#                         if entry_address not in unreach_addresses:
+#                             res += append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+#                             break
+#         else:
+#             print(hex(start_address))
+#             res += append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+#     return res
+
+
+def count_implicit_called_functions(new_content, unreach_addresses, graph):
+    global cond_jump_unreached_cnt, implicit_called_cnt
+    start_address_list, end_address_list = divide_to_block(new_content)
+    inst_addresses = graph.inst_addresses
+    address_inst_map = graph.address_inst_map
+    address_entries_map = graph.address_entries_map
+    reached_entry = False
+    for start_address, end_address in zip(start_address_list, end_address_list):
+        if start_address in graph.block_start_addrs:
+            if start_address in address_entries_map:
+                # if len(address_entries_map[start_address]) > 0:
+                for entry_address in address_entries_map[start_address]:
+                    # If the entry point to the address is reachable
+                    if entry_address not in unreach_addresses:
+                        reached_entry = True
+                        _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                        cond_jump_unreached_cnt += cnt
+                        break
+                if not reached_entry:
+                    pass
+            else:
+                _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                implicit_called_cnt += cnt
+        else:
+            _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+            cond_jump_unreached_cnt += cnt
+    
+
+def not_continuous(prev_address, address, graph):
+    if prev_address:
+        if prev_address in graph.inst_addresses:
+            p_idx = graph.inst_addresses.index(prev_address)
+            if p_idx + 1 < len(graph.inst_addresses):
+                if graph.inst_addresses[p_idx + 1] != address:
+                    return True
+            else:
+                return True
+        else:
+            return False
+    return False
+
+
+def remove_unreachable_inst(new_log_path, graph):
+    inst_addresses = graph.inst_addresses
+    block_start_addrs = graph.block_start_addrs
+    # inst_addresses, block_start_addrs = collect_valid_addr_set(idapro_path)
+    res = ''
+    unreach_addresses = []
+    count = 0
+    blk_count = 0
+    with open(new_log_path, 'r') as f:
+        unreach = False
+        s_addr = None
+        address = None
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line:
+                if unreach:
+                    address = line.split(':', 1)[0].strip()
+                    address = int(address, 16)
+                    if address in inst_addresses:
+                        start_addr = find_start_addr(block_start_addrs, address)
+                        if s_addr:
+                            if start_addr != s_addr:
+                                res += '\n' + line + '\n'
+                                unreach_addresses.append(address)
+                                s_addr = start_addr
+                                blk_count += 1
+                            else:
+                                res += line + '\n'
+                                unreach_addresses.append(address)
+                        else:
+                            s_addr = start_addr
+                            res += line + '\n'
+                            unreach_addresses.append(address)
+                        count += 1
+                elif line.startswith(utils.LOG_UNREACHABLE_INDICATOR):
+                        unreach = True
+        if address:
+            res += line + '\n'
+        blk_count += 1
+        # res += '\n# of unreached instructions: ' + str(count) + '\n'
+        # print(count)
+        # res += '# of unreached blocks: ' + str(blk_count) + '\n'
+        # print(blk_count)
+    with open(new_log_path, 'w+') as f:
+        f.write(res)
+    return res, unreach_addresses.append(address), count, blk_count
+
+
+def normalize_unreachable(new_log_path, graph):
+    # print(graph.unexplored_address_list)
+    new_content, unreach_addresses, unreached_count, blk_count = remove_unreachable_inst(new_log_path, graph)
+    # print(new_content)
+    count_implicit_called_functions(new_content, unreach_addresses, graph)
+    # print(new_content)
+    # with open(new_log_path, 'w+') as f:
+    #     f.write(new_content)
+
+
+def read_parameters(output_path):
+    res_list = []
+    with open(output_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line:
+                if '# of reached instructions' in line:
+                    reached_cnt = int(line.rsplit(' ', 1)[1])
+                elif '# of paths' in line:
+                    path_cnt = int(line.rsplit(' ', 1)[1])
+                elif '# of unsound paths' in line:
+                    neg_path_cnt = int(line.rsplit(' ', 1)[1])
+                elif '# of unresolved indirects' in line:
+                    indirects_cnt = int(line.rsplit(' ', 1)[1])
+    res_list.append(reached_cnt)
+    res_list.append(path_cnt)
+    res_list.append(neg_path_cnt)
+    res_list.append(indirects_cnt)
+    return res_list
+
+
+def neat_main(graph, new_log_path, output_path):
+    global cond_jump_unreached_cnt, implicit_called_cnt
+    cond_jump_unreached_cnt, implicit_called_cnt = 0, 0
+    normalize_unreachable(new_log_path, graph)
+    para_list = read_parameters(output_path)
+    return para_list
 
 
 def parse_idapro_line(line):
@@ -44,52 +247,9 @@ def parse_idapro_line(line):
     return address, inst
 
 
-def is_located_at_code_segments(line):
-    return line.startswith(lib.CODE_SEGMENTS)
-
-
-def div_block(angr_path):
-    block_range_map = {}
-    with open(angr_path, 'r') as f:
-        in_block = False
-        start_addr = None
-        last_addr = None
-        lines = f.readlines()
-        for line in lines:
-            line = line.strip()
-            if in_block:
-                if line:
-                    address, inst = parse_angr_line(line)
-                    if inst:
-                        last_addr = address
-                else:
-                    in_block = False
-                    block_range_map[start_addr] = last_addr
-            else:
-                if line:
-                    address, inst = parse_angr_line(line)
-                    if inst:
-                        block_range_map[address] = None
-                        in_block = True
-                        start_addr = address
-                        last_addr = address
-        block_range_map[start_addr] = last_addr
-    inst_addresses = sorted(list(block_range_map.keys()))
-    # print(inst_addresses)
-    return block_range_map, inst_addresses
-
-
-# line: '0x5f0:	cmp	byte ptr [rip + 0x200a19], 0'
-def parse_angr_line(line):
-    line_split = utils.remove_multiple_spaces(line).split(' ', 1)
-    address = int(line_split[0].split(':')[0], 16)
-    inst = line_split[1]
-    return address, inst
-
-
 def collect_valid_addr_set(idapro_path):
     address_set = set([])
-    invalid_address_set = set([])
+    # invalid_address_set = set([])
     block_start_addrs = []
     with open(idapro_path, 'r') as f:
         in_block = False
@@ -104,11 +264,13 @@ def collect_valid_addr_set(idapro_path):
                         if address_inst_pattern.search(line):
                             address, inst = parse_idapro_line(line)
                             if inst and not inst.startswith(non_inst_prefix):
-                                if address not in invalid_address_set:
-                                    address_set.add(address)
+                                # if address not in invalid_address_set:
+                                address_set.add(address)
                             else:
                                 in_block = False
-                                invalid_address_set.add(address)
+                                # invalid_address_set.add(address)
+                        else:
+                            in_block = False
                     else:
                         in_block = False
                 else:
@@ -117,18 +279,24 @@ def collect_valid_addr_set(idapro_path):
                     elif is_located_at_code_segments(line):
                         if address_inst_pattern.search(line):
                             address, inst = parse_idapro_line(line)
+                            # print(hex(address) + ': ' + inst)
                             if inst and not inst.startswith(non_inst_prefix):
-                                if address not in invalid_address_set:
-                                    in_block = True
-                                    block_start_addrs.append(address)
-                                    address_set.add(address)
-                            else:
-                                invalid_address_set.add(address)
+                                # if address not in invalid_address_set:
+                                in_block = True
+                                block_start_addrs.append(address)
+                                address_set.add(address)
+                            # else:
+                            #     invalid_address_set.add(address)
     block_start_addrs.sort()
-    return address_set, block_start_addrs
+    inst_addresses = []
+    for address in address_set:
+        inst_addresses.append(address)
+    inst_addresses.sort()
+    return inst_addresses, block_start_addrs
 
 
 def find_start_addr(inst_addresses, address):
+    # print(inst_addresses)
     for idx in range(len(inst_addresses) - 1):
         curr_addr = inst_addresses[idx]
         next_addr = inst_addresses[idx + 1]
@@ -136,14 +304,12 @@ def find_start_addr(inst_addresses, address):
             return curr_addr
     return None
 
-def check(log_path, angr_path, idapro_path):
-    # block_range_map, inst_addresses = div_block(angr_path)
-    address_set, block_start_addrs = collect_valid_addr_set(idapro_path)
+# Collect all the addresses for the unreached instructions
+def collect_unreached_addrs(log_path, idapro_path):
+    inst_addresses, _ = collect_valid_addr_set(idapro_path)
+    unexplored_address_list = []
     with open(log_path, 'r') as f:
         unreach = False
-        count = 0
-        blk_count = 0
-        s_addr = None
         address = None
         lines = f.readlines()
         for line in lines:
@@ -152,39 +318,48 @@ def check(log_path, angr_path, idapro_path):
                 if unreach:
                     address = line.split(':', 1)[0].strip()
                     address = int(address, 16)
-                    if address in address_set:
-                        start_addr = find_start_addr(block_start_addrs, address)
-                        if s_addr:
-                            if start_addr != s_addr:
-                                print('\n')
-                                print(hex(address))
-                                s_addr = start_addr
-                                blk_count += 1
-                            else:
-                                print(hex(address))
-                        else:
-                            s_addr = start_addr
-                            print(hex(address))
-                        count += 1
+                    if address in inst_addresses:
+                        unexplored_address_list.append(address)
                 elif line.startswith(utils.LOG_UNREACHABLE_INDICATOR):
                         unreach = True
-        if address:
-            print(hex(address))
-        blk_count += 1
-        print('\n')
-        print(count)
-        print(blk_count)
+    return unexplored_address_list
+
+
+def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
+    global _start_segment_address
+    exec_path = os.path.join(exec_dir, file_name)
+    angr_path = os.path.join(log_dir, file_name + '.angr')
+    log_path = os.path.join(log_dir, file_name + '.log')
+    output_path = os.path.join(log_dir, file_name + '.output')
+    cmd = 'cp ' + log_path + ' ' + target_dir
+    utils.execute_command(cmd)
+    new_log_path = os.path.join(target_dir, file_name + '.log')
+    binary_info = Binary_Info(exec_path)
+    disasm_asm = Disasm_Angr(angr_path)
+    _start_segment_address = binary_info.entry_address
+    inst_addresses, block_start_addrs = collect_valid_addr_set(idapro_path)
+    unexplored_address_list = collect_unreached_addrs(log_path, idapro_path)
+    # print(disasm_asm.address_inst_map)
+    # print(block_start_addrs)
+    graph = Construct_Graph(log_path, disasm_asm.address_inst_map, inst_addresses, block_start_addrs, unexplored_address_list)
+    para_list = neat_main(graph, new_log_path, output_path)
+    if verbose:
+        print(print_info)
+    return para_list
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Concolic model checker results checking')
-    parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler type')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
-    parser.add_argument('-d', '--disasm_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
-    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-objdump', type=str, help='Disassembled folder name')
+    parser.add_argument('-e', '--elf_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
+    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-5.3.0-angr', type=str, help='Log folder name')
+    parser.add_argument('-i', '--idapro_dir', default='benchmark/coreutils-5.3.0-idapro', type=str, help='IDA Pro disassembled folder name')
+    parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print the starts of unreachable instruction blocks')
+    parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run neat_unreach in batch mode')
     args = parser.parse_args()
-    disasm_type = args.disasm_type
-    log_dir = args.log_dir
-    log_path = os.path.join(utils.PROJECT_DIR, os.path.join(log_dir, args.file_name + '.log'))
-    disasm_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.disasm_dir, args.file_name))
-    check(log_path, disasm_path + '.' + disasm_type, disasm_path + '.idapro')
+    utils.make_dir(target_dir)
+    elf_dir = os.path.join(utils.PROJECT_DIR, args.elf_dir)
+    log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
+    idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.idapro_dir, args.file_name + '.idapro'))
+    # check(log_path, disasm_path + '.idapro', unreach_path)
+    main_single(args.file_name, elf_dir, log_dir, idapro_path, args.verbose)

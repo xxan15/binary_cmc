@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
-import os
 import sys
 from ..common import lib
 from ..common import utils
@@ -32,7 +31,7 @@ ida_immediate_pat = re.compile(r'^[0-9A-F]+h')
 
 subtract_hex_pat = re.compile(r'-[0-9a-fA-F]+h')
 
-non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public')
+non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
 
 class Disasm_IDAPro(Disasm):
     def __init__(self, disasm_path):
@@ -47,7 +46,7 @@ class Disasm_IDAPro(Disasm):
         self._curr_ptr_rep = None
         self._global_data_name = set([])
         self._added_ptr_rep_map = {}
-        self._ida_struct_table = helper.init_ida_struct_info()
+        self._ida_struct_table = utils.init_ida_struct_info()
         self._variable_w_ida_struct_type = {}
         self._address_line_map = {}
         self._ida_struct_types = list(self._ida_struct_table.keys())
@@ -180,7 +179,7 @@ class Disasm_IDAPro(Disasm):
         if '.' in symbol:
             res = self._replace_ida_struct_item_symbol(symbol)
         elif ida_immediate_pat.match(symbol):
-            res = helper.convert_imm_endh_to_hex(symbol)
+            res = utils.convert_imm_endh_to_hex(symbol)
         elif utils.check_jmp_with_address(inst_name):
             if symbol in self._proc_value_map:
                 res = hex(self._proc_value_map[symbol])
@@ -215,10 +214,10 @@ class Disasm_IDAPro(Disasm):
     def _replace_each_expr(self, inst_name, content):
         stack = []
         op_stack = []
-        line = helper.rm_unused_spaces(content)
-        line_split = helper.simple_operator_pat.split(line)
+        line = utils.rm_unused_spaces(content)
+        line_split = utils.simple_operator_pat.split(line)
         for lsi in line_split:
-            if helper.simple_operator_pat.match(lsi):
+            if utils.simple_operator_pat.match(lsi):
                 op_stack.append(lsi)
             else:
                 stack.append(lsi)
@@ -304,7 +303,7 @@ class Disasm_IDAPro(Disasm):
             prefix = arg_split[0].strip()
             remaining = arg_split[1].strip()
             if ida_immediate_pat.match(remaining):
-                res = prefix + ':' + helper.convert_imm_endh_to_hex(remaining)
+                res = prefix + ':' + utils.convert_imm_endh_to_hex(remaining)
             else:
                 if ' ptr ' in prefix:
                     prefix_split = prefix.rsplit(' ', 1)
@@ -320,7 +319,7 @@ class Disasm_IDAPro(Disasm):
         m = subtract_hex_pat.search(inst)
         if m:
             hex_str = m.group(0)
-            new_hex_rep = helper.convert_imm_endh_to_hex(hex_str)
+            new_hex_rep = utils.convert_imm_endh_to_hex(hex_str)
             res = inst.replace(hex_str, new_hex_rep)
         return res
 
