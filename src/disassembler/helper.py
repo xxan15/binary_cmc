@@ -16,9 +16,6 @@
 
 import re
 import os
-import sys
-import angr
-from src.common import global_var
 
 from ..common import utils
 
@@ -60,25 +57,10 @@ simple_operator_pat = re.compile(r'(\+|-|\*)')
 remote_addr_pat = re.compile('0x2[0-9a-fA-F]{5}')
 
 
-def disassemble_to_asm(exec_path, disasm_path, disasm_type='objdump'):
+def disassemble_to_asm(disasm_path):
     if os.path.exists(disasm_path): return
-    if disasm_type == 'angr':
-        disassemble_angr(exec_path, disasm_path)
     else:
         raise Exception('The assembly file has not been generated')
-
-
-def disassemble_angr(exec_path, asm_path):
-    image_base = global_var.binary_info.ImageBase
-    proj = angr.Project(exec_path, auto_load_libs=False, load_options={'main_opts': {'base_addr': image_base}})
-    cfg = proj.analyses.CFGFast()
-    nodes = cfg.graph.nodes()
-    sys.stdout = open(asm_path, 'w+')
-    for node in nodes:
-        if node and node.block:
-            node.block.pp()
-        print('\n')
-    sys.stdout.close()
 
 
 def convert_to_hex(line):
@@ -254,6 +236,14 @@ def rm_unused_spaces(content):
     return res
 
 
+def get_ida_ptr_rep_from_item_type(item_type):
+    res = None
+    if item_type in (('dd', 'dq', 'db', 'dw')):
+        suffix = item_type[-1]
+        res = BYTE_REP_PTR_MAP[suffix]
+    return res
+
+
 def convert_imm_endh_to_hex(imm):
     tmp = imm.rsplit('h', 1)[0].strip()
     res = hex(int(tmp, 16))
@@ -272,14 +262,14 @@ def normalize_arg_byte_len_rep(arg):
 def generate_ida_ptr_rep(name, inst, length):
     word_ptr_rep = None
     if name.startswith('jmp'):
-        word_ptr_rep = 'qword ptr'
+        word_ptr_rep = BYTELEN_REP_MAP[utils.MEM_ADDR_SIZE]
     elif name == 'call':
-        word_ptr_rep = 'qword ptr'
+        word_ptr_rep = BYTELEN_REP_MAP[utils.MEM_ADDR_SIZE]
     elif name in ('mov', 'cmp'):
         if length:
             word_ptr_rep = BYTELEN_REP_MAP[length]
     elif name.startswith(('j')):
-        word_ptr_rep = 'qword ptr'
+        word_ptr_rep = BYTELEN_REP_MAP[utils.MEM_ADDR_SIZE]
     elif name.startswith(('set')):
         word_ptr_rep = 'byte ptr'
     elif name in (('subs', 'movs', 'ucomis')):

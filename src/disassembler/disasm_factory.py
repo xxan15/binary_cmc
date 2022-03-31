@@ -14,11 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .disasm_angr import Disasm_Angr
 from.disasm_idapro import Disasm_IDAPro
 
 class Disasm_Factory(object):
-    def __init__(self, disasm_path, exec_path=None, disasm_type='radare2'):
+    def __init__(self, disasm_path, exec_path=None, disasm_type='idapro'):
         self.disasm_type = disasm_type
         self.exec_path = exec_path
         self.disasm_path = disasm_path
@@ -26,9 +25,7 @@ class Disasm_Factory(object):
 
     def get_disasm(self):
         if self.disasm_type:
-            if self.disasm_type == 'angr':
-                return Disasm_Angr(self.disasm_path)
-            elif self.disasm_type == 'idapro':
+            if self.disasm_type == 'idapro':
                 return Disasm_IDAPro(self.disasm_path)
         return None
 

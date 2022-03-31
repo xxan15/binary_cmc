@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# python -m src.check.check_reachability -e benchmark/pe_benchmark -l benchmark/pe_benchmark -i benchmark/pe_benchmark -f HOSTNAME.EXE -v
-# python -m src.check.check_reachability -e benchmark/coreutils-5.3.0-bin/bin -l benchmark/coreutils-5.3.0-angr -i benchmark/coreutils-5.3.0-idapro -f basename.exe -v
+# python -m src.check.check_reachability -e benchmark/pe_benchmark -l benchmark/pe_benchmark -f HOSTNAME.EXE -v
+# python -m src.check.check_reachability -e benchmark/coreutils-5.3.0-bin/bin -l benchmark/coreutils-5.3.0-idapro -f basename.exe -v
 
 import os
 import re
@@ -25,7 +25,6 @@ import argparse
 from ..common import lib
 from ..common import utils
 from ..binary.binary_info import Binary_Info
-from ..disassembler.disasm_angr import Disasm_Angr
 from ..disassembler.disasm_idapro import Disasm_IDAPro
 from .construct_graph import Construct_Graph
 
@@ -297,9 +296,9 @@ def pp_para_list(file_name, para_list):
         if i < 4:
             res += str(val) + '\t'
         elif i in (4, 6, 8):
-            res += str(val) + ' | '
-        elif i in (5, 7, 9):
             res += str(val) + '\t'
+        # elif i in (5, 7, 9):
+        #     res += str(val) + '\t'
         elif i == 10:
             res += str(val)
     # print('\t'.join([str(i) for i in para_list]))
@@ -308,14 +307,13 @@ def pp_para_list(file_name, para_list):
 def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
     global _start_segment_address
     exec_path = os.path.join(exec_dir, file_name)
-    angr_path = os.path.join(log_dir, file_name + '.angr')
     log_path = os.path.join(log_dir, file_name + '.log')
     output_path = os.path.join(log_dir, file_name + '.output')
     cmd = 'cp ' + log_path + ' ' + target_dir
     utils.execute_command(cmd)
     new_log_path = os.path.join(target_dir, file_name + '.log')
     binary_info = Binary_Info(exec_path)
-    disasm_asm = Disasm_Angr(angr_path)
+    disasm_asm = Disasm_IDAPro(idapro_path)
     _start_segment_address = binary_info.entry_address
     inst_addresses = list(disasm_asm.address_inst_map.keys())
     inst_addresses.sort()
@@ -333,17 +331,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Concolic model checker results checking')
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-e', '--exec_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
-    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-5.3.0-angr', type=str, help='Log folder name')
-    parser.add_argument('-i', '--idapro_dir', default='benchmark/coreutils-5.3.0-idapro', type=str, help='IDA Pro disassembled folder name')
+    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-5.3.0-idapro', type=str, help='Log folder name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print the starts of unreachable instruction blocks')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run neat_unreach in batch mode')
     args = parser.parse_args()
     utils.make_dir(target_dir)
     exec_dir = os.path.join(utils.PROJECT_DIR, args.exec_dir)
     log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
-    idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.idapro_dir, args.file_name + '.idapro'))
-    # check(log_path, disasm_path + '.idapro', unreach_path)
-    file_name = args.file_name
-    for file_name in ['seq.exe', 'setuidgid.exe', 'sha1sum.exe', 'sleep.exe', 'stty.exe', 'sum.exe', 'sync.exe', 'tee.exe', 'tr.exe', 'true.exe', 'tsort.exe', 'tty.exe', 'uname.exe', 'unexpand.exe', 'uniq.exe', 'unlink.exe', 'uptime.exe', 'users.exe', 'whoami.exe', 'yes.exe']:
+    idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.log_dir, args.file_name + '.idapro'))
+    if args.batch:
+        for file_name in ['seq.exe', 'setuidgid.exe', 'sha1sum.exe', 'sleep.exe', 'stty.exe', 'sum.exe', 'sync.exe', 'tee.exe', 'tr.exe', 'true.exe', 'tsort.exe', 'tty.exe', 'uname.exe', 'unexpand.exe', 'uniq.exe', 'unlink.exe', 'uptime.exe', 'users.exe', 'whoami.exe', 'yes.exe']:
+            main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose)
+            time.sleep(5)
+    else:
+        file_name = args.file_name
         main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose)
-        time.sleep(5)
+    

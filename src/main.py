@@ -72,14 +72,11 @@ def close_logger():
 
 
 def write_results(disasm_asm, cfg):
-    # num_of_verified_functions = len(cfg.func_call_order)
-    num_of_paths, num_of_positives, num_of_negatives = cfg.cmc_exec_info[0:3]
+    num_of_paths, _, num_of_negatives = cfg.cmc_exec_info[0:3]
     reachable_address_num = cfg.reachable_addresses_num()
     utils.output_logger.info('# of instructions: ' + str(disasm_asm.valid_address_no))
     utils.output_logger.info('# of reached instructions: ' + str(reachable_address_num))
-    # utils.output_logger.info('# of verified functions: ' + str(num_of_verified_functions))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
-    # utils.output_logger.info('# of sound paths: ' + str(num_of_positives))
     utils.output_logger.info('# of unsound paths: ' + str(num_of_negatives))
     utils.output_logger.info('# of unresolved indirects: ' + str(cfg.num_of_unresolved_indirects))
     
@@ -87,8 +84,8 @@ def write_results(disasm_asm, cfg):
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     set_logger(disasm_path, disasm_type, verbose)
     global_var.get_binary_info(exec_path)
-    helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
-    disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
+    helper.disassemble_to_asm(disasm_path)
+    disasm_factory = Disasm_Factory(disasm_path, exec_path)
     disasm_asm = disasm_factory.get_disasm()
     if disasm_asm.valid_address_no < 10000:
         print(exec_path)

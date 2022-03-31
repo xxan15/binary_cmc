@@ -26,7 +26,7 @@ address_inst_pattern = re.compile('^[.a-zA-Z]+:[0-9a-zA-Z]+[ ]{17}[a-zA-Z]')
 
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$|^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
 
-variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+')
+variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_]+')
 ida_immediate_pat = re.compile(r'^[0-9A-F]+h')
 
 subtract_hex_pat = re.compile(r'-[0-9a-fA-F]+h')
@@ -70,7 +70,9 @@ class Disasm_IDAPro(Disasm):
                         self._global_data_name.add(var_name)
             for line in lines:
                 line = line.strip()
-                if variable_expr_pat.search(line):
+                if ' extrn ' in line:
+                    self._store_extern_func_info(line)
+                elif variable_expr_pat.search(line):
                     self._read_variable_value(line)
                 elif self._is_located_at_code_segments(line):
                     if address_inst_pattern.search(line):
@@ -93,7 +95,21 @@ class Disasm_IDAPro(Disasm):
             inst = self._format_inst(address, inst, rip)
             self.address_inst_map[address] = inst
             self.address_next_map[address] = rip
+
         
+
+    def _store_extern_func_info(self, line):
+        line = utils.remove_multiple_spaces(line).strip()
+        line = line.split(';', 1)[0].strip()
+        line_split = line.split(' ', 1)
+        address_str = line_split[0].rsplit(':', 1)[1].strip()
+        address = int(address_str, 16)
+        var_str = line_split[1].strip()
+        var_split = var_str.split(' ', 1)
+        var_split = var_str.split(' ', 1)
+        var_name = var_split[1].rsplit(':', 1)[0].strip()
+        self._variable_value_map[var_name] = address
+
 
     # line: .text:0000000000002050 var_E0          = dword ptr -0E0h
     def _read_variable_value(self, line):
@@ -113,8 +129,8 @@ class Disasm_IDAPro(Disasm):
             self._variable_offset_map[var_name] = address
             self._variable_value_map[var_name] = address
             self._variable_ptr_rep_map[var_name] = helper.BYTE_REP_PTR_MAP[suffix]
-        elif ' = ' in var_str:
-            self._parse_variable_val_in_assignment_expr(line, var_split, var_name, address)
+        elif '= ' in var_str:
+            self._parse_variable_val_in_assignment_expr(line, var_str, address)
         elif var_name.startswith('xmmword_'):
             self._variable_offset_map[var_name] = address
             var_name_split = var_name.rsplit(':', 1)[0].strip().rsplit('_', 1)
@@ -239,7 +255,6 @@ class Disasm_IDAPro(Disasm):
                 res = prefix + ' [' + mem_addr + ']'
             elif 's:' in prefix:
                 prefix_split = prefix.split(':', 1)
-                seg_reg = prefix_split[0]
                 if len(prefix_split) == 2:
                     prefix_suffix = prefix_split[1].strip()
                     if utils.imm_pat.match(prefix_suffix):
@@ -402,9 +417,11 @@ class Disasm_IDAPro(Disasm):
         return res
 
 
-    def _parse_variable_val_in_assignment_expr(self, line, var_split, var_name, address):
+    def _parse_variable_val_in_assignment_expr(self, line, var_str, address):
+        var_split = var_str.split('=', 1)
+        var_name = var_split[0].strip()
         self._variable_offset_map[var_name] = address
-        var_value = var_split[1].split('=', 1)[1].strip()
+        var_value = var_split[1].strip()
         var_value_split = var_value.rsplit(' ', 1)
         ptr_rep = var_value_split[0].strip()
         type_spec = ptr_rep.split('ptr', 1)[0].strip()
@@ -444,14 +461,16 @@ class Disasm_IDAPro(Disasm):
         if 'offset ' in content:
             original = None
             new_var = None
-            content_split = re.split(r'(\W+)', content)
+            content_split = re.split(r'[^a-zA-Z0-9_.]+', content)
             for idx, ci in enumerate(content_split):
                 if ci == 'offset':
-                    if len(content) > idx + 2:
-                        variable = content_split[idx + 2]
+                    if len(content_split) > idx + 1:
+                        variable = content_split[idx + 1]
                         original = 'offset ' + variable
                         if variable in self._variable_offset_map:
                             new_var = hex(self._variable_offset_map[variable])
+                        elif '.' in variable:
+                            new_var = self._replace_ida_struct_item_symbol(variable)
                     break
             if new_var:
                 content = content.replace(original, new_var)

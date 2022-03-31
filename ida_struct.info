@@ -3,8 +3,9 @@
 # item_name: offset, item_type (? represents undefined or unknown type)
 
 mbstate_t:
-__count: 0, dd
-__value: 4, ?
+_Wchar: 0, dd
+_Byte: 4, dw
+_State: 6, dw
 
 timespec:
 tv_sec: 0, dq
@@ -73,5 +74,23 @@ c_line: 16, db
 c_cc: 17, db
 c_ispeed: 52, dd
 c_ospeed: 56, dd
+
+
+FILE:
+_ptr: 0, dd
+_cnt: 4, dd
+_base: 8, dd
+_flag: 12, dd
+_file: 16, dd
+_charbuf: 20, dd
+_bufsiz: 24, dd
+_tmpfname: 28, dd
+
+
+
+
+
+
+
 
 
