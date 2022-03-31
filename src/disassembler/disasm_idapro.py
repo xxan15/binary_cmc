@@ -38,6 +38,8 @@ class Disasm_IDAPro(Disasm):
         self.disasm_path = disasm_path
         self.address_inst_map = {}
         self.address_next_map = {}
+        self.address_label_map = {}
+        self.address_ext_func_map = {}
         self._variable_offset_map = {}
         self._variable_value_map = {}
         self._proc_value_map = {}

@@ -19,6 +19,7 @@
 
 import os
 import re
+import time
 import argparse
 
 from ..common import lib
@@ -342,4 +343,7 @@ if __name__ == '__main__':
     log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
     idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.idapro_dir, args.file_name + '.idapro'))
     # check(log_path, disasm_path + '.idapro', unreach_path)
-    main_single(args.file_name, exec_dir, log_dir, idapro_path, args.verbose)
+    file_name = args.file_name
+    for file_name in ['seq.exe', 'setuidgid.exe', 'sha1sum.exe', 'sleep.exe', 'stty.exe', 'sum.exe', 'sync.exe', 'tee.exe', 'tr.exe', 'true.exe', 'tsort.exe', 'tty.exe', 'uname.exe', 'unexpand.exe', 'uniq.exe', 'unlink.exe', 'uptime.exe', 'users.exe', 'whoami.exe', 'yes.exe']:
+        main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose)
+        time.sleep(5)

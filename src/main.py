@@ -90,11 +90,13 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     helper.disassemble_to_asm(exec_path, disasm_path, disasm_type)
     disasm_factory = Disasm_Factory(disasm_path, exec_path, disasm_type)
     disasm_asm = disasm_factory.get_disasm()
-    start_time = time.time()
-    cfg = construct_cfg(disasm_asm)
-    exec_time = time.time() - start_time
-    write_results(disasm_asm, cfg)
-    utils.output_logger.info('Execution time (s): ' + str(exec_time))
+    if disasm_asm.valid_address_no < 10000:
+        print(exec_path)
+        start_time = time.time()
+        cfg = construct_cfg(disasm_asm)
+        exec_time = time.time() - start_time
+        write_results(disasm_asm, cfg)
+        utils.output_logger.info('Execution time (s): ' + str(exec_time))
     close_logger()
 
 
@@ -103,15 +105,16 @@ def cmc_batch(exec_dir, disasm_dir, disasm_type, verbose=False):
     exec_files.sort()
     for exec_path in exec_files:
         file_name = utils.get_file_name(exec_path)
-        print(file_name)
-        disasm_path = os.path.join(disasm_dir, file_name + '.' + disasm_type)
-        try:
-            cmc_main(exec_path, disasm_path, disasm_type, verbose)
-            time.sleep(15)
-        except:
-            close_logger()
-            time.sleep(15)
-            continue
+        if file_name not in ['[.exe', 'basename.exe', 'cat.exe', 'chgrp.exe', 'chmod.exe', 'chown.exe', 'chroot.exe', 'cksum.exe', 'comm.exe']:
+            print(file_name)
+            disasm_path = os.path.join(disasm_dir, file_name + '.' + disasm_type)
+            try:
+                cmc_main(exec_path, disasm_path, disasm_type, verbose)
+                time.sleep(15)
+            except:
+                close_logger()
+                time.sleep(15)
+                continue
 
 
 def cmc_specified(file_names, exec_dir, disasm_dir, disasm_type, verbose=False):
@@ -129,9 +132,9 @@ def cmc_specified(file_names, exec_dir, disasm_dir, disasm_type, verbose=False):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Concolic Model Checker')
-    parser.add_argument('-t', '--disasm_type', default='angr', type=str, help='Disassembler')
+    parser.add_argument('-t', '--disasm_type', default='idapro', type=str, help='Disassembler')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run cmc_main in batch mode') 
-    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-angr', type=str, help='Benchmark library') 
+    parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-idapro', type=str, help='Benchmark library') 
     parser.add_argument('-e', '--exec_dir', default='benchmark/coreutils-build/src', type=str, help='Elf shared object library') 
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Whether to print log information on the screen')
