@@ -27,6 +27,8 @@ from enum import Enum
 
 MAX_LOOP_COUNT = 5
 
+MAX_VISIT_COUNT = 25
+
 MAX_TRACEBACK_COUNT = 50
 MAX_INST_ADDR_GAP = 25
 

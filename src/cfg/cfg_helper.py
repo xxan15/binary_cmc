@@ -118,19 +118,19 @@ def get_distinct_jt_entries(blk, src_sym, jt_idx_upperbound, block_set):
 def detect_loop(block, address, new_address, block_set):
     exists_loop = False
     parent_id = block.parent_id
-    # prev_address = None
+    prev_address = None
     addr_list = []
     while parent_id:
         # if parent_id in block_set:
         parent_blk = block_set[parent_id]
         p_address = parent_blk.address
         if p_address == address:
-            # if prev_address and prev_address == new_address:
-            exists_loop = True
-            break
+            if prev_address and prev_address == new_address:
+                exists_loop = True
+                break
         addr_list.append(p_address)
         parent_id = parent_blk.parent_id
-        # prev_address = p_address
+        prev_address = p_address
         # else: break
     return exists_loop, addr_list
 
@@ -511,6 +511,33 @@ def insert_new_constraints(store, rip, block_id, ext_name, pre_constraint, const
             new_constraint = Constraint(constraint, predicates)
     return new_constraint
 
+
+def detect_reg_in_memaddr_rep(arg):
+    arg_split = re.split(r'(\W+)', arg)
+    res = []
+    for asi in arg_split:
+        asi = asi.strip()
+        if asi in lib.REG_NAMES:
+            res.append(smt_helper.get_root_reg(asi))
+    return res
+
+
+def retrieve_source_for_memaddr(inst, common):
+    sym_names = []
+    if common:
+        inst_split = inst.strip().split(' ', 1)
+        inst_args = utils.parse_inst_args(inst_split)
+        for arg in inst_args:
+            if arg.endswith(']'):
+                arg = utils.extract_content(arg, '[')
+                sym_names = detect_reg_in_memaddr_rep(arg)
+                break
+    else:
+        sym_names = ['rdi']
+    if sym_names: pass
+    else:
+        print(inst)
+    return sym_names
 
 
 def add_explain_suffix(store, rip, inst, address_sym_table):

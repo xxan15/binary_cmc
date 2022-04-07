@@ -87,13 +87,13 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     helper.disassemble_to_asm(disasm_path)
     disasm_factory = Disasm_Factory(disasm_path, exec_path)
     disasm_asm = disasm_factory.get_disasm()
-    if disasm_asm.valid_address_no < 10000:
-        print(exec_path)
-        start_time = time.time()
-        cfg = construct_cfg(disasm_asm)
-        exec_time = time.time() - start_time
-        write_results(disasm_asm, cfg)
-        utils.output_logger.info('Execution time (s): ' + str(exec_time))
+    # if disasm_asm.valid_address_no < 10000:
+        # print(exec_path)
+    start_time = time.time()
+    cfg = construct_cfg(disasm_asm)
+    exec_time = time.time() - start_time
+    write_results(disasm_asm, cfg)
+    utils.output_logger.info('Execution time (s): ' + str(exec_time))
     close_logger()
 
 

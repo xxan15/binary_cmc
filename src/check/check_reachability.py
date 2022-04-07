@@ -21,6 +21,7 @@ import os
 import re
 import time
 import argparse
+from enum import Enum
 
 from ..common import lib
 from ..common import utils
@@ -39,12 +40,19 @@ variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+')
 non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
 
 
+class UNREACHED_TYPE(Enum):
+    UNREACHED_CONDITIONAL = 0
+    UNREACHED_NO_EXPLICIT_ENTRIES = 1
+    UNREACHED_ENTRIES_CONDITIONAL = 2
+    UNREACHED_ENTRIES_NO_EXPLICIT = 3
+
+
 def is_located_at_code_segments(line):
     return line.startswith(lib.CODE_SEGMENTS)
 
 
 def append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph):
-    # res = ''
+    res = ''
     cnt = 0
     if start_address in inst_addresses:
         s_idx = inst_addresses.index(start_address)
@@ -55,9 +63,9 @@ def append_all_addresses(start_address, end_address, inst_addresses, address_ins
                 inst = address_inst_map[address]
                 if not (inst.startswith('nop ') or inst == 'nop'):
                     cnt += 1
-                    # res += utils.u_hex(address) + ': ' + inst + '\n'
-    # res += '\n'
-    return cnt
+                    res += utils.u_hex(address) + ': ' + inst + '\n'
+    res += '\n'
+    return res, cnt
 
 
 def divide_to_block(new_content):
@@ -79,9 +87,26 @@ def divide_to_block(new_content):
     return start_address_list, end_address_list
 
 
-def count_implicit_called_functions(new_content, unreach_addresses, graph):
-    global cond_jump_unreached_cnt, c_blk_cnt, implicit_called_cnt, i_blk_cnt, unreached_entries_cnt, u_blk_cnt
-    start_address_list, end_address_list = divide_to_block(new_content)
+def reconstruct_new_content(start_address_list, end_address_list, graph):
+    global unreached_class_map
+    content = ''
+    inst_addresses = graph.inst_addresses
+    address_inst_map = graph.address_inst_map
+    for start_address, end_address in zip(start_address_list, end_address_list):
+        res, _ = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+        unreached_class = unreached_class_map[start_address]
+        if unreached_class in (UNREACHED_TYPE.UNREACHED_CONDITIONAL, UNREACHED_TYPE.UNREACHED_ENTRIES_CONDITIONAL):
+            content += 'unreached due to conditional jump (upperbound is hit)\n'
+            content += res + '\n'
+        else:
+            content += 'unreached due to implicit called function or unresolved indirect jump\n'
+            content += res + '\n'
+    return content
+
+
+def count_refined_implicit_called_functions(unreach_addresses, start_address_list, end_address_list, graph):
+    global cond_jump_unreached_cnt, implicit_called_cnt, unreached_class_map
+    undecided_info = {}
     inst_addresses = graph.inst_addresses
     address_inst_map = graph.address_inst_map
     address_entries_map = graph.address_entries_map
@@ -94,26 +119,85 @@ def count_implicit_called_functions(new_content, unreach_addresses, graph):
                     # If the entry point to the address is reachable
                     if entry_address not in unreach_addresses:
                         reached_entry = True
-                        cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
-                        cond_jump_unreached_cnt += cnt
-                        c_blk_cnt += 1
                         break
                 if not reached_entry:
-                    # The entries for these blocks are not reached
-                    cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
-                    unreached_entries_cnt += cnt
-                    u_blk_cnt += 1
+                    maybe_reached = False
+                    for entry_address in address_entries_map[start_address]:
+                        entry_start_addr = find_start_addr(start_address_list, entry_address)
+                        if entry_start_addr in unreached_class_map:
+                            if unreached_class_map[entry_start_addr] == UNREACHED_TYPE.UNREACHED_CONDITIONAL:
+                                maybe_reached = True
+                                _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                                unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_ENTRIES_CONDITIONAL
+                                cond_jump_unreached_cnt += cnt
+                                if start_address in undecided_info:
+                                    del undecided_info[start_address]
+                                break
+                        else:
+                            if start_address in undecided_info:
+                                undecided_info[start_address].append(entry_start_addr)
+                            else:
+                                undecided_info[start_address] = [entry_start_addr]
+                    if not maybe_reached and start_address not in undecided_info:
+                        _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                        unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_ENTRIES_NO_EXPLICIT
+                        implicit_called_cnt += cnt
+                        # i_blk_cnt += 1
+            else:
+                pass
+        else:
+            pass
+    for start_address in undecided_info:
+        maybe_reached = False
+        index = start_address_list.index(start_address)
+        end_address = end_address_list[index]
+        for entry_address in address_entries_map[start_address]:
+            entry_start_addr = find_start_addr(start_address_list, entry_address)
+            if entry_start_addr in unreached_class_map:
+                if unreached_class_map[entry_start_addr] == UNREACHED_TYPE.UNREACHED_CONDITIONAL:
+                    maybe_reached = True
+                    _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                    unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_ENTRIES_CONDITIONAL
+                    cond_jump_unreached_cnt += cnt
+                    break
+        if not maybe_reached:
+            _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+            unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_ENTRIES_NO_EXPLICIT
+            implicit_called_cnt += cnt
+
+
+
+def count_implicit_called_functions(start_address_list, end_address_list, unreach_addresses, graph):
+    global cond_jump_unreached_cnt, implicit_called_cnt, unreached_class_map
+    unreached_class_map = {}
+    inst_addresses = graph.inst_addresses
+    address_inst_map = graph.address_inst_map
+    address_entries_map = graph.address_entries_map
+    for start_address, end_address in zip(start_address_list, end_address_list):
+        if start_address in graph.block_start_addrs:
+            if start_address in address_entries_map:
+                # if len(address_entries_map[start_address]) > 0:
+                for entry_address in address_entries_map[start_address]:
+                    # If the entry point to the address is reachable
+                    if entry_address not in unreach_addresses:
+                        unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_CONDITIONAL
+                        _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                        cond_jump_unreached_cnt += cnt
+                        # c_blk_cnt += 1
+                        break
             else:
                 # No explicit entries for these unreached blocks
-                cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+                unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_NO_EXPLICIT_ENTRIES
                 implicit_called_cnt += cnt
-                i_blk_cnt += 1
+                # i_blk_cnt += 1
         else:
             # The starting address of the unreached block is not the starting address of any block divided by IDA Pro
             # Before the starting address, there should be some conditional jump instruction
-            cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+            _, cnt = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
+            unreached_class_map[start_address] = UNREACHED_TYPE.UNREACHED_CONDITIONAL            
             cond_jump_unreached_cnt += cnt
-            c_blk_cnt += 1
+    count_refined_implicit_called_functions(unreach_addresses, start_address_list, end_address_list, graph)
 
 
 # Remove the real unreachable instructions from the results
@@ -169,10 +253,12 @@ def normalize_unreachable(new_log_path, graph):
     # print(graph.unexplored_address_list)
     new_content, unreach_addresses, unreached_count, blk_count = remove_unreachable_inst(new_log_path, graph)
     # print(new_content)
-    count_implicit_called_functions(new_content, unreach_addresses, graph)
+    start_address_list, end_address_list = divide_to_block(new_content)
+    count_implicit_called_functions(start_address_list, end_address_list, unreach_addresses, graph)
+    new_content = reconstruct_new_content(start_address_list, end_address_list, graph)
     # print(new_content)
-    # with open(new_log_path, 'w+') as f:
-    #     f.write(new_content)
+    with open(new_log_path, 'w+') as f:
+        f.write(new_content)
     return unreached_count, blk_count
 
 
@@ -201,19 +287,18 @@ def read_parameters(output_path):
 
 
 def neat_main(graph, new_log_path, output_path):
-    global cond_jump_unreached_cnt, c_blk_cnt, implicit_called_cnt, i_blk_cnt, unreached_entries_cnt, u_blk_cnt
-    cond_jump_unreached_cnt, implicit_called_cnt, unreached_entries_cnt = 0, 0, 0
-    c_blk_cnt, i_blk_cnt, u_blk_cnt = 0, 0, 0
+    global cond_jump_unreached_cnt, implicit_called_cnt
+    cond_jump_unreached_cnt, implicit_called_cnt = 0, 0
     normalize_unreachable(new_log_path, graph)
     para_list, exec_time = read_parameters(output_path)
     # para_list.append(unreached_count)
     # para_list.append(blk_count)
     para_list.append(cond_jump_unreached_cnt)
-    para_list.append(c_blk_cnt)
+    # para_list.append(c_blk_cnt)
     para_list.append(implicit_called_cnt)
-    para_list.append(i_blk_cnt)
-    para_list.append(unreached_entries_cnt)
-    para_list.append(u_blk_cnt)
+    # para_list.append(i_blk_cnt)
+    # para_list.append(unreached_entries_cnt)
+    # para_list.append(u_blk_cnt)
     para_list.append(exec_time)
     return para_list
 
@@ -295,11 +380,11 @@ def pp_para_list(file_name, para_list):
         val = para_list[i]
         if i < 4:
             res += str(val) + '\t'
-        elif i in (4, 6, 8):
+        elif i in (4, 5):
             res += str(val) + '\t'
         # elif i in (5, 7, 9):
         #     res += str(val) + '\t'
-        elif i == 10:
+        elif i == 6:
             res += str(val)
     # print('\t'.join([str(i) for i in para_list]))
     print(res)

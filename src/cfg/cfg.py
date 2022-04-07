@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
-import re
+
 from ..common.inst_element import Inst_Elem
 from ..common import utils
 from ..common import lib
@@ -86,14 +86,7 @@ class CFG(object):
         while self.block_stack:
             curr = self.block_stack.pop()
             # utils.logger.debug('%s: %s' % (hex(curr.address), curr.inst))
-            # if curr.address == 0x40256d:
-                # utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
-            # elif curr.address == 0x4024fe:
-            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
-            # elif curr.address == 0x402659:
-            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
-            # elif curr.address in (0x4024ff, 0x402512, 0x402578):
-            #     utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
+            # utils.logger.debug(str(curr.block_id) + '\n' + curr.sym_store.pp_store())
             address, inst, sym_store, constraint = curr.address, curr.inst, curr.sym_store, curr.constraint
             if inst and inst.startswith('bnd '):
                 inst = inst.strip().split(' ', 1)[1]
@@ -125,6 +118,7 @@ class CFG(object):
                     self.loop_trace_counter[(address, new_address)] += 1
                     self.jump_to_block_w_new_constraint(block, inst, new_address, sym_store, constraint, val, need_new_constraint)
                 else:
+                    self.loop_trace_counter[(address, new_address)] = 0
                     utils.logger.info('The path is terminated since the loop upperbound is hit')
                     self.handle_cmc_path_termination(sym_store.store)
             else:
@@ -213,8 +207,6 @@ class CFG(object):
             ext_handler.ext__libc_start_main(store, rip, self.main_address, block.block_id, inv_names)
             new_constraint = cfg_helper.insert_new_constraints(store, rip, block.block_id, ext_name, pre_constraint, constraint)
             self.jump_to_block(block, next_address, sym_store, new_constraint)
-        elif ext_func_name.startswith('pthread_create'):
-            self._cfg_create_new_thread(ext_func_address, ext_func_name, block, address, inst, sym_store, constraint, inv_names, pre_constraint)
         else:
             if ext_func_name.startswith(('malloc', 'calloc', 'realloc')):
                 ext_handler.ext_alloc_mem_call(store, rip, ext_name, block.block_id)
@@ -232,9 +224,6 @@ class CFG(object):
                     utils.logger.info('The symbolic execution has been terminated at the path due to the call of the function ' + ext_name + '\n')
                     return
                 new_constraint = cfg_helper.insert_new_constraints(store, rip, block.block_id, ext_name, pre_constraint, constraint)
-                # if ext_name.startswith('strndup'):
-                #     print('strndup')
-                #     print(sym_engine.get_sym(store, rip, 'rax', block.block_id))
             self.build_ret_branch(block, address, sym_store, new_constraint)
                 
 
@@ -763,39 +752,10 @@ class CFG(object):
         utils.logger.info('\n\n')
 
 
-    def _detect_reg_in_memaddr_rep(self, arg):
-        arg_split = re.split(r'(\W+)', arg)
-        res = []
-        for asi in arg_split:
-            asi = asi.strip()
-            if asi in lib.REG_NAMES:
-                res.append(smt_helper.get_root_reg(asi))
-        return res
-
-
-    def _retrieve_source_for_memaddr(self, inst, common):
-        sym_names = []
-        if common:
-            inst_split = inst.strip().split(' ', 1)
-            inst_args = utils.parse_inst_args(inst_split)
-            for arg in inst_args:
-                if arg.endswith(']'):
-                    arg = utils.extract_content(arg, '[')
-                    sym_names = self._detect_reg_in_memaddr_rep(arg)
-                    break
-        else:
-            sym_names = ['rdi']
-        if sym_names: pass
-        else:
-            print(inst)
-        return sym_names
-
-
-
     def _terminate_path_w_pointer_related_errors(self, block, sym_store, address, inst, common=True):
         utils.output_logger.info('Terminate path with pointer-related error at ' + hex(address) + ': ' + inst)
         # print('Pointer-related error at ' + hex(address) + ': ' + inst)
-        sym_names = self._retrieve_source_for_memaddr(inst, common)
+        sym_names = cfg_helper.retrieve_source_for_memaddr(inst, common)
         if sym_names:
             # utils.logger.info('terminate_path_w_pointer_related_errors')
             # print(sym_names)
@@ -884,40 +844,15 @@ class CFG(object):
     def _explored_func_block(self, sym_store, new_address):
         blk_list = self.address_block_map[new_address]
         cnt = len(blk_list)
-        if cnt > utils.MAX_VISIT_COUNT: return True
+        if cnt > utils.MAX_VISIT_COUNT:
+            return True
         elif cnt == 0: return False
         blk = blk_list[-1]
         prev_sym_store = blk.sym_store
-        new_inst = self.address_inst_map[new_address]
+        # new_inst = self.address_inst_map[new_address]
         new_sym_store = Sym_Store(sym_store.store, prev_sym_store.rip)
         res = new_sym_store.state_ith_eq(prev_sym_store) and new_sym_store.aux_mem_eq(prev_sym_store, lib.AUX_MEM)
         return res
-
-
-    def _remove_all_children_block(self, p_block_id):
-        block_id_list = []
-        block_id_stack = [p_block_id]
-        if p_block_id in self.block_set:
-            p_block = self.block_set[p_block_id]
-            while block_id_stack:
-                curr_block_id = block_id_stack.pop()
-                curr_block = self.block_set[curr_block_id]
-                children_block_list = curr_block.children_blk_list
-                for children_block_id in children_block_list:
-                    if children_block_id != curr_block_id and children_block_id != -1:
-                        if children_block_id not in block_id_list:
-                            block_id_list.append(children_block_id)
-                            block_id_stack.append(children_block_id)
-            sorted(block_id_list, reverse=True)
-            for block_id in block_id_list:
-                block = self.block_set[block_id]
-                address = block.address
-                if address in self.address_block_map:
-                    del self.address_block_map[address]
-                del self.block_set[block_id]
-                if block in self.block_stack:
-                    self.block_stack.remove(block)
-            p_block.children_blk_list = []
 
 
     def _jump_to_next_block(self, block, address, sym_store, constraint):
@@ -925,24 +860,6 @@ class CFG(object):
         if new_address != -1:
             self.jump_to_block(block, new_address, sym_store, constraint)
 
-
-    def _cfg_create_new_thread(self, ext_func_address, ext_func_name, block, address, inst, sym_store, constraint, inv_names, pre_constraint):  
-        store, rip = sym_store.store, sym_store.rip
-        jmp_sym_store = Sym_Store(store, rip)
-        sym_rdi = sym_engine.get_sym(store, rip, 'rdi', block.block_id)
-        if sym_helper.sym_is_int_or_bitvecnum(sym_rdi):
-            semantics.ret(jmp_sym_store.store, block.block_id)
-            rdi_val = sym_helper.int_from_sym(sym_rdi)
-            if rdi_val in self.address_inst_map:
-                # utils.logger.info(hex(address) + ': jump address is ' + sym_helper.string_of_address(rdi_val))
-                self.jump_to_block(block, rdi_val, jmp_sym_store, constraint)
-        fall_through_sym_store = Sym_Store(store, rip)
-        mem_preserve_assumption = True if ext_func_address in self.external_mem_preservation else False
-        ext_handler.ext_func_call(fall_through_sym_store.store, fall_through_sym_store.rip, block.block_id, mem_preserve_assumption)
-        ext_name = ext_func_name.split('@', 1)[0].strip()
-        new_constraint = cfg_helper.insert_new_constraints(store, rip, block.block_id, ext_name, pre_constraint, constraint)
-        self.build_ret_branch(block, address, fall_through_sym_store, new_constraint)  
-        
 
     def draw_callgraph(self, file_path):
         res = 'digraph callgraph {\n'
