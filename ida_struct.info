@@ -237,6 +237,27 @@ hStdOutput: 60, dd
 hStdError: 64, dd
 
 
+_STARTUPINFOW:
+cb: 0, dd
+lpReserved: 4, dd
+lpDesktop: 8, dd
+lpTitle: 12, dd
+dwX: 16, dd
+dwY: 20, dd
+dwXSize: 24, dd
+dwYSize: 28, dd
+dwXCountChars: 32, dd
+dwYCountChars: 36, dd
+dwFillAttribute: 40, dd
+dwFlags: 44, dd
+wShowWindow: 48, dw
+cbReserved2: 50, dw
+lpReserved2: 52, dd
+hStdInput: 56, dd
+hStdOutput: 60, dd
+hStdError: 64, dd
+
+
 _cpinfo:
 MaxCharSize: 0, dd
 DefaultChar: 4, db
@@ -337,6 +358,234 @@ dwMinorVersion: 8, dd
 dwBuildNumber: 12, dd
 dwPlatformId: 16, dd
 szCSDVersion: 20, dw
+
+
+_SID_IDENTIFIER_AUTHORITY:
+Value: 0, db
+
+
+tagRECT:
+left: 0, dd
+top: 4, dd
+right: 8, dd
+bottom: 12, dd
+
+
+_WIN32_FIND_DATAW:
+dwFileAttributes: 0, dd
+ftCreationTime: 4, FILETIME
+ftLastAccessTime: 12, FILETIME
+ftLastWriteTime: 20, FILETIME
+nFileSizeHigh: 28, dd
+nFileSizeLow: 32, dd
+dwReserved0: 36, dd
+dwReserved1: 40, dd
+cFileName: 44, dw
+cAlternateFileName: 564, dw
+
+
+
+_MEMORYSTATUSEX:
+dwLength: 0, dd
+dwMemoryLoad: 4, dd
+ullTotalPhys: 8, dq
+ullAvailPhys: 16, dq
+ullTotalPageFile: 24, dq
+ullAvailPageFile: 32, dq
+ullTotalVirtual: 40, dq
+ullAvailVirtual: 48, dq
+ullAvailExtendedVirtual: 56, dq
+
+
+
+tagSIZE:
+_cx: 0, dd
+cy: 4, dd
+
+
+
+tagTEXTMETRICW:
+tmHeight: 0, dd
+tmAscent: 4, dd
+tmDescent: 8, dd
+tmInternalLeading: 12, dd
+tmExternalLeading: 16, dd
+tmAveCharWidth: 20, dd
+tmMaxCharWidth: 24, dd
+tmWeight: 28, dd
+tmOverhang: 32, dd
+tmDigitizedAspectX: 36, dd
+tmDigitizedAspectY: 40, dd
+tmFirstChar: 44, dw
+tmLastChar: 46, dw
+tmDefaultChar: 48, dw
+tmBreakChar: 50, dw
+tmItalic: 52, db
+tmUnderlined: 53, db
+tmStruckOut: 54, db
+tmPitchAndFamily: 55, db
+tmCharSet: 56, db
+
+
+_TOKEN_PRIVILEGES:
+PrivilegeCount: 0, dd
+Privileges: 4, LUID_AND_ATTRIBUTES
+
+
+LUID_AND_ATTRIBUTES:
+Luid: 0, LUID
+Attributes: 8, dd
+
+
+LUID:
+LowPart: 0, dd
+HighPart: 4, dd
+
+
+ADDRINFOW:
+ai_flags: 0, dd
+ai_family: 4, dd
+ai_socktype: 8, dd
+ai_protocol: 12, dd
+ai_addrlen: 16, dd
+ai_canonname: 20, dd
+ai_addr: 24, dd
+ai_next: 28, dd
+
+
+sockaddr:
+sa_family: 0, dw
+sa_data: 2, db
+
+
+_PROCESS_INFORMATION:
+hProcess: 0, dd
+hThread: 4, dd
+dwProcessId: 8, dd
+dwThreadId: 12, dd
+
+
+fd_set:
+fd_count: 0, dd
+fd_array: 4, dd
+
+
+_CONSOLE_READCONSOLE_CONTROL:
+nLength: 0, dd
+nInitialChars: 4, dd
+dwCtrlWakeupMask: 8, dd
+dwControlKeyState: 12, dd
+
+
+_OVERLAPPED:
+Internal: 0, dd
+InternalHigh: 4, dd
+anonymous_0: 8, _OVERLAPPED
+hEvent: 16, dd
+
+
+_stat32:
+st_dev: 0, dd
+st_ino: 4, dw
+st_mode: 6, dw
+st_nlink: 8, dw
+st_uid: 10, dw
+st_gid: 12, dw
+st_rdev: 16, dd
+st_size: 20, dd
+st_atime: 24, dd
+st_mtime: 28, dd
+st_ctime: 32, dd
+
+
+_RTL_CRITICAL_SECTION:
+DebugInfo: 0, dd
+LockCount: 4, dd
+RecursionCount: 8, dd
+OwningThread: 12, dd
+LockSemaphore: 16, dd
+SpinCount: 20, dd
+
+
+tagPAINTSTRUCT:
+hdc: 0, dd
+fErase: 4, dd
+rcPaint: 8, RECT
+fRestore: 24, dd
+fIncUpdate: 28, dd
+rgbReserved: 32, db
+
+
+LOGBRUSH:
+lbStyle: 0, dd
+lbColor: 4, dd
+lbHatch: 8, dd
+
+
+_SHFILEOPSTRUCTA:
+hwnd: 0, dd
+wFunc: 4, dd
+pFrom: 8, dd
+pTo: 12, dd
+fFlags: 16, dw
+fAnyOperationsAborted: 18, dd
+hNameMappings: 22, dd
+lpszProgressTitle: 26, dd
+
+
+SHFILEINFOA:
+hIcon: 0, dd
+iIcon: 4, dd
+dwAttributes: 8, dd
+szDisplayName: 12, db
+szTypeName: 272, db
+
+
+_browseinfoA:
+hwndOwner: 0, dd
+pidlRoot: 4, dd
+pszDisplayName: 8, dd
+lpszTitle: 12, dd
+ulFlags: 16, dd
+lpfn: 20, dd
+lParam: 24, dd
+iImage: 28, dd
+
+
+tagPOINT:
+x: 0, dd
+y: 4, dd
+
+
+MSG:
+hwnd: 0, dd
+message: 4, dd
+wParam: 8, dd
+lParam: 12, dd
+time: 16, dd
+pt: 20, POINT
+
+
+POINT:
+x: 0, dd
+y: 4, dd
+
+
+_OSVERSIONINFOEXW:
+dwOSVersionInfoSize: 0, dd
+dwMajorVersion: 4, dd
+dwMinorVersion: 8, dd
+dwBuildNumber: 12, dd
+dwPlatformId: 16, dd
+szCSDVersion: 20, dw
+wServicePackMajor: 276, dw
+wServicePackMinor: 278, dw
+wSuiteMask: 280, dw
+wProductType: 282, db
+wReserved: 283, db
+
+
+
 
 
 

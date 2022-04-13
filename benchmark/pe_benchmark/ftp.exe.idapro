@@ -14352,7 +14352,121 @@
 .text:00409492 pre_cpp_init    endp
 .text:00409492
 .text:00409493 ; ---------------------------------------------------------------------------
-.text:00409493 ; [0000011F BYTES: COLLAPSED CHUNK OF FUNCTION start. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409493 ; START OF FUNCTION CHUNK FOR start
+.text:00409493
+.text:00409493 loc_409493:                             ; CODE XREF: start+5↓j
+.text:00409493 ; __unwind { // __SEH_prolog4_GS
+.text:00409493                 push    10h
+.text:00409495                 push    offset stru_409CE0
+.text:0040949A                 call    __SEH_prolog4_GS
+.text:0040949F                 xor     ebx, ebx
+.text:004094A1                 mov     [ebp-4], ebx
+.text:004094A4                 mov     eax, large fs:18h
+.text:004094AA                 mov     esi, [eax+4]
+.text:004094AD                 mov     edi, ebx
+.text:004094AF
+.text:004094AF loc_4094AF:                             ; CODE XREF: start-17A↓j
+.text:004094AF                 mov     edx, offset unk_40CFAC
+.text:004094B4                 mov     ecx, esi
+.text:004094B6                 xor     eax, eax
+.text:004094B8                 lock cmpxchg [edx], ecx
+.text:004094BC                 test    eax, eax
+.text:004094BE                 jz      short loc_4094D8
+.text:004094C0                 cmp     eax, esi
+.text:004094C2                 jnz     short loc_4094CB
+.text:004094C4                 xor     esi, esi
+.text:004094C6                 inc     esi
+.text:004094C7                 mov     edi, esi
+.text:004094C9                 jmp     short loc_4094DB
+.text:004094CB ; ---------------------------------------------------------------------------
+.text:004094CB
+.text:004094CB loc_4094CB:                             ; CODE XREF: start-18E↑j
+.text:004094CB                 push    3E8h            ; dwMilliseconds
+.text:004094D0                 call    ds:Sleep
+.text:004094D6                 jmp     short loc_4094AF
+.text:004094D8 ; ---------------------------------------------------------------------------
+.text:004094D8
+.text:004094D8 loc_4094D8:                             ; CODE XREF: start-192↑j
+.text:004094D8                 xor     esi, esi
+.text:004094DA                 inc     esi
+.text:004094DB
+.text:004094DB loc_4094DB:                             ; CODE XREF: start-187↑j
+.text:004094DB                 cmp     dword_40CFB0, esi
+.text:004094E1                 jnz     short loc_4094ED
+.text:004094E3                 push    1Fh
+.text:004094E5                 call    _amsg_exit
+.text:004094EA                 pop     ecx
+.text:004094EB                 jmp     short loc_409527
+.text:004094ED ; ---------------------------------------------------------------------------
+.text:004094ED
+.text:004094ED loc_4094ED:                             ; CODE XREF: start-16F↑j
+.text:004094ED                 cmp     dword_40CFB0, ebx
+.text:004094F3                 jnz     short loc_409521
+.text:004094F5                 mov     dword_40CFB0, esi
+.text:004094FB                 push    offset dword_4010B8 ; Last
+.text:00409500                 push    offset dword_4010AC ; First
+.text:00409505                 call    __initterm_e
+.text:0040950A                 pop     ecx
+.text:0040950B                 pop     ecx
+.text:0040950C                 test    eax, eax
+.text:0040950E                 jz      short loc_409527
+.text:00409510                 mov     dword ptr [ebp-4], 0FFFFFFFEh
+.text:00409517                 mov     eax, 0FFh
+.text:0040951C                 jmp     loc_4095FC
+.text:00409521 ; ---------------------------------------------------------------------------
+.text:00409521
+.text:00409521 loc_409521:                             ; CODE XREF: start-15D↑j
+.text:00409521                 mov     dword_40A324, esi
+.text:00409527
+.text:00409527 loc_409527:                             ; CODE XREF: start-165↑j
+.text:00409527                                         ; start-142↑j
+.text:00409527                 cmp     dword_40CFB0, esi
+.text:0040952D                 jnz     short loc_40954A
+.text:0040952F                 push    offset Last     ; Last
+.text:00409534                 push    offset First    ; First
+.text:00409539                 call    _initterm
+.text:0040953E                 pop     ecx
+.text:0040953F                 pop     ecx
+.text:00409540                 mov     dword_40CFB0, 2
+.text:0040954A
+.text:0040954A loc_40954A:                             ; CODE XREF: start-123↑j
+.text:0040954A                 test    edi, edi
+.text:0040954C                 jnz     short loc_409557
+.text:0040954E                 xor     eax, eax
+.text:00409550                 mov     ecx, offset unk_40CFAC
+.text:00409555                 xchg    eax, [ecx]
+.text:00409557
+.text:00409557 loc_409557:                             ; CODE XREF: start-104↑j
+.text:00409557                 cmp     pTarget, 0
+.text:0040955E                 jz      short loc_409583
+.text:00409560                 push    offset pTarget  ; pTarget
+.text:00409565                 call    __IsNonwritableInCurrentImage
+.text:0040956A                 pop     ecx
+.text:0040956B                 test    eax, eax
+.text:0040956D                 jz      short loc_409583
+.text:0040956F                 push    ebx
+.text:00409570                 push    2
+.text:00409572                 push    ebx
+.text:00409573                 mov     esi, pTarget
+.text:00409579                 mov     ecx, esi
+.text:0040957B                 call    ds:___guard_check_icall_fptr ; _guard_check_icall_nop(x)
+.text:00409581                 call    esi ; pTarget
+.text:00409583
+.text:00409583 loc_409583:                             ; CODE XREF: start-F2↑j
+.text:00409583                                         ; start-E3↑j
+.text:00409583                 push    dword_40A330
+.text:00409589                 push    dword_40A32C
+.text:0040958F                 push    dword_40A328
+.text:00409595                 call    _wmain
+.text:0040959A ; ---------------------------------------------------------------------------
+.text:0040959A                 add     esp, 0Ch
+.text:0040959D                 mov     dword_40A320, eax
+.text:004095A2                 cmp     dword_40A338, 0
+.text:004095A9                 jnz     short loc_4095E1
+.text:004095AB                 push    eax             ; Code
+.text:004095AC                 call    ds:exit
+.text:004095AC ; } // starts at 409493
+.text:004095AC ; END OF FUNCTION CHUNK FOR start
 .text:004095B2
 .text:004095B2 ; =============== S U B R O U T I N E =======================================
 .text:004095B2
@@ -14381,7 +14495,24 @@
 .text:004095DA                 push    eax
 .text:004095DB                 call    ds:_exit
 .text:004095E1 ; ---------------------------------------------------------------------------
-.text:004095E1 ; [00000021 BYTES: COLLAPSED CHUNK OF FUNCTION start. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:004095E1 ; START OF FUNCTION CHUNK FOR start
+.text:004095E1
+.text:004095E1 loc_4095E1:                             ; CODE XREF: start-A7↑j
+.text:004095E1                                         ; .text:004095D8↑j
+.text:004095E1 ; __unwind { // __SEH_prolog4_GS
+.text:004095E1                 cmp     dword_40A324, 0
+.text:004095E8                 jnz     short loc_4095F5
+.text:004095EA                 call    ds:_cexit
+.text:004095F0                 mov     eax, dword_40A320
+.text:004095F5
+.text:004095F5 loc_4095F5:                             ; CODE XREF: start-68↑j
+.text:004095F5                 mov     dword ptr [ebp-4], 0FFFFFFFEh
+.text:004095FC
+.text:004095FC loc_4095FC:                             ; CODE XREF: start-134↑j
+.text:004095FC                 call    __SEH_epilog4_GS
+.text:00409601                 retn
+.text:00409601 ; } // starts at 4095E1
+.text:00409601 ; END OF FUNCTION CHUNK FOR start
 .text:00409602
 .text:00409602 ; =============== S U B R O U T I N E =======================================
 .text:00409602
@@ -14438,9 +14569,42 @@
 .text:00409649
 .text:00409649 ; ---------------------------------------------------------------------------
 .text:0040964A                 align 10h
-.text:00409650 ; [0000000A BYTES: COLLAPSED FUNCTION start. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409650
+.text:00409650 ; =============== S U B R O U T I N E =======================================
+.text:00409650
+.text:00409650 ; Attributes: library function
+.text:00409650
+.text:00409650                 public start
+.text:00409650 start           proc near               ; DATA XREF: .text:00401150↑o
+.text:00409650
+.text:00409650 ; FUNCTION CHUNK AT .text:00409493 SIZE 0000011F BYTES
+.text:00409650 ; FUNCTION CHUNK AT .text:004095E1 SIZE 00000021 BYTES
+.text:00409650
+.text:00409650 ; __unwind { // __SEH_prolog4_GS
+.text:00409650                 call    ___security_init_cookie
+.text:00409655                 jmp     loc_409493
+.text:00409655 ; } // starts at 409650
+.text:00409655 start           endp
+.text:00409655
+.text:00409655 ; ---------------------------------------------------------------------------
 .text:0040965A                 align 10h
-.text:00409660 ; [00000010 BYTES: COLLAPSED FUNCTION __security_check_cookie(x). PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409660
+.text:00409660 ; =============== S U B R O U T I N E =======================================
+.text:00409660
+.text:00409660 ; Attributes: library function
+.text:00409660
+.text:00409660 ; void __fastcall __security_check_cookie(uintptr_t StackCookie)
+.text:00409660 @__security_check_cookie@4 proc near    ; CODE XREF: sub_401C70+1A9↑p
+.text:00409660                                         ; remglob(x,x)+217↑p ...
+.text:00409660                 cmp     ecx, ___security_cookie
+.text:00409666                 jnz     short loc_40966B
+.text:00409668                 retn    0
+.text:0040966B ; ---------------------------------------------------------------------------
+.text:0040966B
+.text:0040966B loc_40966B:                             ; CODE XREF: __security_check_cookie(x)+6↑j
+.text:0040966B                 jmp     ___report_gsfailure
+.text:0040966B @__security_check_cookie@4 endp
+.text:0040966B
 .text:00409670
 .text:00409670 ; =============== S U B R O U T I N E =======================================
 .text:00409670
@@ -14645,7 +14809,15 @@
 .text:004098CD                 retn
 .text:004098CD sub_4098C0      endp
 .text:004098CD
-.text:004098CE ; [00000006 BYTES: COLLAPSED FUNCTION _XcptFilter. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:004098CE
+.text:004098CE ; =============== S U B R O U T I N E =======================================
+.text:004098CE
+.text:004098CE ; Attributes: thunk
+.text:004098CE
+.text:004098CE _XcptFilter     proc near               ; CODE XREF: sub_4095B2+C↑p
+.text:004098CE                 jmp     ds:__imp__XcptFilter
+.text:004098CE _XcptFilter     endp
+.text:004098CE
 .text:004098D4
 .text:004098D4 ; =============== S U B R O U T I N E =======================================
 .text:004098D4
@@ -14760,7 +14932,16 @@
 .text:00409973                 retn
 .text:00409973 __get_image_app_type endp
 .text:00409973
-.text:00409974 ; [00000006 BYTES: COLLAPSED FUNCTION _amsg_exit. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409974
+.text:00409974 ; =============== S U B R O U T I N E =======================================
+.text:00409974
+.text:00409974 ; Attributes: thunk
+.text:00409974
+.text:00409974 _amsg_exit      proc near               ; CODE XREF: start-16B↑p
+.text:00409974                 jmp     ds:__imp__amsg_exit
+.text:00409974 _amsg_exit      endp
+.text:00409974
+.text:00409974 ; ---------------------------------------------------------------------------
 .text:0040997A                 align 10h
 .text:00409980
 .text:00409980 ; =============== S U B R O U T I N E =======================================
@@ -15049,10 +15230,68 @@
 .text:00409B87                 retn
 .text:00409B87 sub_409B75      endp
 .text:00409B87
-.text:00409B88 ; [00000006 BYTES: COLLAPSED FUNCTION _initterm. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409B88
+.text:00409B88 ; =============== S U B R O U T I N E =======================================
+.text:00409B88
+.text:00409B88 ; Attributes: thunk
+.text:00409B88
+.text:00409B88 ; void __cdecl initterm(_PVFV *First, _PVFV *Last)
+.text:00409B88 _initterm       proc near               ; CODE XREF: start-117↑p
+.text:00409B88
+.text:00409B88 First           = dword ptr  4
+.text:00409B88 Last            = dword ptr  8
+.text:00409B88
+.text:00409B88                 jmp     ds:__imp__initterm
+.text:00409B88 _initterm       endp
+.text:00409B88
+.text:00409B88 ; ---------------------------------------------------------------------------
 .text:00409B8E                 align 10h
-.text:00409B90 ; [00000048 BYTES: COLLAPSED FUNCTION __SEH_prolog4_GS. PRESS CTRL-NUMPAD+ TO EXPAND]
-.text:00409BD8 ; [0000000F BYTES: COLLAPSED FUNCTION __SEH_epilog4_GS. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409B90
+.text:00409B90 ; =============== S U B R O U T I N E =======================================
+.text:00409B90
+.text:00409B90 ; Attributes: library function
+.text:00409B90
+.text:00409B90 __SEH_prolog4_GS proc near              ; CODE XREF: start-1B6↑p
+.text:00409B90
+.text:00409B90 arg_4           = dword ptr  8
+.text:00409B90
+.text:00409B90                 push    offset __except_handler4
+.text:00409B95                 push    large dword ptr fs:0
+.text:00409B9C                 mov     eax, [esp+8+arg_4]
+.text:00409BA0                 mov     [esp+8+arg_4], ebp
+.text:00409BA4                 lea     ebp, [esp+8+arg_4]
+.text:00409BA8                 sub     esp, eax
+.text:00409BAA                 push    ebx
+.text:00409BAB                 push    esi
+.text:00409BAC                 push    edi
+.text:00409BAD                 mov     eax, ___security_cookie
+.text:00409BB2                 xor     [ebp-4], eax
+.text:00409BB5                 xor     eax, ebp
+.text:00409BB7                 mov     [ebp-1Ch], eax
+.text:00409BBA                 push    eax
+.text:00409BBB                 mov     [ebp-18h], esp
+.text:00409BBE                 push    dword ptr [ebp-8]
+.text:00409BC1                 mov     eax, [ebp-4]
+.text:00409BC4                 mov     dword ptr [ebp-4], 0FFFFFFFEh
+.text:00409BCB                 mov     [ebp-8], eax
+.text:00409BCE                 lea     eax, [ebp-10h]
+.text:00409BD1                 mov     large fs:0, eax
+.text:00409BD7                 retn
+.text:00409BD7 __SEH_prolog4_GS endp ; sp-analysis failed
+.text:00409BD7
+.text:00409BD8
+.text:00409BD8 ; =============== S U B R O U T I N E =======================================
+.text:00409BD8
+.text:00409BD8 ; Attributes: library function
+.text:00409BD8
+.text:00409BD8 __SEH_epilog4_GS proc near              ; CODE XREF: start:loc_4095FC↑p
+.text:00409BD8                 mov     ecx, [ebp-1Ch]
+.text:00409BDB                 xor     ecx, ebp        ; StackCookie
+.text:00409BDD                 call    @__security_check_cookie@4 ; __security_check_cookie(x)
+.text:00409BE2                 jmp     __SEH_epilog4
+.text:00409BE2 __SEH_epilog4_GS endp
+.text:00409BE2
+.text:00409BE2 ; ---------------------------------------------------------------------------
 .text:00409BE7                 align 10h
 .text:00409BF0
 .text:00409BF0 ; =============== S U B R O U T I N E =======================================
@@ -15097,10 +15336,69 @@
 .text:00409C20
 .text:00409C20 ; ---------------------------------------------------------------------------
 .text:00409C21                 align 4
-.text:00409C24 ; [00000045 BYTES: COLLAPSED FUNCTION __SEH_prolog4. PRESS CTRL-NUMPAD+ TO EXPAND]
-.text:00409C69 ; [00000014 BYTES: COLLAPSED FUNCTION __SEH_epilog4. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409C24
+.text:00409C24 ; =============== S U B R O U T I N E =======================================
+.text:00409C24
+.text:00409C24 ; Attributes: library function
+.text:00409C24
+.text:00409C24 __SEH_prolog4   proc near               ; CODE XREF: RtlpImageNtHeader(x)+7↑p
+.text:00409C24
+.text:00409C24 arg_4           = dword ptr  8
+.text:00409C24
+.text:00409C24                 push    offset __except_handler4
+.text:00409C29                 push    large dword ptr fs:0
+.text:00409C30                 mov     eax, [esp+8+arg_4]
+.text:00409C34                 mov     [esp+8+arg_4], ebp
+.text:00409C38                 lea     ebp, [esp+8+arg_4]
+.text:00409C3C                 sub     esp, eax
+.text:00409C3E                 push    ebx
+.text:00409C3F                 push    esi
+.text:00409C40                 push    edi
+.text:00409C41                 mov     eax, ___security_cookie
+.text:00409C46                 xor     [ebp-4], eax
+.text:00409C49                 xor     eax, ebp
+.text:00409C4B                 push    eax
+.text:00409C4C                 mov     [ebp-18h], esp
+.text:00409C4F                 push    dword ptr [ebp-8]
+.text:00409C52                 mov     eax, [ebp-4]
+.text:00409C55                 mov     dword ptr [ebp-4], 0FFFFFFFEh
+.text:00409C5C                 mov     [ebp-8], eax
+.text:00409C5F                 lea     eax, [ebp-10h]
+.text:00409C62                 mov     large fs:0, eax
+.text:00409C68                 retn
+.text:00409C68 __SEH_prolog4   endp ; sp-analysis failed
+.text:00409C68
+.text:00409C69
+.text:00409C69 ; =============== S U B R O U T I N E =======================================
+.text:00409C69
+.text:00409C69 ; Attributes: library function
+.text:00409C69
+.text:00409C69 __SEH_epilog4   proc near               ; CODE XREF: RtlpImageNtHeader(x)+62↑p
+.text:00409C69                                         ; __SEH_epilog4_GS+A↑j
+.text:00409C69                 mov     ecx, [ebp-10h]
+.text:00409C6C                 mov     large fs:0, ecx
+.text:00409C73                 pop     ecx
+.text:00409C74                 pop     edi
+.text:00409C75                 pop     edi
+.text:00409C76                 pop     esi
+.text:00409C77                 pop     ebx
+.text:00409C78                 mov     esp, ebp
+.text:00409C7A                 pop     ebp
+.text:00409C7B                 push    ecx
+.text:00409C7C                 retn
+.text:00409C7C __SEH_epilog4   endp ; sp-analysis failed
+.text:00409C7C
+.text:00409C7C ; ---------------------------------------------------------------------------
 .text:00409C7D                 align 2
-.text:00409C7E ; [00000006 BYTES: COLLAPSED FUNCTION _except_handler4_common. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409C7E
+.text:00409C7E ; =============== S U B R O U T I N E =======================================
+.text:00409C7E
+.text:00409C7E ; Attributes: thunk
+.text:00409C7E
+.text:00409C7E _except_handler4_common proc near       ; CODE XREF: __except_handler4+1B↑p
+.text:00409C7E                 jmp     ds:__imp__except_handler4_common
+.text:00409C7E _except_handler4_common endp
+.text:00409C7E
 .text:00409C84
 .text:00409C84 ; =============== S U B R O U T I N E =======================================
 .text:00409C84
@@ -15122,13 +15420,93 @@
 .text:00409C97                 retn
 .text:00409C97 sub_409C84      endp
 .text:00409C97
-.text:00409C98 ; [00000006 BYTES: COLLAPSED FUNCTION __iob_func. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409C98
+.text:00409C98 ; =============== S U B R O U T I N E =======================================
+.text:00409C98
+.text:00409C98 ; Attributes: thunk
+.text:00409C98
+.text:00409C98 ; FILE *__cdecl _iob_func()
+.text:00409C98 __iob_func      proc near               ; CODE XREF: sub_409C84+5↑p
+.text:00409C98                 jmp     ds:__imp___iob_func
+.text:00409C98 __iob_func      endp
+.text:00409C98
+.text:00409C98 ; ---------------------------------------------------------------------------
 .text:00409C9E                 align 10h
-.text:00409CA0 ; [0000002B BYTES: COLLAPSED FUNCTION __alloca_probe_0_0. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409CA0
+.text:00409CA0 ; =============== S U B R O U T I N E =======================================
+.text:00409CA0
+.text:00409CA0 ; Attributes: info_from_lumina
+.text:00409CA0
+.text:00409CA0 ; void *__usercall _alloca_probe_0_0@<eax>(unsigned int a1@<eax>, int a2@<ecx>)
+.text:00409CA0 __alloca_probe_0_0 proc near            ; CODE XREF: sub_405B92+A↑p
+.text:00409CA0                 push    ecx
+.text:00409CA1                 lea     ecx, [esp+4]
+.text:00409CA5                 sub     ecx, eax
+.text:00409CA7                 sbb     eax, eax
+.text:00409CA9                 not     eax
+.text:00409CAB                 and     ecx, eax
+.text:00409CAD                 mov     eax, esp
+.text:00409CAF                 and     eax, 0FFFFF000h
+.text:00409CB4
+.text:00409CB4 loc_409CB4:                             ; CODE XREF: __alloca_probe_0_0+29↓j
+.text:00409CB4                 cmp     ecx, eax
+.text:00409CB6                 jb      short loc_409CC2
+.text:00409CB8                 mov     eax, ecx
+.text:00409CBA                 pop     ecx
+.text:00409CBB                 xchg    eax, esp
+.text:00409CBC                 mov     eax, [eax]
+.text:00409CBE                 mov     [esp+0], eax
+.text:00409CC1                 retn
+.text:00409CC2 ; ---------------------------------------------------------------------------
+.text:00409CC2
+.text:00409CC2 loc_409CC2:                             ; CODE XREF: __alloca_probe_0_0+16↑j
+.text:00409CC2                 sub     eax, 1000h
+.text:00409CC7                 test    [eax], eax
+.text:00409CC9                 jmp     short loc_409CB4
+.text:00409CC9 __alloca_probe_0_0 endp
+.text:00409CC9
+.text:00409CC9 ; ---------------------------------------------------------------------------
 .text:00409CCB                 align 4
-.text:00409CCC ; [00000006 BYTES: COLLAPSED FUNCTION _setjmp3. PRESS CTRL-NUMPAD+ TO EXPAND]
-.text:00409CD2 ; [00000006 BYTES: COLLAPSED FUNCTION memcpy. PRESS CTRL-NUMPAD+ TO EXPAND]
-.text:00409CD8 ; [00000006 BYTES: COLLAPSED FUNCTION memset. PRESS CTRL-NUMPAD+ TO EXPAND]
+.text:00409CCC
+.text:00409CCC ; =============== S U B R O U T I N E =======================================
+.text:00409CCC
+.text:00409CCC ; Attributes: thunk
+.text:00409CCC
+.text:00409CCC _setjmp3        proc near               ; CODE XREF: _wmain+5F5↑p
+.text:00409CCC                                         ; _wmain+82C↑p ...
+.text:00409CCC                 jmp     ds:__imp__setjmp3
+.text:00409CCC _setjmp3        endp
+.text:00409CCC
+.text:00409CD2
+.text:00409CD2 ; =============== S U B R O U T I N E =======================================
+.text:00409CD2
+.text:00409CD2 ; Attributes: thunk
+.text:00409CD2
+.text:00409CD2 ; void *__cdecl memcpy(void *, const void *Src, size_t Size)
+.text:00409CD2 memcpy          proc near               ; CODE XREF: initconn()+48↑p
+.text:00409CD2
+.text:00409CD2 Src             = dword ptr  8
+.text:00409CD2 Size            = dword ptr  0Ch
+.text:00409CD2
+.text:00409CD2                 jmp     ds:__imp_memcpy
+.text:00409CD2 memcpy          endp
+.text:00409CD2
+.text:00409CD8
+.text:00409CD8 ; =============== S U B R O U T I N E =======================================
+.text:00409CD8
+.text:00409CD8 ; Attributes: thunk
+.text:00409CD8
+.text:00409CD8 ; void *__cdecl memset(void *, int Val, size_t Size)
+.text:00409CD8 memset          proc near               ; CODE XREF: sub_40411A+2B↑p
+.text:00409CD8                                         ; hookup(x,x)+D4↑p ...
+.text:00409CD8
+.text:00409CD8 Val             = dword ptr  8
+.text:00409CD8 Size            = dword ptr  0Ch
+.text:00409CD8
+.text:00409CD8                 jmp     ds:__imp_memset
+.text:00409CD8 memset          endp
+.text:00409CD8
+.text:00409CD8 ; ---------------------------------------------------------------------------
 .text:00409CDE                 align 10h
 .text:00409CE0 stru_409CE0     dd 0FFFFFFE4h           ; GSCookieOffset
 .text:00409CE0                                         ; DATA XREF: start-1BB↑o

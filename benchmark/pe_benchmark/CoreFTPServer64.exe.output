@@ -1,6 +1,6 @@
-# of total instructions: 7798
-# of white instructions: 38
-# of grey instructions: 0
-# of black instructions: 7760
-Ratio (grey/white): 0.0
-# of indirects: 7
+# of instructions: 7644
+# of reached instructions: 224
+# of paths: 19
+# of unsound paths: 0
+# of unresolved indirects: 4
+Execution time (s): 1.9508142471313477

@@ -26,8 +26,8 @@ address_inst_pattern = re.compile('^[.a-zA-Z]+:[0-9a-zA-Z]+[ ]{17}[a-zA-Z]')
 
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$|^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
 
-variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_]+')
-ida_immediate_pat = re.compile(r'^[0-9A-F]+h')
+variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_@]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_@]+')
+ida_immediate_pat = re.compile(r'^[0-9A-F]+h$')
 
 subtract_hex_pat = re.compile(r'-[0-9a-fA-F]+h')
 
@@ -76,13 +76,14 @@ class Disasm_IDAPro(Disasm):
                 elif variable_expr_pat.search(line):
                     self._read_variable_value(line)
                 elif self._is_located_at_code_segments(line):
-                    if address_inst_pattern.search(line):
-                        address, inst = self._parse_line(line)
-                        if inst and not inst.startswith(non_inst_prefix):
-                            inst = self._replace_inst_var_arg(address, inst, line)
-                            self.address_inst_map[address] = inst
-                            self._address_line_map[address] = line
-                            self.valid_address_no += 1
+                    if 'UnwindMapEntry ' not in line:
+                        if address_inst_pattern.search(line):
+                            address, inst = self._parse_line(line)
+                            if inst and not inst.startswith(non_inst_prefix):
+                                inst = self._replace_inst_var_arg(address, inst, line)
+                                self.address_inst_map[address] = inst
+                                self._address_line_map[address] = line
+                                self.valid_address_no += 1
         inst_addresses = sorted(list(self.address_inst_map.keys()))
         inst_num = len(inst_addresses)
         for idx, address in enumerate(inst_addresses):
@@ -145,8 +146,11 @@ class Disasm_IDAPro(Disasm):
             self._variable_value_map[var_name] = address
             if ' proc ' in var_str:
                 self._proc_value_map[var_name] = address
-        elif  var_name.endswith(':'):
+        elif var_name.endswith(':'):
             var_name = var_name.rsplit(':', 1)[0].strip()
+            self._variable_offset_map[var_name] = address
+            self._variable_value_map[var_name] = address
+        elif var_split[1].strip() != '' and ' endp' not in var_split[1] and ' ends' not in var_split[1]:
             self._variable_offset_map[var_name] = address
             self._variable_value_map[var_name] = address
         else:
@@ -277,6 +281,10 @@ class Disasm_IDAPro(Disasm):
         elif arg in self._global_data_name:
             if count == 2:
                 res = hex(self._variable_value_map[arg])
+        elif ' ptr ' in arg:
+            arg_split = arg.split(' ptr ', 1)
+            ptr_rep = arg_split[0] + ' ptr '
+            res = ptr_rep + '[' + self._replace_symbol(inst_name, arg_split[1].strip()) + ']'
         else:
             res = self._replace_symbol(inst_name, arg)
         return res
@@ -319,7 +327,7 @@ class Disasm_IDAPro(Disasm):
     def _remove_unused_seg_reg(self, arg):
         res = arg
         if 's:' in arg and not arg.endswith(']'):
-            arg_split = arg.strip().split(':')
+            arg_split = arg.strip().split(':', 1)
             prefix = arg_split[0].strip()
             remaining = arg_split[1].strip()
             if ida_immediate_pat.match(remaining):
@@ -432,7 +440,7 @@ class Disasm_IDAPro(Disasm):
         if type_spec not in helper.BYTE_LEN_REPS:
             if type_spec in self._ida_struct_table:
                 self._variable_w_ida_struct_type[var_name] = type_spec
-            elif type_spec in ('LARGE_INTEGER'):
+            elif type_spec in ('LARGE_INTEGER', '_LARGE_INTEGER'):
                 self._variable_ptr_rep_map[var_name] = ptr_rep
             else:
                 print(line)
@@ -479,14 +487,6 @@ class Disasm_IDAPro(Disasm):
                             v = variable.split('_', 1)[1]
                             if utils.imm_start_pat.match(v):
                                 new_var = hex(int(v, 16))
-                        # elif variable.startswith('byte_'):
-                        #     v = variable.split('byte_', 1)[1]
-                        #     if utils.imm_start_pat.match(v):
-                        #         new_var = hex(int(v, 16))
-                        # elif variable.startswith('loc_'):
-                        #     v = variable.split('loc_', 1)[1]
-                        #     if utils.imm_start_pat.match(v):
-                        #         new_var = hex(int(v, 16))
                         elif '.' in variable:
                             new_var = self._replace_ida_struct_item_symbol(variable)
                     break

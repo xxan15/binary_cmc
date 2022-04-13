@@ -13,4 +13,5 @@
 *.nam
 *.til
 temp/
+test/
 *.ods

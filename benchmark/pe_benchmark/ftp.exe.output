@@ -1,0 +1,16 @@
+Error: Null pointer dereference at address 0xffd000
+Terminate path with pointer-related error at 0x409cc7: test dword ptr [eax],eax
+Error: Null pointer dereference at address 0xffd000
+Terminate path with pointer-related error at 0x409cc7: test dword ptr [eax],eax
+Error: Null pointer dereference at address 0xffd000
+Terminate path with pointer-related error at 0x409cc7: test dword ptr [eax],eax
+Error: Null pointer dereference at address 0xffd000
+Terminate path with pointer-related error at 0x409cc7: test dword ptr [eax],eax
+Error: Null pointer dereference at address 0xffd000
+Terminate path with pointer-related error at 0x409cc7: test dword ptr [eax],eax
+# of instructions: 10303
+# of reached instructions: 1646
+# of paths: 668
+# of unsound paths: 5
+# of unresolved indirects: 10
+Execution time (s): 22.328655242919922
