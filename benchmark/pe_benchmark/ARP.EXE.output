@@ -1,2 +1,0 @@
-Error: Null pointer dereference at address 0xfffc80
-Terminate path with pointer-related error at 0x4021eb: cmp byte ptr [edi],0x30

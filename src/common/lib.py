@@ -142,6 +142,8 @@ JMP_INST_WITHOUT_CALL = CONDITIONAL_JMP_INST | {'jmp', 'ret'}
 
 JMP_INST_WITH_ADDRESS = CONDITIONAL_JMP_INST | {'jmp', 'call'}
 
+JMP_INST_WITH_JUMP = CONDITIONAL_JMP_INST | {'jmp'}
+
 DEFAULT_REG_LEN = 64
 C_INT_LEN = 32
 
@@ -153,7 +155,6 @@ CS = 'cs'
 DS = 'ds'
 ES = 'es'
 GS = 'gs'
-AUX_MEM = 'aux_memory'
 STDIN = 'stdin'
 STDOUT = 'stdout'
 STDIN_ADDRESS = 'stdin_address'
@@ -162,13 +163,11 @@ STDOUT_ADDRESS = 'stdout_address'
 STDOUT_HANDLER = 'stdout_handler'
 NEED_TRACE_BACK = 'need_trace_back'
 POINTER_RELATED_ERROR = 'pointer_related_error'
-VERIFIED_FUNC_INFO = 'verified_func_info'
-TO_BE_VERIFIED_ARGS = 'to_be_verified_args'
 MEM_CONTENT_POLLUTED = 'mem_content_polluted'
 HEAP_ADDR = 'heap_addr'
 FUNC_CALL_STACK = 'func_call_stack'
 
-STATE_NAMES = {REG, MEM, FLAGS, FS, CS, DS, ES, GS, AUX_MEM, STDOUT, FUNC_CALL_STACK}
+STATE_NAMES = {REG, MEM, FLAGS, FS, CS, DS, ES, GS, STDOUT, FUNC_CALL_STACK}
 RECORD_STATE_NAMES = [REG, MEM]
 
 CODE_SEGMENTS = ('.plt.got', '.plt', '.text')

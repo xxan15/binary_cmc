@@ -152,6 +152,13 @@ def get_effective_address(store, rip, src, length=utils.MEM_ADDR_SIZE):
             res = eval(res)
             res = BitVecVal(res & 0xffffffffffffffff, length)
         else:  # 'rax + rbx * 1'
+            lsi_group = letter_num_neg_pat.match(res)
+            if lsi_group:
+                lsi = lsi_group.group(0)
+                if lsi in lib.REG_INFO_DICT:
+                    _, _, length = lib.REG_INFO_DICT[lsi]
+                elif lsi in lib.REG64_NAMES:
+                    length = 64
             res = calc_effective_address(res, store, length)
     elif 's:' in src:
         seg_name, new_src = src.split(':', 1)

@@ -87,6 +87,260 @@ _bufsiz: 24, dd
 _tmpfname: 28, dd
 
 
+_WIN32_FIND_DATAA:
+dwFileAttributes: 0, dd
+ftCreationTime: 4, FILETIME
+ftLastAccessTime: 12, FILETIME
+ftLastWriteTime: 20, FILETIME
+nFileSizeHigh: 28, dd
+nFileSizeLow: 32, dd
+dwReserved0: 36, dd
+dwReserved1: 40, dd
+cFileName: 44, db
+cAlternateFileName: 304, db
+
+
+FILETIME:
+dwLowDateTime: 0, dd
+dwHighDateTime: 4, dd
+
+
+_BY_HANDLE_FILE_INFORMATION:
+dwFileAttributes: 0, dd
+ftCreationTime: 4, FILETIME
+ftLastAccessTime: 12, FILETIME
+ftLastWriteTime: 20, FILETIME
+dwVolumeSerialNumber: 28, dd
+nFileSizeHigh: 32, dd
+nFileSizeLow: 36, dd
+nNumberOfLinks: 40, dd
+nFileIndexHigh: 44, dd
+nFileIndexLow: 48, dd
+
+
+_OSVERSIONINFOA:
+dwOSVersionInfoSize: 0, dd
+dwMajorVersion: 4, dd
+dwMinorVersion: 8, dd
+dwBuildNumber: 12, dd
+dwPlatformId: 16, dd
+szCSDVersion: 20, db
+
+
+_TIME_ZONE_INFORMATION:
+Bias: 0, dd
+StandardName: 4, dw
+StandardDate: 68, SYSTEMTIME
+StandardBias: 84, dd
+DaylightName: 88, dw
+DaylightDate: 152, SYSTEMTIME
+DaylightBias: 168, dd
+
+
+SYSTEMTIME:
+wYear: 0, dw
+wMonth: 2, dw
+wDayOfWeek: 4, dw
+wDay: 6, dw
+wHour: 8, dw
+wMinute: 10, dw
+wSecond: 12, dw
+wMilliseconds: 14, dw
+
+
+_FILETIME:
+dwLowDateTime: 0, dd
+dwHighDateTime: 4, dd
+
+
+_SYSTEMTIME:
+wYear: 0, dw
+wMonth: 2, dw
+wDayOfWeek: 4, dw
+wDay: 6, dw
+wHour: 8, dw
+wMinute: 10, dw
+wSecond: 12, dw
+wMilliseconds: 14, dw
+
+
+_MEMORYSTATUS:
+dwLength: 0, dd
+dwMemoryLoad: 4, dd
+dwTotalPhys: 8, dd
+dwAvailPhys: 12, dd
+dwTotalPageFile: 16, dd
+dwAvailPageFile: 20, dd
+dwTotalVirtual: 24, dd
+dwAvailVirtual: 28, dd
+
+
+WSAData:
+wVersion: 0, dw
+wHighVersion: 2, dw
+szDescription: 4, db
+szSystemStatus: 261, db
+iMaxSockets: 390, dw
+iMaxUdpDg: 392, dw
+lpVendorInfo: 396, dd
+
+
+in_addr:
+S_un: 0, in_addr
+
+
+
+_SYSTEM_INFO:
+anonymous_0: 0, _SYSTEM_INFO
+dwPageSize: 4, dd
+lpMinimumApplicationAddress: 8, dd
+lpMaximumApplicationAddress: 12, dd
+dwActiveProcessorMask: 16, dd
+dwNumberOfProcessors: 20, dd
+dwProcessorType: 24, dd
+dwAllocationGranularity: 28, dd
+wProcessorLevel: 32, dw
+wProcessorRevision: 34, dw
+
+
+CPPEH_RECORD:
+old_esp: 0, dd
+exc_ptr: 4, dd
+registration: 8, _EH3_EXCEPTION_REGISTRATION
+
+
+_EH3_EXCEPTION_REGISTRATION:
+Next: 0, dd
+ExceptionHandler: 4, dd
+ScopeTable: 8, dd
+TryLevel: 12, dd
+
+
+_STARTUPINFOA:
+cb: 0, dd
+lpReserved: 4, dd
+lpDesktop: 8, dd
+lpTitle: 12, dd
+dwX: 16, dd
+dwY: 20, dd
+dwXSize: 24, dd
+dwYSize: 28, dd
+dwXCountChars: 32, dd
+dwYCountChars: 36, dd
+dwFillAttribute: 40, dd
+dwFlags: 44, dd
+wShowWindow: 48, dw
+cbReserved2: 50, dw
+lpReserved2: 52, dd
+hStdInput: 56, dd
+hStdOutput: 60, dd
+hStdError: 64, dd
+
+
+_cpinfo:
+MaxCharSize: 0, dd
+DefaultChar: 4, db
+LeadByte: 6, db
+
+
+_MEMORY_BASIC_INFORMATION:
+BaseAddress: 0, dd
+AllocationBase: 4, dd
+AllocationProtect: 8, dd
+RegionSize: 12, dd
+State: 16, dd
+Protect: 20, dd
+Type: 24, dd
+
+
+TOKEN_VALUE:
+pwszToken: 0, dd
+dwValue: 4, dd
+
+
+_UNICODE_STRING:
+Length: 0, dw
+MaximumLength: 2, dw
+Buffer: 4, dd
+
+
+NS_CONTEXT_ATTRIBUTES:
+anonymous_0: 0, _NS_CONTEXT_ATTRIBUTES
+pwszContext: 8, dd
+guidHelper: 12, GUID
+dwFlags: 28, dd
+ulPriority: 32, dd
+ulNumTopCmds: 36, dd
+pTopCmds: 40, dd
+ulNumGroups: 44, dd
+pCmdGroups: 48, dd
+pfnCommitFn: 52, dd
+pfnDumpFn: 56, dd
+pfnConnectFn: 60, dd
+pReserved: 64, dd
+pfnOsVersionCheck: 68, dd
+
+
+GUID:
+Data1: 0, dd
+Data2: 4, dw
+Data3: 6, dw
+Data4: 8, db
+
+
+NS_HELPER_ATTRIBUTES:
+anonymous_0: 0, _NS_HELPER_ATTRIBUTES
+guidHelper: 8, GUID
+pfnStart: 24, dd
+pfnStop: 28, dd
+
+
+_NETRESOURCEW:
+dwScope: 0, dd
+dwType: 4, dd
+dwDisplayType: 8, dd
+dwUsage: 12, dd
+lpLocalName: 16, dd
+lpRemoteName: 20, dd
+lpComment: 24, dd
+lpProvider: 28, dd
+
+
+COORD:
+X: 0, dw
+Y: 2, dw
+
+
+_CONSOLE_SCREEN_BUFFER_INFO:
+dwSize: 0, COORD
+dwCursorPosition: 4, COORD
+wAttributes: 8, dw
+srWindow: 10, SMALL_RECT
+dwMaximumWindowSize: 18, COORD
+
+
+SMALL_RECT:
+Left: 0, dw
+Top: 2, dw
+Right: 4, dw
+Bottom: 6, dw
+
+
+VARIANTARG:
+anonymous_0: 0, tagVARIANT
+
+
+_OSVERSIONINFOW:
+dwOSVersionInfoSize: 0, dd
+dwMajorVersion: 4, dd
+dwMinorVersion: 8, dd
+dwBuildNumber: 12, dd
+dwPlatformId: 16, dd
+szCSDVersion: 20, dw
+
+
+
+
 
 
 

@@ -32,6 +32,7 @@ ida_immediate_pat = re.compile(r'^[0-9A-F]+h')
 subtract_hex_pat = re.compile(r'-[0-9a-fA-F]+h')
 
 non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
+offset_spec_prefix = ('off_', 'loc_', 'byte_', 'stru_')
 
 class Disasm_IDAPro(Disasm):
     def __init__(self, disasm_path):
@@ -178,7 +179,7 @@ class Disasm_IDAPro(Disasm):
         res = inst
         if ' short ' in inst:
             res = inst.replace(' short ', ' ')
-        elif inst.startswith('lea') and not inst.endswith(']'):
+        elif inst.startswith('lea ') and not inst.endswith(']'):
             inst_split = inst.rsplit(',', 1)
             res = inst_split[0].strip() + ', ' + '[' + inst_split[1] + ']'
         return res
@@ -262,8 +263,10 @@ class Disasm_IDAPro(Disasm):
                     else:
                         if prefix_suffix.startswith('(') and prefix_suffix.endswith(')'):
                             res = '[' + mem_addr + '+' + utils.extract_content(prefix_suffix) + ']'
-                        else:
+                        elif prefix_suffix:
                             res = '[' + mem_addr + '+' + prefix_suffix + ']'
+                        else:
+                            res = '[' + mem_addr + ']'
                 else:
                     res = '[' + mem_addr + ']'
             elif self._curr_ptr_rep:
@@ -359,7 +362,8 @@ class Disasm_IDAPro(Disasm):
 
 
     def _format_arg(self, address, inst_name, arg, rip):
-        res = self._remove_unused_seg_reg(arg)
+        res = arg.replace('large ', '')
+        res = self._remove_unused_seg_reg(res)
         res = self._replace_symbol_with_value(address, inst_name, res, 2)
         res = res.replace('+-', '-')
         res = self._move_segment_rep(res)
@@ -428,6 +432,8 @@ class Disasm_IDAPro(Disasm):
         if type_spec not in helper.BYTE_LEN_REPS:
             if type_spec in self._ida_struct_table:
                 self._variable_w_ida_struct_type[var_name] = type_spec
+            elif type_spec in ('LARGE_INTEGER'):
+                self._variable_ptr_rep_map[var_name] = ptr_rep
             else:
                 print(line)
                 sys.exit('We have not recorded the specific information for ida type ' + type_spec)
@@ -469,6 +475,18 @@ class Disasm_IDAPro(Disasm):
                         original = 'offset ' + variable
                         if variable in self._variable_offset_map:
                             new_var = hex(self._variable_offset_map[variable])
+                        elif variable.startswith(offset_spec_prefix):
+                            v = variable.split('_', 1)[1]
+                            if utils.imm_start_pat.match(v):
+                                new_var = hex(int(v, 16))
+                        # elif variable.startswith('byte_'):
+                        #     v = variable.split('byte_', 1)[1]
+                        #     if utils.imm_start_pat.match(v):
+                        #         new_var = hex(int(v, 16))
+                        # elif variable.startswith('loc_'):
+                        #     v = variable.split('loc_', 1)[1]
+                        #     if utils.imm_start_pat.match(v):
+                        #         new_var = hex(int(v, 16))
                         elif '.' in variable:
                             new_var = self._replace_ida_struct_item_symbol(variable)
                     break

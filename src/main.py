@@ -87,7 +87,7 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     helper.disassemble_to_asm(disasm_path)
     disasm_factory = Disasm_Factory(disasm_path, exec_path)
     disasm_asm = disasm_factory.get_disasm()
-    # if disasm_asm.valid_address_no < 10000:
+    # if disasm_asm.valid_address_no >= 10000:
         # print(exec_path)
     start_time = time.time()
     cfg = construct_cfg(disasm_asm)
@@ -102,16 +102,16 @@ def cmc_batch(exec_dir, disasm_dir, disasm_type, verbose=False):
     exec_files.sort()
     for exec_path in exec_files:
         file_name = utils.get_file_name(exec_path)
-        if file_name not in ['[.exe', 'basename.exe', 'cat.exe', 'chgrp.exe', 'chmod.exe', 'chown.exe', 'chroot.exe', 'cksum.exe', 'comm.exe']:
-            print(file_name)
-            disasm_path = os.path.join(disasm_dir, file_name + '.' + disasm_type)
-            try:
-                cmc_main(exec_path, disasm_path, disasm_type, verbose)
-                time.sleep(15)
-            except:
-                close_logger()
-                time.sleep(15)
-                continue
+        # if file_name not in ['[.exe', 'basename.exe', 'cat.exe', 'chgrp.exe', 'chmod.exe', 'chown.exe', 'chroot.exe', 'cksum.exe', 'comm.exe']:
+        print(file_name)
+        disasm_path = os.path.join(disasm_dir, file_name + '.' + disasm_type)
+        try:
+            cmc_main(exec_path, disasm_path, disasm_type, verbose)
+            time.sleep(15)
+        except:
+            close_logger()
+            time.sleep(15)
+            continue
 
 
 def cmc_specified(file_names, exec_dir, disasm_dir, disasm_type, verbose=False):
@@ -136,7 +136,7 @@ if __name__=='__main__':
     parser.add_argument('-f', '--file_name', type=str, help='Benchmark file name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Whether to print log information on the screen')
     parser.add_argument('-c', '--bmc_bound', default=25, type=int, help='The default value of the BMC bound')
-    parser.add_argument('-s', '--mem_addr_size', default=64, type=int, help='The default value of the memory address size')
+    parser.add_argument('-s', '--mem_addr_size', default=32, type=int, help='The default value of the memory address size')
     args = parser.parse_args()
     utils.MAX_VISIT_COUNT = args.bmc_bound
     utils.MEM_ADDR_SIZE = args.mem_addr_size

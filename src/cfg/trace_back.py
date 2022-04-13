@@ -23,6 +23,8 @@ from ..symbolic import sym_helper
 from ..symbolic import sym_engine
 from ..semantics import smt_helper
 from ..semantics import semantics
+from ..semantics import semantics_tb_sym
+from . import cfg_helper
 
 
 def get_func_call_invariant_arguments(block_set, func_call_blk, src_names):
@@ -83,3 +85,4 @@ def generate_alternative_values(alternative_sym):
             val = random.randint(0, utils.MAX_ARGC_NUM)
             res.append(sym_helper.bit_vec_val_sym(val))
     return res
+

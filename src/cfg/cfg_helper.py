@@ -368,22 +368,6 @@ def check_unsatisfied_input(constraint):
     return res
 
 
-def find_out_func_name_with_addr_in_range(func_start_addr_name_map, address):
-    res = ''
-    start_addr_list = list(func_start_addr_name_map.keys())
-    start_addr_list.sort()
-    addr_num = len(start_addr_list)
-    for idx, start_addr in enumerate(start_addr_list):
-        if idx + 1 < addr_num:
-            next_addr = start_addr_list[idx + 1]
-            if address >= start_addr and address < next_addr:
-                res = func_start_addr_name_map[start_addr]
-                break
-        else:
-            res = func_start_addr_name_map[start_addr]
-    return res
-
-
 def collect_statistic_data_from_map(cmc_func_exec_info):
     res = [0] * utils.CMC_EXEC_RES_COUNT
     for name in cmc_func_exec_info:
@@ -424,24 +408,22 @@ def start_init(store, rip, block_id):
     ext_handler.insert_termination_symbol(store, rip, block_id)
     
 
-def get_sym_val(store, rip, src, block_id):
+def get_sym_val(store, rip, src, block_id, length=utils.MEM_ADDR_SIZE):
     res = None
     src = src.strip()
-    res = sym_engine.get_sym(store, rip, src, block_id)
+    res = sym_engine.get_sym(store, rip, src, block_id, length)
     return res
 
 
-def preprocess_constraint(store, rip, block_id, ext_name, constraint):
+def preprocess_constraint(store, rip, block_id, ext_name, pre_constraint):
     res = None
-    if 'fresh heap pointer' in constraint:
-        # op = re.search(r'[<!=>]+', constraint).group(0)
-        # arg = constraint.split(op, 1)[0].strip()
-        # res = utils.MIN_HEAP_ADDR + '<=' + arg + '<=' + utils.MAX_HEAP_ADDR
-        # mem_size = sym_engine.get_sym(store, rip, 'rdi', block_id) if ext_name in ('malloc', 'calloc') else sym_engine.get_sym(store, rip, 'rsi', block_id)
+    if 'fresh heap pointer' in pre_constraint:
         mem_size = sym_helper.bit_vec_val_sym(utils.MAX_MALLOC_SIZE)
         ext_handler.ext_gen_fresh_heap_pointer(store, rip, ext_name, block_id, mem_size)
+    elif 'unchanged' in pre_constraint or 'starting_point' in pre_constraint:
+        pass
     else:
-        res = constraint
+        res = pre_constraint
     return res
 
 
@@ -449,13 +431,17 @@ def parse_basic_pred(store, rip, block_id, logic_op, lhs, rhs):
     lhs = get_sym_val(store, rip, lhs, block_id)
     rhs = get_sym_val(store, rip, rhs, block_id)
     if lhs == None or rhs == None: return None
+    if lhs.size() < rhs.size():
+        rhs = Extract(lhs.size() - 1, 0, rhs)
+    elif lhs.size() > rhs.size():
+        lhs = Extract(rhs.size() - 1, 0, lhs)
     pred = sym_helper.LOGIC_OP_FUNC_MAP[logic_op](lhs, rhs)
     return pred
 
 
-def parse_single_predicate(store, rip, block_id, ext_name, constraint):
+def parse_single_predicate(store, rip, block_id, ext_name, pre_constraint):
     predicates = None
-    constraint = preprocess_constraint(store, rip, block_id, ext_name, constraint)
+    constraint = preprocess_constraint(store, rip, block_id, ext_name, pre_constraint)
     if constraint:
         logic_ops = re.findall(r'[<!=>]+', constraint)
         if len(logic_ops) > 1:
@@ -507,6 +493,33 @@ def insert_new_constraints(store, rip, block_id, ext_name, pre_constraint, const
                     predicates = simplify(And(predicates, pred))
                 else:
                     predicates = pred
+        if predicates is not None:
+            new_constraint = Constraint(constraint, predicates)
+    return new_constraint
+
+
+def handle_pre_constraint(store, rip, constraint, block_id, global_pre_constraint, external_lib_assumptions):
+    new_constraint = constraint
+    if global_pre_constraint:
+        predicates = None
+        for ext_name in global_pre_constraint:
+            pre_constraint = global_pre_constraint[ext_name]
+            for p_constraint in pre_constraint:
+                p_constraint = utils.remove_multiple_spaces(p_constraint)
+                p_constraint = p_constraint.lower()
+                if 'unchanged' in p_constraint:
+                    statepart = p_constraint.split('=', 1)[0].strip()
+                    if ext_name in external_lib_assumptions:
+                        external_lib_assumptions[ext_name].append(statepart)
+                    else:
+                        external_lib_assumptions[ext_name] = [statepart]
+                elif ext_name == 'starting_point':
+                    pred = parse_predicates(store, rip, block_id, ext_name, p_constraint)
+                    if pred is not None:
+                        if predicates is not None:
+                            predicates = simplify(And(predicates, pred))
+                        else:
+                            predicates = pred
         if predicates is not None:
             new_constraint = Constraint(constraint, predicates)
     return new_constraint
@@ -583,3 +596,11 @@ def print_tree_path_info(init_sym_store, init_node, address_sym_table):
     res += '\n'.join(print_info) + '\n'
     utils.logger.info(res)
     utils.output_logger.info(res)
+
+
+def get_parent_block_info(block_set, blk):
+    block_id, sym_store = None, None
+    if blk.parent_id in block_set:
+        parent_block = block_set[blk.parent_id]
+        block_id, sym_store = parent_block.block_id, parent_block.sym_store
+    return block_id, sym_store

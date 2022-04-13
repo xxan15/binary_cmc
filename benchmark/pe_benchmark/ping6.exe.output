@@ -1,5 +1,8 @@
-# of instructions: 8650
-# of reachable instructions: 29
+Error: Null pointer dereference at address 0xffff27
+Terminate path with pointer-related error at 0x1003dbe: test dword ptr [eax],eax
+# of instructions: 7439
+# of reached instructions: 29
 # of paths: 1
 # of unsound paths: 1
 # of unresolved indirects: 0
+Execution time (s): 0.23498106002807617

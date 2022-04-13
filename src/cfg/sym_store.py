@@ -29,9 +29,7 @@ class Sym_Store:
         else:
             self.store = {}
             for name in lib.STATE_NAMES:
-                if name == lib.AUX_MEM:
-                    self.store[name] = set()
-                elif name == lib.FUNC_CALL_STACK:
+                if name == lib.FUNC_CALL_STACK:
                     self.store[name] = []
                 else:
                     self.store[name] = {}
@@ -39,8 +37,6 @@ class Sym_Store:
             self.store[lib.NEED_TRACE_BACK] = False
             self.store[lib.POINTER_RELATED_ERROR] = None
             self.store[lib.MEM_CONTENT_POLLUTED] = utils.INIT_BLOCK_NO
-            self.store[lib.VERIFIED_FUNC_INFO] = None
-            self.store[lib.TO_BE_VERIFIED_ARGS] = {}
 
 
     def pp_val(self, sym):
@@ -52,15 +48,6 @@ class Sym_Store:
         else: res = str(sym)
         return res
 
-    def pp_aux_mem(self):
-        res = 'mem:{\n'
-        aux_mem_set = self.store[lib.AUX_MEM]
-        mem_map = self.store[lib.MEM]
-        for k in aux_mem_set:
-            v = mem_map[k]
-            res += str(k) + ': ' + self.pp_val(v) + ',\n'
-        res += '}\n'
-        return res
 
     def pp_store(self):
         result = ''
@@ -93,21 +80,6 @@ class Sym_Store:
                     s[ki] = sym_helper.merge_sym(v_old, v, address_inst_map)
 
 
-    def aux_mem_eq(self, other, k=lib.AUX_MEM):
-        v = self.store[k]
-        v_mem = self.store[lib.MEM]
-        other_v = other.store[lib.MEM]
-        for ki in v:
-            vi = v_mem[ki]
-            val = other_v.get(ki, None)
-            if val is not None:
-                if not sym_helper.bitvec_eq(val, vi):
-                    return False
-            else:
-                return False
-        return True
-
-
     def state_ith_eq(self, old, k=lib.REG):
         s = self.store[k]
         s_old = old.store[k]
@@ -118,10 +90,6 @@ class Sym_Store:
                 v_old = v_old[0]
                 if not sym_helper.bitvec_eq(v_old, v):
                     return False
-        # for ki in other_v:
-        #     val = v.get(ki, None)
-        #     if val is None:
-        #         return False
         return True
 
 

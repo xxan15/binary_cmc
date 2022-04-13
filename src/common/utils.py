@@ -139,6 +139,8 @@ def imm_str_to_int(imm_str):
         res = int(imm_str, 16)
     elif re.search(r'[a-f]+', imm_str):
         res = int(imm_str, 16)
+    elif imm_str.endswith('h'):
+        res = int(imm_str.rsplit('h', 1)[0], 16)
     else:
         res = int(imm_str)
     return res
@@ -515,9 +517,15 @@ def check_not_single_branch_inst(inst):
     inst_name = inst.strip().split(' ', 1)[0]
     return inst_name in lib.CONDITIONAL_JMP_INST
 
+
 def check_jmp_with_address(line):
     inst_name = line.strip().split(' ', 1)[0]
     return inst_name in lib.JMP_INST_WITH_ADDRESS
+
+
+def check_jmp_with_jump_instr(line):
+    inst_name = line.strip().split(' ', 1)[0]
+    return inst_name in lib.JMP_INST_WITH_JUMP
 
 
 def get_mem_sym_length(sym_name):
