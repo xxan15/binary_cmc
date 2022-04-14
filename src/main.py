@@ -72,11 +72,12 @@ def close_logger():
 
 
 def write_results(cfg):
-    num_of_paths, num_of_negatives, num_of_unresolved_indirects = cfg.cmc_exec_info[0:3]
+    num_of_paths, num_of_negatives, num_of_unresolved_indirects, num_of_uninitialized = cfg.cmc_exec_info[0:4]
     reachable_address_num = cfg.reachable_addresses_num()
     utils.output_logger.info('# of reached instructions: ' + str(reachable_address_num))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
     utils.output_logger.info('# of (possibly) negative paths: ' + str(num_of_negatives))
+    utils.output_logger.info('# of uninitialized content: ' + str(num_of_uninitialized))
     utils.output_logger.info('# of unresolved indirects: ' + str(num_of_unresolved_indirects))
     
 

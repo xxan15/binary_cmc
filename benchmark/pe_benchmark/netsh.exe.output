@@ -43,12 +43,6 @@
 0x180602d	cmp dword ptr [0x1813760],edi
 	Uninitialized content at address 0x1813760
 
-Error: 0x18060e5	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
-
-Error: 0x180622e	mov ecx,dword ptr [esi]
-	Null pointer dereference at address 0x0
-
 0x1806a6a	cmp dword ptr [0x1813754],esi
 	Uninitialized content at address 0x1813754
 
@@ -130,17 +124,8 @@ Error: 0x180622e	mov ecx,dword ptr [esi]
 0x1807ebf	mov esi,dword ptr [0x181375c]
 	Uninitialized content at address 0x181375c
 
-Error: 0x180622e	mov ecx,dword ptr [esi]
-	Null pointer dereference at address 0x0
-
 0x1806454	mov eax,dword ptr [0x181373c]
 	Uninitialized content at address 0x181373c
-
-Error: 0x180552f	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x180552f	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
 
 0x1806537	cmp dword ptr [0x1813770],0x1
 	Uninitialized content at address 0x1813770
@@ -148,32 +133,17 @@ Error: 0x180552f	mov eax,dword ptr [edi]
 0x18049d5	add ecx,dword ptr [0x1818b10]
 	Uninitialized content at address 0x1818b10
 
-Error: 0x1808b86	push dword ptr [esi*8]
-	Null pointer dereference at address 0x0
+0x18049d5	add ecx,dword ptr [0x1818b10]
+	Uninitialized content at address 0x1818b10
 
 0x18049d5	add ecx,dword ptr [0x1818b10]
 	Uninitialized content at address 0x1818b10
 
-Error: 0x1808b86	push dword ptr [esi*8]
-	Null pointer dereference at address 0x0
-
 0x18049d5	add ecx,dword ptr [0x1818b10]
 	Uninitialized content at address 0x1818b10
 
-Error: 0x1808b86	push dword ptr [esi*8]
-	Null pointer dereference at address 0x0
-
 0x18049d5	add ecx,dword ptr [0x1818b10]
 	Uninitialized content at address 0x1818b10
-
-Error: 0x1808b86	push dword ptr [esi*8]
-	Null pointer dereference at address 0x0
-
-0x18049d5	add ecx,dword ptr [0x1818b10]
-	Uninitialized content at address 0x1818b10
-
-Error: 0x1808b86	push dword ptr [esi*8]
-	Null pointer dereference at address 0x0
 
 0x18049d5	add ecx,dword ptr [0x1818b10]
 	Uninitialized content at address 0x1818b10
@@ -195,21 +165,6 @@ Error: 0x1808b86	push dword ptr [esi*8]
 
 0x1806454	mov eax,dword ptr [0x181373c]
 	Uninitialized content at address 0x181373c
-
-Error: 0x180624c	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
-
-Error: 0x180624c	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
-
-Error: 0x180624c	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
-
-Error: 0x180624c	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
-
-Error: 0x180624c	cmp dword ptr [esi],esi
-	Null pointer dereference at address 0x0
 
 0x18022f7	mov esi,dword ptr [0x1818b20+eax*4]
 	Uninitialized content at address 0x1818b20
@@ -648,6 +603,7 @@ Error: 0x180624c	cmp dword ptr [esi],esi
 
 # of reached instructions: 5028
 # of paths: 1701
-# of (possibly) negative paths: 216
+# of (possibly) negative paths: 0
+# of uninitialized content: 201
 # of unresolved indirects: 5
-Execution time (s): 71.07407712936401
+Execution time (s): 79.71837377548218

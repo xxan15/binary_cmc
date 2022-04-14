@@ -10,27 +10,6 @@
 0x409b48	xor eax,dword ptr [ebp-0x14]
 	Uninitialized content at address 0xffffdb
 
-Error: 0x405a72	movzx eax,dword ptr [edx*2]
-	Null pointer dereference at address 0x0
-
-Error: 0x4059db	movzx eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x405a72	movzx eax,dword ptr [edx*2]
-	Null pointer dereference at address 0x0
-
-Error: 0x405a72	movzx eax,dword ptr [edx*2]
-	Null pointer dereference at address 0x0
-
-Error: 0x405a72	movzx eax,dword ptr [edx*2]
-	Null pointer dereference at address 0x0
-
-Error: 0x405a72	movzx eax,dword ptr [edx*2]
-	Null pointer dereference at address 0x0
-
-Error: 0x401f07	push dword ptr [esi]
-	Null pointer dereference at address 0x0
-
 0x40963b	mov ecx,dword ptr [ebp-0x4]
 	Uninitialized content at address 0xfffffffc
 
@@ -48,6 +27,7 @@ Error: 0x401f07	push dword ptr [esi]
 
 # of reached instructions: 3898
 # of paths: 1425
-# of (possibly) negative paths: 16
+# of (possibly) negative paths: 0
+# of uninitialized content: 9
 # of unresolved indirects: 3
-Execution time (s): 58.2379252910614
+Execution time (s): 57.146695375442505

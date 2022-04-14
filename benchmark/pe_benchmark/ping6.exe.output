@@ -585,6 +585,7 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 
 # of reached instructions: 3002
 # of paths: 1443
-# of (possibly) negative paths: 195
+# of (possibly) negative paths: 1
+# of uninitialized content: 194
 # of unresolved indirects: 2
-Execution time (s): 38.83066439628601
+Execution time (s): 36.89326190948486

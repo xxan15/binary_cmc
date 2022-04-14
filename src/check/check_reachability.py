@@ -304,6 +304,8 @@ def read_parameters(output_path):
                     path_cnt = int(line.rsplit(' ', 1)[1])
                 elif '# of (possibly) negative paths' in line:
                     neg_path_cnt = int(line.rsplit(' ', 1)[1])
+                elif '# of uninitialized content' in line:
+                    uninitialized_path_cnt = int(line.rsplit(' ', 1)[1])
                 elif '# of unresolved indirects' in line:
                     indirects_cnt = int(line.rsplit(' ', 1)[1])
                 elif 'Execution time ' in line:
@@ -311,6 +313,7 @@ def read_parameters(output_path):
     res_list.append(reached_cnt)
     res_list.append(path_cnt)
     res_list.append(neg_path_cnt)
+    res_list.append(uninitialized_path_cnt)
     res_list.append(indirects_cnt)
     return res_list, exec_time
 
@@ -320,14 +323,8 @@ def neat_main(graph, new_log_path, output_path):
     cond_jump_unreached_cnt, implicit_called_cnt = 0, 0
     normalize_unreachable(new_log_path, graph)
     para_list, exec_time = read_parameters(output_path)
-    # para_list.append(unreached_count)
-    # para_list.append(blk_count)
     para_list.append(cond_jump_unreached_cnt)
-    # para_list.append(c_blk_cnt)
     para_list.append(implicit_called_cnt)
-    # para_list.append(i_blk_cnt)
-    # para_list.append(unreached_entries_cnt)
-    # para_list.append(u_blk_cnt)
     para_list.append(exec_time)
     return para_list
 
@@ -392,33 +389,24 @@ def collect_valid_addr_set(idapro_path):
     return block_start_addrs
 
 
-def pp_para_list(file_name, para_list, print_type, combine):
+def pp_para_list(file_name, para_list, print_type):
     sep = '\t' if print_type == 0 else ' & '
     res = file_name + sep
     unreached = 0
     for i in range(len(para_list)):
         val = para_list[i]
-        if i < 4:
+        if i < 5:
             res += str(val) + sep
-        elif i == 4: 
-            if combine:
-                unreached += val
-            else:
-                res += str(val) + sep
-        elif i == 5:
-            if print_type != 0:
-                if combine:
-                    unreached += val
-                    res += str(unreached)
-                else:
-                    res += str(val)
-            else:
-                if combine:
-                    unreached += val
-                    res += str(unreached) + sep
-                else:
-                    res += str(val) + sep
+        elif i == 5: 
+            unreached += val
         elif i == 6:
+            if print_type != 0:
+                unreached += val
+                res += str(unreached)
+            else:
+                unreached += val
+                res += str(unreached) + sep
+        elif i == 7:
             if print_type != 0:
                 pass
             else:
@@ -428,7 +416,8 @@ def pp_para_list(file_name, para_list, print_type, combine):
         # res += '\n\\midrule'
     print(res)
 
-def main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type, combine):
+
+def main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type):
     global _start_segment_address
     exec_path = os.path.join(exec_dir, file_name)
     log_path = os.path.join(log_dir, file_name + '.log')
@@ -447,18 +436,18 @@ def main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type, 
     graph = Construct_Graph(log_path, disasm_asm.address_inst_map, inst_addresses, block_start_addrs)
     para_list = neat_main(graph, new_log_path, output_path)
     if verbose:
-        pp_para_list(file_name, para_list, print_type, combine)
+        pp_para_list(file_name, para_list, print_type)
     return para_list
 
 
-def main_batch(exec_dir, log_dir, verbose, print_type, combine):
+def main_batch(exec_dir, log_dir, verbose, print_type):
     exec_files = utils.get_executable_files(exec_dir)
     exec_files.sort()
     for exec_path in exec_files:
         file_name = utils.get_file_name(exec_path)
         # print(file_name)
         idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(log_dir, file_name + '.idapro'))
-        main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type, combine)
+        main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type)
         time.sleep(5)
 
 
@@ -469,7 +458,6 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-5.3.0-idapro', type=str, help='Log folder name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print the starts of unreachable instruction blocks')
     parser.add_argument('-t', '--print_type', default=0, help='Print the output in specific format')
-    parser.add_argument('-c', '--combine', default=False, action='store_true', help='Whether the add the unreached instrs together')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run neat_unreach in batch mode')
     args = parser.parse_args()
     utils.make_dir(target_dir)
@@ -477,10 +465,10 @@ if __name__ == '__main__':
     log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
     if args.batch:
         # for file_name in ['seq.exe', 'setuidgid.exe', 'sha1sum.exe', 'sleep.exe', 'stty.exe', 'sum.exe', 'sync.exe', 'tee.exe', 'tr.exe', 'true.exe', 'tsort.exe', 'tty.exe', 'uname.exe', 'unexpand.exe', 'uniq.exe', 'unlink.exe', 'uptime.exe', 'users.exe', 'whoami.exe', 'yes.exe']:
-        main_batch(exec_dir, log_dir, args.verbose, args.print_type, args.combine)
+        main_batch(exec_dir, log_dir, args.verbose, args.print_type)
         time.sleep(5)
     else:
         idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.log_dir, args.file_name + '.idapro'))
         file_name = args.file_name
-        main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose, args.print_type, args.combine)
+        main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose, args.print_type)
     

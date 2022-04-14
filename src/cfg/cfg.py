@@ -195,7 +195,6 @@ class CFG(object):
             elif ext_func_name.startswith(('free')):
                 succeed = ext_handler.ext_free_mem_call(store, rip, block.block_id)
                 if not succeed: 
-                    # self._terminate_path_w_pointer_related_errors(block, sym_store, address, inst, False)
                     return
             else:
                 mem_preserve_assumption = True if ext_func_address in self.external_mem_preservation else False
@@ -560,18 +559,15 @@ class CFG(object):
         if sym_store.store[lib.NEED_TRACE_BACK]:
             self._handle_symbolized_mem_addr_w_traceback(block, address, inst, sym_store, constraint)
         elif sym_store.store[lib.POINTER_RELATED_ERROR] and sym_store.store[lib.POINTER_RELATED_ERROR][0] != MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT:
-            error_msg = 'Error: ' + hex(address) + '\t' + inst + '\n\t' + cfg_helper.str_of_error_type(sym_store.store[lib.POINTER_RELATED_ERROR][0]) + ' at address ' + hex(sym_store.store[lib.POINTER_RELATED_ERROR][1]) + '\n'
-            utils.output_logger.error(error_msg)
-            utils.logger.error(error_msg)
-            self._terminate_path_w_pointer_related_errors(block, sym_store, address, inst)
+            self._terminate_path_w_pointer_related_errors(block, sym_store, address, inst, constraint)
         else:
             if sym_store.store[lib.POINTER_RELATED_ERROR] and sym_store.store[lib.POINTER_RELATED_ERROR][0] == MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT:
                 error_msg = hex(address) + '\t' + inst + '\n\t' + cfg_helper.str_of_error_type(sym_store.store[lib.POINTER_RELATED_ERROR][0]) + ' at address ' + hex(sym_store.store[lib.POINTER_RELATED_ERROR][1]) + '\n'
                 utils.output_logger.error(error_msg)
                 utils.logger.error(error_msg)
                 sym_store.store[lib.POINTER_RELATED_ERROR] = None
-                # number of negative paths
-                self.cmc_exec_info[1] += 1
+                # number of negative paths with uninitialized content
+                self.cmc_exec_info[3] += 1
             if parent_blk:
                 parent_blk.add_to_children_list(block_id)
             if address in self.address_block_map:
@@ -612,8 +608,6 @@ class CFG(object):
                 if path_reachable == False: return
             print_info = trace_back.pp_tb_debug_info(res, address, inst)
             utils.logger.info(print_info)
-            # # Unresolved symbolic memory address
-            # self.cmc_exec_info[6] += 1
         
 
     def _update_node_with_bid(self, block_id, sym_name, prev_blk):
@@ -664,8 +658,17 @@ class CFG(object):
         utils.logger.info('\n\n')
 
 
-    def _terminate_path_w_pointer_related_errors(self, block, sym_store, address, inst, common=True):
+    def _terminate_path_w_pointer_related_errors(self, block, sym_store, address, inst, constraint, common=True):
         # utils.output_logger.info('Terminate path with pointer-related error at ' + hex(address) + ': ' + inst)
+        if constraint is not None:
+            path_reachable = cfg_helper.check_path_reachability(constraint)
+            if path_reachable == False: 
+                # number of paths
+                self.cmc_exec_info[0] += 1
+                return
+        error_msg = 'Error: ' + hex(address) + '\t' + inst + '\n\t' + cfg_helper.str_of_error_type(sym_store.store[lib.POINTER_RELATED_ERROR][0]) + ' at address ' + hex(sym_store.store[lib.POINTER_RELATED_ERROR][1]) + '\n'
+        utils.output_logger.error(error_msg)
+        utils.logger.error(error_msg)
         sym_names = cfg_helper.retrieve_source_for_memaddr(inst, common)
         if sym_names:
             self._locate_pointer_related_error(block, sym_store, address, inst, sym_names)
@@ -779,10 +782,10 @@ class CFG(object):
     def handle_cmc_path_termination(self, store):
         # NUM_OF_PATHS
         self.cmc_exec_info[0] += 1
-        if store[lib.POINTER_RELATED_ERROR] and store[lib.POINTER_RELATED_ERROR][0] != MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT:
-            # NUM_OF_NEGATIVES
-            self.cmc_exec_info[1] += 1
-            utils.logger.info('The symbolic execution has been terminated at the path with pointer-related error\n')
+        # if store[lib.POINTER_RELATED_ERROR] and store[lib.POINTER_RELATED_ERROR][0] != MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT:
+        #     # NUM_OF_NEGATIVES
+        #     self.cmc_exec_info[1] += 1
+        #     utils.logger.info('The symbolic execution has been terminated at the path with pointer-related error\n')
 
 
     def reachable_addresses_num(self):

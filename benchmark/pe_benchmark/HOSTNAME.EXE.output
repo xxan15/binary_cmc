@@ -30,6 +30,7 @@
 
 # of reached instructions: 1037
 # of paths: 237
-# of (possibly) negative paths: 10
+# of (possibly) negative paths: 0
+# of uninitialized content: 10
 # of unresolved indirects: 3
-Execution time (s): 8.542989015579224
+Execution time (s): 10.95699405670166

@@ -34,42 +34,6 @@ Error: 0x401596	mov eax,dword ptr [ecx]
 Error: 0x40356e	mov ax,word ptr [edi]
 	Null pointer dereference at address 0x0
 
-Error: 0x40356e	mov ax,word ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40356e	mov ax,word ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x402938	cmp dword ptr [ecx],edi
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4017cd	movzx eax,byte ptr [ecx]
-	Null pointer dereference at address 0x0
-
 0x4038fb	mov ecx,dword ptr [ebp-0x4]
 	Uninitialized content at address 0xfffffffc
 
@@ -87,6 +51,7 @@ Error: 0x4017cd	movzx eax,byte ptr [ecx]
 
 # of reached instructions: 2825
 # of paths: 995
-# of (possibly) negative paths: 29
+# of (possibly) negative paths: 8
+# of uninitialized content: 9
 # of unresolved indirects: 3
-Execution time (s): 34.76041340827942
+Execution time (s): 35.68519473075867

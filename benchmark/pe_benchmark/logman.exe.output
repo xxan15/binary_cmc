@@ -172,50 +172,11 @@
 0x40e492	and dword ptr [ebp-0x8],0x0
 	Uninitialized content at address 0xfff280
 
-Error: 0x40bf41	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bf71	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
 0x40c13f	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffab4
 
 0x408c30	cmp dword ptr [esp+0x28],0x0
 	Uninitialized content at address 0xfffb54
-
-Error: 0x408c67	mov esi,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x4096ee	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4097e0	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x408c67	mov esi,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x408c67	mov esi,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x408c67	mov esi,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x408c67	mov esi,dword ptr [eax]
-	Null pointer dereference at address 0x0
 
 0x40e48e	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfffa6c
@@ -223,122 +184,17 @@ Error: 0x408c67	mov esi,dword ptr [eax]
 0x40e492	and dword ptr [ebp-0x8],0x0
 	Uninitialized content at address 0xfffa68
 
-Error: 0x4096ee	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
+0x40c13f	mov eax,dword ptr [ebx]
+	Uninitialized content at address 0xfffab4
 
 0x40c13f	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffab4
 
-Error: 0x4099f6	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a15	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x4099f6	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a15	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
 0x40c13f	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffab4
 
-Error: 0x4099f6	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a15	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
 0x40c13f	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffab4
-
-Error: 0x4099f6	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a15	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a80	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-0x40c13f	mov eax,dword ptr [ebx]
-	Uninitialized content at address 0xfffab4
-
-Error: 0x4099f6	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x409a15	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0b3	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0f5	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c077	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
 
 0x40bf41	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffb90
@@ -346,21 +202,6 @@ Error: 0x40bfe8	mov eax,dword ptr [ebx]
 0x40bf71	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffb90
 
-Error: 0x40c0b3	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0f5	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c077	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
 0x40bfe8	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffb90
 
@@ -370,57 +211,6 @@ Error: 0x40c049	mov eax,dword ptr [edi]
 0x40bfe8	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xfffb90
 
-Error: 0x40bf41	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bf71	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0b3	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0f5	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c077	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bfe8	mov eax,dword ptr [ebx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0b3	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c0f5	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c077	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c049	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40bcff	mov eax,dword ptr [edi]
-	Null pointer dereference at address 0x0
-
-Error: 0x40941d	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
 0x40e5aa	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfff6b4
 
@@ -429,18 +219,6 @@ Error: 0x40941d	mov ecx,dword ptr [eax]
 
 0x40e5aa	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfff6b4
-
-Error: 0x408975	cmp si,word ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40de2f	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x40de2f	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x40d81b	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
 
 0x40bf26	and dword ptr [ebp-0x8],0x0
 	Uninitialized content at address 0xfffb14
@@ -448,56 +226,23 @@ Error: 0x40d81b	mov eax,dword ptr [ecx]
 0x40be33	mov eax,dword ptr [ebp-0x8]
 	Uninitialized content at address 0xfffb14
 
-Error: 0x40be99	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40be68	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
 0x40e5aa	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfff6b4
 
 0x40e5aa	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfff6b4
-
-Error: 0x408975	cmp si,word ptr [ecx]
-	Null pointer dereference at address 0x0
 
 0x40e5aa	and dword ptr [ebp-0x4],0x0
 	Uninitialized content at address 0xfffb18
 
-Error: 0x40d81b	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
 0x40bf26	and dword ptr [ebp-0x8],0x0
 	Uninitialized content at address 0xfffb14
-
-Error: 0x408975	cmp si,word ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40d81b	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x408975	cmp si,word ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40d81b	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x408975	cmp si,word ptr [ecx]
-	Null pointer dereference at address 0x0
 
 0x40d820	and dword ptr [ebp-0x14],0x0
 	Uninitialized content at address 0xfffb10
 
 0x40be33	mov eax,dword ptr [ebp-0x8]
 	Uninitialized content at address 0xfffb14
-
-Error: 0x40be99	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
-
-Error: 0x40be68	mov eax,dword ptr [ecx]
-	Null pointer dereference at address 0x0
 
 0x40ebc6	or dword ptr [eax],0xffffffff
 	Uninitialized content at address 0xfff300
@@ -508,18 +253,6 @@ Error: 0x40be68	mov eax,dword ptr [ecx]
 0x40c519	mov eax,dword ptr [ebx]
 	Uninitialized content at address 0xffffffff
 
-Error: 0x40c727	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c70c	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c727	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
-Error: 0x40c6d9	mov ecx,dword ptr [eax]
-	Null pointer dereference at address 0x0
-
 0x409096	push dword ptr [ebp-0x10]
 	Uninitialized content at address 0xfffb14
 
@@ -564,9 +297,6 @@ Error: 0x40c6d9	mov ecx,dword ptr [eax]
 
 0x409096	push dword ptr [ebp-0x10]
 	Uninitialized content at address 0xfffb14
-
-Error: 0x410091	mov ecx,dword ptr [ebx]
-	Null pointer dereference at address 0x0
 
 0x40fe06	and dword ptr [ebp-0x8],0x0
 	Uninitialized content at address 0xfffffff4
@@ -597,6 +327,7 @@ Error: 0x410091	mov ecx,dword ptr [ebx]
 
 # of reached instructions: 6126
 # of paths: 2252
-# of (possibly) negative paths: 199
+# of (possibly) negative paths: 0
+# of uninitialized content: 109
 # of unresolved indirects: 29
-Execution time (s): 68.69543981552124
+Execution time (s): 72.10605430603027
