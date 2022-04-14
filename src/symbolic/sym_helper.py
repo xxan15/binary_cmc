@@ -255,9 +255,10 @@ def sym_is_int_or_bitvecnum(address):
     return isinstance(address, (int, BitVecNumRef))
 
 
-def int_from_sym(sym_val):
-    res = sym_val.as_long()
+def int_from_sym(val):
+    res = val.as_long()
     return res
+
 
 def extract_bytes(high, low, sym):
     return Extract(high * 8 - 1, low * 8, sym)
@@ -291,7 +292,8 @@ def is_term_address(address):
 
 
 def remove_memory_content(store, mem_address):
-    del store[lib.MEM][mem_address]
+    if mem_address in store[lib.MEM]:
+        del store[lib.MEM][mem_address]
 
 
 def is_z3_bv_var(arg):
@@ -334,16 +336,17 @@ def bitvec_eq(v_old, v):
 def merge_sym(lhs, rhs, address_inst_map):
     res = rhs
     if isinstance(lhs, BitVecNumRef) and isinstance(rhs, BitVecNumRef):
-        lhs_num = lhs.as_long()
-        rhs_num = rhs.as_long()
+        lhs_num = int_from_sym(lhs)
+        rhs_num = int_from_sym(rhs)
         if rhs_num not in address_inst_map:
-            if not bvnum_eq(lhs, rhs):
-                if lhs_num >= global_var.elf_info.rodata_start_addr and lhs_num < global_var.elf_info.rodata_end_addr:
-                    res = gen_sym(rhs.size())
-                elif rhs_num < global_var.elf_info.rodata_start_addr or rhs_num >= global_var.elf_info.rodata_end_addr:
-                    res = gen_sym(rhs.size())
+            if lhs_num != rhs_num:
+                res = gen_sym(rhs.size())
+                # if lhs_num >= global_var.elf_info.rodata_start_addr and lhs_num < global_var.elf_info.rodata_end_addr:
+                #     res = gen_sym(rhs.size())
+                # elif rhs_num < global_var.elf_info.rodata_start_addr or rhs_num >= global_var.elf_info.rodata_end_addr:
+                #     res = gen_sym(rhs.size())
     elif isinstance(rhs, BitVecNumRef):
-        rhs_num = rhs.as_long()
+        rhs_num = int_from_sym(rhs)
         if rhs_num not in address_inst_map:
             res = gen_sym(rhs.size())
     return res

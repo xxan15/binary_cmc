@@ -1,0 +1,14 @@
+Error: Null pointer dereference at address 0xffedc0
+Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xffedc0
+Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xffedc0
+Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xffedc0
+Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
+# of instructions: 25108
+# of reached instructions: 3643
+# of paths: 769
+# of unsound paths: 4
+# of unresolved indirects: 9
+Execution time (s): 58.08478879928589

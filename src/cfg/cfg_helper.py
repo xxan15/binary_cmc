@@ -21,6 +21,7 @@ from z3 import *
 from ..common import lib
 from ..common import Inst_Elem
 from ..common import utils
+from ..common.lib import MEMORY_RELATED_ERROR_TYPE
 from .constraint import Constraint
 from .sym_store import Sym_Store
 from ..symbolic import sym_helper
@@ -575,27 +576,27 @@ def add_explain_suffix(store, rip, inst, address_sym_table):
     return res
 
 
-def print_tree_path_info(init_sym_store, init_node, address_sym_table):
-    print_info = []
-    node = init_node
-    block, sym_names, _ = node.data
-    init_suffix = add_explain_suffix(block.sym_store.store, block.sym_store.rip, block.inst, address_sym_table)
-    p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(block.address) + ': ' + block.inst + init_suffix
-    print_info.append(p_info)
-    # print_info.append(blk.sym_store.pp_store())
-    while node:
-        blk, sym_names, prev_blk = node.data
-        suffix = add_explain_suffix(prev_blk.sym_store.store, prev_blk.sym_store.rip, prev_blk.inst, address_sym_table)
-        p_info = 'Trace back to ' + str(sym_names) + ' after ' + hex(prev_blk.address) + ': ' + prev_blk.inst + suffix
-        print_info.append(p_info)
-        # print_info.append(prev_blk.sym_store.pp_store())
-        node = node.parent
-    print_info.reverse()
-    res = init_sym_store.store[lib.POINTER_RELATED_ERROR].name.capitalize()
-    res += ' if: ' + init_suffix.strip() + '@' + hex(block.address) + ' allocated size is not sufficient\n'
-    res += '\n'.join(print_info) + '\n'
-    utils.logger.info(res)
-    utils.output_logger.info(res)
+# def print_tree_path_info(init_sym_store, init_node, address_sym_table):
+#     print_info = []
+#     node = init_node
+#     block, sym_names, _ = node.data
+#     init_suffix = add_explain_suffix(block.sym_store.store, block.sym_store.rip, block.inst, address_sym_table)
+#     p_info = 'Trace back to ' + str(sym_names) + ' at initial state with ' + hex(block.address) + ': ' + block.inst + init_suffix
+#     print_info.append(p_info)
+#     # print_info.append(blk.sym_store.pp_store())
+#     while node:
+#         blk, sym_names, prev_blk = node.data
+#         suffix = add_explain_suffix(prev_blk.sym_store.store, prev_blk.sym_store.rip, prev_blk.inst, address_sym_table)
+#         p_info = 'Trace back to ' + str(sym_names) + ' after ' + hex(prev_blk.address) + ': ' + prev_blk.inst + suffix
+#         print_info.append(p_info)
+#         # print_info.append(prev_blk.sym_store.pp_store())
+#         node = node.parent
+#     print_info.reverse()
+#     res = init_sym_store.store[lib.POINTER_RELATED_ERROR][0].name.capitalize()
+#     res += ' if: ' + init_suffix.strip() + '@' + hex(block.address) + ' allocated size is not sufficient\n'
+#     res += '\n'.join(print_info) + '\n'
+#     utils.logger.info(res)
+#     utils.output_logger.info(res)
 
 
 def get_parent_block_info(block_set, blk):
@@ -604,3 +605,18 @@ def get_parent_block_info(block_set, blk):
         parent_block = block_set[blk.parent_id]
         block_id, sym_store = parent_block.block_id, parent_block.sym_store
     return block_id, sym_store
+
+
+def str_of_error_type(err):
+    res = ''
+    if err == MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE:
+        res = 'Null pointer dereference'
+    elif err == MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE:
+        res = 'Use after free'
+    elif err == MEMORY_RELATED_ERROR_TYPE.FREE_AFTER_FREE:
+        res = 'Use after free'
+    elif err == MEMORY_RELATED_ERROR_TYPE.BUFFER_OVERFLOW:
+        res = 'Buffer overflow'
+    elif err == MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT:
+        res = 'Uninitialized content'
+    return res

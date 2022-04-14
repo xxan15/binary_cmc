@@ -1,0 +1,14 @@
+Error: Null pointer dereference at address 0xfffb30
+Terminate path with pointer-related error at 0x41b2ef: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xfffb30
+Terminate path with pointer-related error at 0x41b2ef: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xfffb30
+Terminate path with pointer-related error at 0x41b2ef: or dword ptr [ecx],0x0
+Error: Null pointer dereference at address 0xfffb30
+Terminate path with pointer-related error at 0x41b2ef: or dword ptr [ecx],0x0
+# of instructions: 14514
+# of reached instructions: 2969
+# of paths: 986
+# of unsound paths: 4
+# of unresolved indirects: 2
+Execution time (s): 41.98791861534119

@@ -1,0 +1,8 @@
+Error: Null pointer dereference at address 0xffef9f
+Terminate path with pointer-related error at 0x407083: or dword ptr [ecx],0x0
+# of instructions: 4921
+# of reached instructions: 93
+# of paths: 1
+# of unsound paths: 1
+# of unresolved indirects: 0
+Execution time (s): 0.22987651824951172

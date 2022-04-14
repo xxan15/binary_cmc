@@ -1,0 +1,6 @@
+# of instructions: 3717
+# of reached instructions: 1542
+# of paths: 383
+# of unsound paths: 0
+# of unresolved indirects: 0
+Execution time (s): 14.974533081054688

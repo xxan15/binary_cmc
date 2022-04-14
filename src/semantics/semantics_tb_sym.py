@@ -145,13 +145,29 @@ def lea(store, sym_names, dest, src):
 
 
 def push(store, sym_names, src):
+    global halt_point
     src_names = sym_names
     sym_rsp = sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO)
     prev_rsp = str(sym_helper.sym_op('-', sym_rsp, utils.MEM_ADDR_SIZE // 8))
     if prev_rsp in sym_names:
         src_names.remove(prev_rsp)
-    src_names.append(smt_helper.get_root_reg(src))
+    if src in lib.REG_NAMES:
+        src_names.append(smt_helper.get_root_reg(src))
+    elif src.endswith(']'):
+        new_srcs, is_reg_bottom = smt_helper.get_bottom_source(src, store, rip, mem_len_map)
+        if is_reg_bottom:
+            src_names = src_names + new_srcs
+        else:
+            addr = sym_engine.get_effective_address(store, rip, src)
+            src_names = src_names + [str(addr)]
+            length = utils.get_sym_length(src)
+            mem_len_map[str(addr)] = length
+            if str(addr) not in store[lib.MEM]: 
+                halt_point = True
+    elif utils.imm_start_pat.match(src):
+        halt_point = True
     return src_names
+
 
 def pop(store, sym_names, dest):
     sym_rsp = str(sym_engine.get_sym(store, rip, 'rsp', utils.TB_DEFAULT_BLOCK_NO))
@@ -307,9 +323,13 @@ def parse_sym_src(address_ext_func_map, dll_func_info, address_inst_map, store, 
     inst_name = inst_split[0]
     src_names = sym_names
     if inst_name in INSTRUCTION_SEMANTICS_MAP:
-        inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
         inst_args = utils.parse_inst_args(inst_split)
-        src_names = inst_op(store, sym_names, *inst_args)
+        if inst_name == 'xor' and len(inst_args) == 2 and inst_args[0] == inst_args[1]:
+            halt_point = True
+            src_names = []
+        else:
+            inst_op = INSTRUCTION_SEMANTICS_MAP[inst_name]
+            src_names = inst_op(store, sym_names, *inst_args)
     elif inst_name in ('nop', 'hlt'): pass
     elif inst_name.startswith('cmov'):
         inst_args = utils.parse_inst_args(inst_split)

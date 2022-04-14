@@ -1,8 +1,590 @@
-Error: Null pointer dereference at address 0xffff27
-Terminate path with pointer-related error at 0x1003dbe: test dword ptr [eax],eax
-# of instructions: 7439
-# of reached instructions: 29
-# of paths: 1
-# of unsound paths: 1
-# of unresolved indirects: 0
-Execution time (s): 0.19322419166564941
+0x1003dbe	test dword ptr [eax],eax
+	Uninitialized content at address 0xffff2b
+
+0x1002daa	cmp dword ptr [0x1009b4c],0x2
+	Uninitialized content at address 0x1009b4c
+
+0x1003274	mov eax,dword ptr [0x100b0f0]
+	Uninitialized content at address 0x100b0f0
+
+0x10055ec	cmp dword ptr [0x100b0ec],0x0
+	Uninitialized content at address 0x100b0ec
+
+0x1005e7c	mov eax,dword ptr [0x100ad60]
+	Uninitialized content at address 0x100ad60
+
+0x1002eb2	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002eeb	cmp dword ptr [0x1009cb8],0x0
+	Uninitialized content at address 0x1009cb8
+
+0x1003ded	mov eax,dword ptr [0x1009cb4]
+	Uninitialized content at address 0x1009cb4
+
+0x1003a26	mov eax,dword ptr [0x1009cb0]
+	Uninitialized content at address 0x1009cb0
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x10032d1	cmp dword ptr [0x1009b9c],eax
+	Uninitialized content at address 0x1009b9c
+
+0x10035ad	mov eax,dword ptr [0x1009ba0]
+	Uninitialized content at address 0x1009ba0
+
+0x1005471	cmp esi,dword ptr [0x100ae84]
+	Uninitialized content at address 0x100ae84
+
+0x1005407	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea0
+
+0x1005407	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea1
+
+0x1005407	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea2
+
+0x1005407	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea3
+
+0x1005a33	cmp dword ptr [0x1009cd4],esi
+	Uninitialized content at address 0x1009cd4
+
+0x1005b77	mov edi,dword ptr [0x1009ce0]
+	Uninitialized content at address 0x1009ce0
+
+0x1005b84	mov ebx,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1006043	cmp dword ptr [0x1009cfc],edi
+	Uninitialized content at address 0x1009cfc
+
+0x10062aa	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10062aa	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005396	or byte ptr [0x100ad81+eax],0x10
+	Uninitialized content at address 0x100ad81
+
+0x10053b1	or byte ptr [0x100ad81+eax],0x20
+	Uninitialized content at address 0x100ad81
+
+0x10053c1	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea0
+
+0x1005396	or byte ptr [0x100ad81+eax],0x10
+	Uninitialized content at address 0x100ad82
+
+0x10053b1	or byte ptr [0x100ad81+eax],0x20
+	Uninitialized content at address 0x100ad82
+
+0x10053c1	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea1
+
+0x10053c1	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea2
+
+0x1005396	or byte ptr [0x100ad81+eax],0x10
+	Uninitialized content at address 0x100ad84
+
+0x10053b1	or byte ptr [0x100ad81+eax],0x20
+	Uninitialized content at address 0x100ad84
+
+0x10053c1	and byte ptr [0x100aea0+eax],0x0
+	Uninitialized content at address 0x100aea3
+
+0x1002f23	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1003e50	mov eax,dword ptr [0x100afa4]
+	Uninitialized content at address 0x100afa4
+
+0x1003e58	mov eax,dword ptr [0x100afa8]
+	Uninitialized content at address 0x100afa8
+
+0x1004097	mov eax,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x10040a4	mov ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004097	mov eax,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x10040a4	mov ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004097	mov eax,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x10040a4	mov ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004097	mov eax,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x10040a4	mov ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004097	mov eax,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x10040a4	mov ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1002eb2	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002eb2	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002eb2	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002f23	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002eb2	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x1002ec1	cmp edi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x1004359	mov eax,dword ptr [0x100afa4]
+	Uninitialized content at address 0x100afa4
+
+0x100435e	mov edx,dword ptr [0x100afa8]
+	Uninitialized content at address 0x100afa8
+
+0x100439a	mov eax,dword ptr [0x100afb0]
+	Uninitialized content at address 0x100afb0
+
+0x1004625	cmp ebx,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x1004630	cmp ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004625	cmp ebx,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x1004630	cmp ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004625	cmp ebx,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x1004630	cmp ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004625	cmp ebx,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x1004630	cmp ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004625	cmp ebx,dword ptr [0x100afa0]
+	Uninitialized content at address 0x100afa0
+
+0x1004630	cmp ecx,dword ptr [0x100afb8]
+	Uninitialized content at address 0x100afb8
+
+0x1004198	mov ecx,dword ptr [0x100afb4]
+	Uninitialized content at address 0x100afb4
+
+0x100439a	mov eax,dword ptr [0x100afb0]
+	Uninitialized content at address 0x100afb0
+
+0x1002ec1	cmp edi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x1002ec1	cmp edi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x1002ec1	cmp edi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x10051be	cmp dword ptr [0x100afc0],0x3
+	Uninitialized content at address 0x100afc0
+
+0x10051cc	cmp esi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x10051cc	cmp esi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x10062aa	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10062aa	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10060d1	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10062aa	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10060d1	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10060d1	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10060d1	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x10060d1	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1006043	cmp dword ptr [0x1009cfc],edi
+	Uninitialized content at address 0x1009cfc
+
+0x1005b77	mov edi,dword ptr [0x1009ce0]
+	Uninitialized content at address 0x1009ce0
+
+0x1005b84	mov ebx,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005b84	mov ebx,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005a9a	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005b77	mov edi,dword ptr [0x1009ce0]
+	Uninitialized content at address 0x1009ce0
+
+0x1005b84	mov ebx,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005b84	mov ebx,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005b77	mov edi,dword ptr [0x1009ce0]
+	Uninitialized content at address 0x1009ce0
+
+0x1005a9a	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005b77	mov edi,dword ptr [0x1009ce0]
+	Uninitialized content at address 0x1009ce0
+
+0x1005a9a	mov eax,dword ptr [0x1009cf0]
+	Uninitialized content at address 0x1009cf0
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae27
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae28
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae29
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae2a
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae2b
+
+0x1005534	or byte ptr [0x100ad81+eax],dl
+	Uninitialized content at address 0x100ae22
+
+Error: 0x1003770	mov cl,byte ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad83
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad84
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad85
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad86
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1005599	or byte ptr [0x100ad81+eax],0x8
+	Uninitialized content at address 0x100ad82
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1005471	cmp esi,dword ptr [0x100ae84]
+	Uninitialized content at address 0x100ae84
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1005471	cmp esi,dword ptr [0x100ae84]
+	Uninitialized content at address 0x100ae84
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1005471	cmp esi,dword ptr [0x100ae84]
+	Uninitialized content at address 0x100ae84
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1003999	and dword ptr [0x1009cac],0x0
+	Uninitialized content at address 0x1009cac
+
+0x1005ef7	mov eax,dword ptr [0x100afe0+eax*4]
+	Uninitialized content at address 0x100afe0
+
+0x1003a26	mov eax,dword ptr [0x1009cb0]
+	Uninitialized content at address 0x1009cb0
+
+0x1003a26	mov eax,dword ptr [0x1009cb0]
+	Uninitialized content at address 0x1009cb0
+
+0x10035ad	mov eax,dword ptr [0x1009ba0]
+	Uninitialized content at address 0x1009ba0
+
+0x10032d1	cmp dword ptr [0x1009b9c],eax
+	Uninitialized content at address 0x1009b9c
+
+0x10035ad	mov eax,dword ptr [0x1009ba0]
+	Uninitialized content at address 0x1009ba0
+
+0x1002ec1	cmp edi,dword ptr [0x100afac]
+	Uninitialized content at address 0x100afac
+
+0x1005471	cmp esi,dword ptr [0x100ae84]
+	Uninitialized content at address 0x100ae84
+
+0x1003274	mov eax,dword ptr [0x100b0f0]
+	Uninitialized content at address 0x100b0f0
+
+0x1003274	mov eax,dword ptr [0x100b0f0]
+	Uninitialized content at address 0x100b0f0
+
+0x1003274	mov eax,dword ptr [0x100b0f0]
+	Uninitialized content at address 0x100b0f0
+
+0x1003421	and byte ptr [ebp-0x8],0x0
+	Uninitialized content at address 0xfffeff
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfb
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfc
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfd
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfe
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdff
+
+0x1004fc8	cmp dword ptr [0x1009cbc],ebx
+	Uninitialized content at address 0x1009cbc
+
+0x100503f	mov eax,dword ptr [0x1009cc8]
+	Uninitialized content at address 0x1009cc8
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x1005095	mov eax,dword ptr [0x1009cc4]
+	Uninitialized content at address 0x1009cc4
+
+0x1005074	or byte ptr [ebp+0x12],0x20
+	Uninitialized content at address 0xfffde1
+
+0x100507e	or byte ptr [ebp+0x12],0x4
+	Uninitialized content at address 0xfffde1
+
+0x1005061	test eax,eax
+	Uninitialized content at address 0x1009ccc
+
+0x1005065	test byte ptr [ebp-0x8],0x1
+	Uninitialized content at address 0xfffdc7
+
+0x1005074	or byte ptr [ebp+0x12],0x20
+	Uninitialized content at address 0xfffde1
+
+0x100507e	or byte ptr [ebp+0x12],0x4
+	Uninitialized content at address 0xfffde1
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x1005095	mov eax,dword ptr [0x1009cc4]
+	Uninitialized content at address 0x1009cc4
+
+0x1005074	or byte ptr [ebp+0x12],0x20
+	Uninitialized content at address 0xfffde1
+
+0x100507e	or byte ptr [ebp+0x12],0x4
+	Uninitialized content at address 0xfffde1
+
+0x100352b	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde4
+
+0x100352b	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde5
+
+0x100352b	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde6
+
+0x1004fc8	cmp dword ptr [0x1009cbc],ebx
+	Uninitialized content at address 0x1009cbc
+
+0x100503f	mov eax,dword ptr [0x1009cc8]
+	Uninitialized content at address 0x1009cc8
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x1005095	mov eax,dword ptr [0x1009cc4]
+	Uninitialized content at address 0x1009cc4
+
+0x1005074	or byte ptr [ebp+0x12],0x20
+	Uninitialized content at address 0xfffde1
+
+0x100507e	or byte ptr [ebp+0x12],0x4
+	Uninitialized content at address 0xfffde1
+
+0x1005061	test eax,eax
+	Uninitialized content at address 0x1009ccc
+
+0x1005065	test byte ptr [ebp-0x8],0x1
+	Uninitialized content at address 0xfffdc7
+
+0x1005074	or byte ptr [ebp+0x12],0x20
+	Uninitialized content at address 0xfffde1
+
+0x100507e	or byte ptr [ebp+0x12],0x4
+	Uninitialized content at address 0xfffde1
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x1005095	mov eax,dword ptr [0x1009cc4]
+	Uninitialized content at address 0x1009cc4
+
+0x1004fc8	cmp dword ptr [0x1009cbc],ebx
+	Uninitialized content at address 0x1009cbc
+
+0x100503f	mov eax,dword ptr [0x1009cc8]
+	Uninitialized content at address 0x1009cc8
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x1005095	mov eax,dword ptr [0x1009cc4]
+	Uninitialized content at address 0x1009cc4
+
+0x1005061	test eax,eax
+	Uninitialized content at address 0x1009ccc
+
+0x1005065	test byte ptr [ebp-0x8],0x1
+	Uninitialized content at address 0xfffdc7
+
+0x1005084	mov eax,dword ptr [0x1009cc0]
+	Uninitialized content at address 0x1009cc0
+
+0x10034eb	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde4
+
+0x10034eb	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde5
+
+0x10034eb	mov cl,byte ptr [edi+0x1]
+	Uninitialized content at address 0xfffde6
+
+0x100349c	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdc3
+
+0x100349c	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdc2
+
+0x100349c	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdc1
+
+0x100349c	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdc0
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfb
+
+0x1003421	and byte ptr [ebp-0x8],0x0
+	Uninitialized content at address 0xfffeff
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfb
+
+0x100345f	mov cl,byte ptr [eax]
+	Uninitialized content at address 0xfffdfb
+
+0x1003e29	and dword ptr [0x100afa0],0x0
+	Uninitialized content at address 0x100afa0
+
+0x1003e30	and dword ptr [0x100afa4],0x0
+	Uninitialized content at address 0x100afa4
+
+0x1002daa	cmp dword ptr [0x1009b4c],0x2
+	Uninitialized content at address 0x1009b4c
+
+0x1002daa	cmp dword ptr [0x1009b4c],0x2
+	Uninitialized content at address 0x1009b4c
+
+0x1002daa	cmp dword ptr [0x1009b4c],0x2
+	Uninitialized content at address 0x1009b4c
+
+0x1002daa	cmp dword ptr [0x1009b4c],0x2
+	Uninitialized content at address 0x1009b4c
+
+# of reached instructions: 3002
+# of paths: 1443
+# of (possibly) negative paths: 195
+# of unresolved indirects: 2
+Execution time (s): 38.83066439628601

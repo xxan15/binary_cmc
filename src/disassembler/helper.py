@@ -168,7 +168,7 @@ def rewrite_absolute_address_to_relative(arg, rip):
             if relative_address >= 0:
                 res = '[rip+0x{0:x}]'.format(relative_address)
             else:
-                res = '[rip+' + str(to_hex(relative_address, 64)) + ']'
+                res = '[rip+' + str(to_hex(relative_address, utils.MEM_ADDR_SIZE)) + ']'
             if arg.startswith(('qword', 'dword', 'word', 'byte', 'tbyte', 'xmmword')):
                 res = arg_split[0] + res
     elif re.match(r'^0x[0-9a-f]+$|^-0x[0-9a-f]+$', arg):

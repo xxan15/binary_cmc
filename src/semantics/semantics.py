@@ -52,7 +52,6 @@ def lea(store, dest, src):
 def pop(store, dest):
     dest_len = utils.get_sym_length(dest)
     sym_rsp = smt_helper.get_sym_rsp(store, rip)
-    # sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is None:
         res = sym_helper.gen_sym()
@@ -122,12 +121,8 @@ def pushf(store):
 
 
 def call(store, dest):
-    # sym_rsp = smt_helper.get_sym_rsp(store, rip)
-    # utils.logger.info(sym_rsp)
     store[lib.FUNC_CALL_STACK].append(rip)
     push(store, hex(rip))
-    # sym_rsp = smt_helper.get_sym_rsp(store, rip)
-    # utils.logger.info(sym_rsp)
 
 
 def call_op(store, rip, block_id):
@@ -136,18 +131,39 @@ def call_op(store, rip, block_id):
     smt_helper.push_val(store, rip, sym_src, block_id)
 
 
-def ret(store, inst, block_id):
+def ret(store, block_id):
     sym_rsp = smt_helper.get_sym_rsp(store, rip)
-    # sym_rsp = sym_engine.get_sym(store, rip, 'rsp', block_id)
     res = sym_engine.get_mem_sym(store, sym_rsp)
     if res is not None:
         sym_helper.remove_memory_content(store, sym_rsp)
-    # smt_helper.sym_bin_op_na_flags(store, rip, '+', 'rsp', '8', block_id)
     smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(utils.MEM_ADDR_SIZE // 8), block_id)
-    # if res != None and sym_helper.sym_is_int_or_bitvecnum(res):
-    #     res = res.as_long()
-    # return res
-    if inst.startswith('ret '):
+    if res != None:
+        if utils.MEM_ADDR_SIZE == 16:
+            res = simplify(res & 0x0000ffff)
+        if sym_helper.sym_is_int_or_bitvecnum(res):
+            res = res.as_long()
+    alter_res = None
+    if store[lib.FUNC_CALL_STACK]:
+        alter_res = store[lib.FUNC_CALL_STACK].pop()
+    return res, alter_res
+
+
+def retn(store, inst, block_id):
+    alter_res = None
+    if store[lib.FUNC_CALL_STACK]:
+        alter_res = store[lib.FUNC_CALL_STACK].pop()
+    sym_rsp = smt_helper.get_sym_rsp(store, rip)
+    res = sym_engine.get_mem_sym(store, sym_rsp)
+    if alter_res:
+        if not sym_helper.sym_is_int_or_bitvecnum(res) or res.as_long() != alter_res:
+            res = alter_res
+        else:
+            sym_helper.remove_memory_content(store, sym_rsp)
+            smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(utils.MEM_ADDR_SIZE // 8), block_id)
+    else:
+        sym_helper.remove_memory_content(store, sym_rsp)
+        smt_helper.sym_bin_op_na_flags(store, rip, '+', utils.ADDR_SIZE_SP_MAP[utils.MEM_ADDR_SIZE], str(utils.MEM_ADDR_SIZE // 8), block_id)
+    if inst.startswith('retn '):
         arg = inst.strip().rsplit(' ', 1)[1].strip()
         if utils.imm_start_pat.match(arg):
             imm = int(arg, 16)
@@ -158,11 +174,8 @@ def ret(store, inst, block_id):
     if res != None:
         if utils.MEM_ADDR_SIZE == 16:
             res = simplify(res & 0x0000ffff)
-        if sym_helper.sym_is_int_or_bitvecnum(res):
+        if sym_helper.is_bit_vec_num(res):
             res = res.as_long()
-    alter_res = None
-    if store[lib.FUNC_CALL_STACK]:
-        alter_res = store[lib.FUNC_CALL_STACK].pop()
     return res, alter_res
 
 

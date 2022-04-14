@@ -1,6 +1,65 @@
-# of instructions: 17185
-# of reached instructions: 270
-# of paths: 30
-# of unsound paths: 0
-# of unresolved indirects: 10
-Execution time (s): 1.5432796478271484
+0x4107fb	and dword ptr [ebp-0xc],0x0
+	Uninitialized content at address 0xffffe3
+
+0x4107ff	and dword ptr [ebp-0x8],0x0
+	Uninitialized content at address 0xffffe7
+
+0x410865	mov eax,dword ptr [ebp-0x10]
+	Uninitialized content at address 0xffffdf
+
+0x410868	xor eax,dword ptr [ebp-0x14]
+	Uninitialized content at address 0xffffdb
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100e0	movzx eax,word ptr [ebp-0x3c]
+	Uninitialized content at address 0xffffb7
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100e0	movzx eax,word ptr [ebp-0x3c]
+	Uninitialized content at address 0xffffb7
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100e0	movzx eax,word ptr [ebp-0x3c]
+	Uninitialized content at address 0xffffb7
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100e0	movzx eax,word ptr [ebp-0x3c]
+	Uninitialized content at address 0xffffb7
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100e0	movzx eax,word ptr [ebp-0x3c]
+	Uninitialized content at address 0xffffb7
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4100da	test byte ptr [ebp-0x40],0x1
+	Uninitialized content at address 0xffffb3
+
+0x4101c3	mov ecx,dword ptr [ebp-0x4]
+	Uninitialized content at address 0xfffffffc
+
+# of reached instructions: 570
+# of paths: 174
+# of (possibly) negative paths: 20
+# of unresolved indirects: 3
+Execution time (s): 3.6753010749816895

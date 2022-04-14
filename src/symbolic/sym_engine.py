@@ -53,6 +53,10 @@ def get_sym(store, rip, src, block_id, length=utils.MEM_ADDR_SIZE):
         left = sym_register.get_register_sym(store, regs[0])
         right = sym_register.get_register_sym(store, regs[1])
         res = simplify(Concat(left, right))
+    elif src in lib.SEG_REGS:
+        res = BitVec(src, length)
+    else:
+        res = BitVec(src, length)
     return res
 
 

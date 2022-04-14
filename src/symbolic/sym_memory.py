@@ -292,8 +292,8 @@ def set_mem_sym(store, address, sym, block_id, length=utils.MEM_ADDR_SIZE):
         else:
             # pollute_all_mem_content(store, block_id)
             store[lib.MEM][address] =[sym, block_id]
-            utils.logger.error('\nWarning: Potential buffer overflow with symbolic memory address ' + str(address))
-            store[lib.NEED_TRACE_BACK] = True
+            # utils.logger.error('\nWarning: Potential buffer overflow with symbolic memory address ' + str(address))
+            # store[lib.NEED_TRACE_BACK] = True
     else:
         set_mem_sym_val(store, address, sym, block_id, length)
         # pollute_mem_w_sym_address(store, block_id)
@@ -350,18 +350,12 @@ def get_mem_sym(store, address, length=utils.MEM_ADDR_SIZE, store_key=lib.MEM):
 
 
 def read_mem_error_report(store, int_address):
-    stack_top = sym_helper.top_stack_addr(store)
     if sym_helper.addr_in_heap(int_address):
-        utils.output_logger.error('Error: Use after free at address ' + hex(int_address))
-        #  + ' which is located in heap while there is no record in the global memory state')
-        utils.logger.error('Error: Use after free at address ' + hex(int_address) + ' which is located in heap while there is no record in the global memory state')
-        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE
-    elif utils.MAX_HEAP_ADDR <= int_address < stack_top:
-        # pass
-        utils.output_logger.error('Error: Null pointer dereference at address ' + hex(int_address))
-        # #  + ' which is located above the maximum address for the heap section')
-        utils.logger.error('Error: Null pointer dereference at address ' + hex(int_address) + ' which is located above the maximum address for the heap section')
-        store[lib.POINTER_RELATED_ERROR] = MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE
+        store[lib.POINTER_RELATED_ERROR] = (MEMORY_RELATED_ERROR_TYPE.USE_AFTER_FREE, int_address)
+    elif utils.MAX_HEAP_ADDR <= int_address:
+        store[lib.POINTER_RELATED_ERROR] = (MEMORY_RELATED_ERROR_TYPE.UNINITIALIZED_CONTENT, int_address)
+    elif int_address == 0:
+        store[lib.POINTER_RELATED_ERROR] = (MEMORY_RELATED_ERROR_TYPE.NULL_POINTER_DEREFERENCE, int_address)
 
 
 def read_memory_val(store, address, block_id, length=utils.MEM_ADDR_SIZE):
@@ -434,8 +428,12 @@ def get_seg_memory_val(store, address, seg, block_id, length=utils.MEM_ADDR_SIZE
     if address in store[seg]:
         res = store[seg][address]
     else:
-        res = read_memory_val(store, address, block_id, length)
-        # res = sym_helper.gen_mem_sym(length)
+        if sym_helper.is_bit_vec_num(address):
+            int_address = address.as_long()
+            res = BitVec(utils.MEM_DATA_SEC_SUFFIX + seg + ':' + hex(int_address), length)
+        else:
+            res = sym_helper.gen_mem_sym(length)
+        # res = read_memory_val(store, address, block_id, length)
         store[seg][address] = res
     # print(res)
     return res

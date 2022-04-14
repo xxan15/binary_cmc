@@ -36,7 +36,7 @@ address_inst_pattern = re.compile('^[.a-zA-Z]+:[0-9a-zA-Z]+[ ]{17}[a-zA-Z]')
 
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$|^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
 
-variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_]+')
+variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_@]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_@]+')
 
 non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
 
@@ -103,11 +103,11 @@ def string_of_unreached_class(unreached_class):
     if unreached_class == UNREACHED_TYPE.UNREACHED_CONDITIONAL:
         res = 'conditional jump (upperbound is hit)'
     elif unreached_class == UNREACHED_TYPE.UNREACHED_ENTRIES_CONDITIONAL:
-        res = 'entries not reached because of conditional jump (upperbound is hit)'
+        res = 'conditional entries not reached (upperbound is hit)'
     elif unreached_class == UNREACHED_TYPE.UNREACHED_NO_EXPLICIT_ENTRIES:
         res = 'implicit called function or unresolved indirect jump'
     else:
-        res = 'entries not reached because of implicit called function or unresolved indirect jump'
+        res = 'dynamic entries not reached'
     return res
     
     
@@ -117,10 +117,15 @@ def reconstruct_new_content(start_address_list, end_address_list, graph):
     content = ''
     inst_addresses = graph.inst_addresses
     address_inst_map = graph.address_inst_map
+    address_entries_map = graph.address_entries_map
     for start_address, end_address in zip(start_address_list, end_address_list):
         res, _ = append_all_addresses(start_address, end_address, inst_addresses, address_inst_map, graph)
         unreached_class = unreached_class_map[start_address]
         content +='unreached due to ' + string_of_unreached_class(unreached_class) + '\n'
+        if start_address in address_entries_map:
+            entries = address_entries_map[start_address]
+            start_entries = [entry_start_addr_map[i] if i in entry_start_addr_map else i for i in entries]
+            content += str([hex(i).split('0x', 1)[1].strip() for i in start_entries]) + '\n'
         content += res + '\n'
     return content
 
@@ -297,7 +302,7 @@ def read_parameters(output_path):
                     reached_cnt = int(line.rsplit(' ', 1)[1])
                 elif '# of paths' in line:
                     path_cnt = int(line.rsplit(' ', 1)[1])
-                elif '# of unsound paths' in line:
+                elif '# of (possibly) negative paths' in line:
                     neg_path_cnt = int(line.rsplit(' ', 1)[1])
                 elif '# of unresolved indirects' in line:
                     indirects_cnt = int(line.rsplit(' ', 1)[1])
@@ -342,7 +347,6 @@ def parse_idapro_line(line):
 
 def collect_valid_addr_set(idapro_path):
     address_set = set([])
-    # invalid_address_set = set([])
     block_start_addrs = []
     with open(idapro_path, 'r') as f:
         in_block = False
@@ -359,11 +363,11 @@ def collect_valid_addr_set(idapro_path):
                             if inst and not inst.startswith(non_inst_prefix):
                                 # if address not in invalid_address_set:
                                 address_set.add(address)
-                            else:
-                                in_block = False
-                                # invalid_address_set.add(address)
-                        else:
-                            in_block = False
+                        #     else:
+                        #         in_block = False
+                        #         # invalid_address_set.add(address)
+                        # else:
+                        #     in_block = False
                     else:
                         in_block = False
                 else:
@@ -388,22 +392,43 @@ def collect_valid_addr_set(idapro_path):
     return block_start_addrs
 
 
-def pp_para_list(file_name, para_list):
-    res = file_name + '\t'
+def pp_para_list(file_name, para_list, print_type, combine):
+    sep = '\t' if print_type == 0 else ' & '
+    res = file_name + sep
+    unreached = 0
     for i in range(len(para_list)):
         val = para_list[i]
         if i < 4:
-            res += str(val) + '\t'
-        elif i in (4, 5):
-            res += str(val) + '\t'
-        # elif i in (5, 7, 9):
-        #     res += str(val) + '\t'
+            res += str(val) + sep
+        elif i == 4: 
+            if combine:
+                unreached += val
+            else:
+                res += str(val) + sep
+        elif i == 5:
+            if print_type != 0:
+                if combine:
+                    unreached += val
+                    res += str(unreached)
+                else:
+                    res += str(val)
+            else:
+                if combine:
+                    unreached += val
+                    res += str(unreached) + sep
+                else:
+                    res += str(val) + sep
         elif i == 6:
-            res += str(val)
-    # print('\t'.join([str(i) for i in para_list]))
+            if print_type != 0:
+                pass
+            else:
+                res += str(val)
+    if print_type != 0:
+        res += ' \\\\'
+        # res += '\n\\midrule'
     print(res)
 
-def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
+def main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type, combine):
     global _start_segment_address
     exec_path = os.path.join(exec_dir, file_name)
     log_path = os.path.join(log_dir, file_name + '.log')
@@ -422,18 +447,18 @@ def main_single(file_name, exec_dir, log_dir, idapro_path, verbose):
     graph = Construct_Graph(log_path, disasm_asm.address_inst_map, inst_addresses, block_start_addrs)
     para_list = neat_main(graph, new_log_path, output_path)
     if verbose:
-        pp_para_list(file_name, para_list)
+        pp_para_list(file_name, para_list, print_type, combine)
     return para_list
 
 
-def main_batch(exec_dir, log_dir, verbose=False):
+def main_batch(exec_dir, log_dir, verbose, print_type, combine):
     exec_files = utils.get_executable_files(exec_dir)
     exec_files.sort()
     for exec_path in exec_files:
         file_name = utils.get_file_name(exec_path)
         # print(file_name)
         idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(log_dir, file_name + '.idapro'))
-        main_single(file_name, exec_dir, log_dir, idapro_path, verbose)
+        main_single(file_name, exec_dir, log_dir, idapro_path, verbose, print_type, combine)
         time.sleep(5)
 
 
@@ -443,6 +468,8 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--exec_dir', default='benchmark/coreutils-build', type=str, help='Benchmark folder name')
     parser.add_argument('-l', '--log_dir', default='benchmark/coreutils-5.3.0-idapro', type=str, help='Log folder name')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print the starts of unreachable instruction blocks')
+    parser.add_argument('-t', '--print_type', default=0, help='Print the output in specific format')
+    parser.add_argument('-c', '--combine', default=False, action='store_true', help='Whether the add the unreached instrs together')
     parser.add_argument('-b', '--batch', default=False, action='store_true', help='Run neat_unreach in batch mode')
     args = parser.parse_args()
     utils.make_dir(target_dir)
@@ -450,10 +477,10 @@ if __name__ == '__main__':
     log_dir = os.path.join(utils.PROJECT_DIR, args.log_dir)
     if args.batch:
         # for file_name in ['seq.exe', 'setuidgid.exe', 'sha1sum.exe', 'sleep.exe', 'stty.exe', 'sum.exe', 'sync.exe', 'tee.exe', 'tr.exe', 'true.exe', 'tsort.exe', 'tty.exe', 'uname.exe', 'unexpand.exe', 'uniq.exe', 'unlink.exe', 'uptime.exe', 'users.exe', 'whoami.exe', 'yes.exe']:
-        main_batch(exec_dir, log_dir, args.verbose)
+        main_batch(exec_dir, log_dir, args.verbose, args.print_type, args.combine)
         time.sleep(5)
     else:
         idapro_path = os.path.join(utils.PROJECT_DIR, os.path.join(args.log_dir, args.file_name + '.idapro'))
         file_name = args.file_name
-        main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose)
+        main_single(file_name, exec_dir, log_dir, idapro_path, args.verbose, args.print_type, args.combine)
     

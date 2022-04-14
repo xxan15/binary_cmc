@@ -77,7 +77,7 @@ class Sym_Store:
             for ki, v in s.items():
                 v_old = s_old.get(ki, None)
                 if v_old is not None:
-                    s[ki] = sym_helper.merge_sym(v_old, v, address_inst_map)
+                    s[ki][0] = sym_helper.merge_sym(v_old[0], v[0], address_inst_map)
 
 
     def state_ith_eq(self, old, k=lib.REG):

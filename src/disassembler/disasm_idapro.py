@@ -26,13 +26,13 @@ address_inst_pattern = re.compile('^[.a-zA-Z]+:[0-9a-zA-Z]+[ ]{17}[a-zA-Z]')
 
 imm_pat = re.compile('^0x[0-9a-fA-F]+$|^[0-9]+$|^-[0-9]+$|^-0x[0-9a-fA-F]+$|^[0-9a-fA-F]+$|^-[0-9a-fA-F]+$')
 
-variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_@]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_@]+')
-ida_immediate_pat = re.compile(r'^[0-9A-F]+h$')
+variable_expr_pat = re.compile(r'^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{16} [a-zA-Z0-9_@?$]+|^[.a-zA-Z_0-9]+:[0-9a-zA-Z]{8} [a-zA-Z0-9_@?$]+')
+ida_immediate_pat = re.compile(r'^[0-9A-F]+h$|^[0-9]$')
 
 subtract_hex_pat = re.compile(r'-[0-9a-fA-F]+h')
 
 non_inst_prefix = ('dd ', 'dw', 'db', 'text ', 'align', 'assume', 'public', 'start', 'type')
-offset_spec_prefix = ('off_', 'loc_', 'byte_', 'stru_')
+offset_spec_prefix = ('off_', 'loc_', 'byte_', 'stru_', 'dword_', 'qword_', 'unk_', 'sub_', 'asc_', 'def_')
 
 class Disasm_IDAPro(Disasm):
     def __init__(self, disasm_path):
@@ -94,7 +94,7 @@ class Disasm_IDAPro(Disasm):
                 rip = -1
             inst = self.address_inst_map[address]
             line = self._address_line_map[address]
-            inst = self._format_inst(address, inst, rip)
+            inst = self._format_inst(address, inst)
             self.address_inst_map[address] = inst
             self.address_next_map[address] = rip
 
@@ -150,7 +150,7 @@ class Disasm_IDAPro(Disasm):
             var_name = var_name.rsplit(':', 1)[0].strip()
             self._variable_offset_map[var_name] = address
             self._variable_value_map[var_name] = address
-        elif var_split[1].strip() != '' and ' endp' not in var_split[1] and ' ends' not in var_split[1]:
+        elif var_split[1].strip() != '' and 'endp' not in var_split[1] and 'ends' not in var_split[1]:
             self._variable_offset_map[var_name] = address
             self._variable_value_map[var_name] = address
         else:
@@ -189,9 +189,9 @@ class Disasm_IDAPro(Disasm):
         return res
 
 
-    def _format_inst(self, address, inst, rip):
+    def _format_inst(self, address, inst):
         inst_elem = Inst_Elem(inst)
-        inst_args = list(map(lambda x: self._format_arg(address, inst_elem.inst_name, x, rip), inst_elem.inst_args))
+        inst_args = list(map(lambda x: self._format_arg(address, inst_elem.inst_name, x), inst_elem.inst_args))
         result = self._postprocess_format_inst(address, inst, inst_elem.inst_name, inst_args)
         return result
 
@@ -276,11 +276,13 @@ class Disasm_IDAPro(Disasm):
             elif self._curr_ptr_rep:
                 self._added_ptr_rep_map[address] = True
                 res = self._curr_ptr_rep + ' [' + mem_addr + ']'
+            elif prefix.startswith(offset_spec_prefix):
+                res = '[' + prefix + '+' + mem_addr + ']'
             else:
                 res = '[' + mem_addr + ']'
         elif arg in self._global_data_name:
             if count == 2:
-                res = hex(self._variable_value_map[arg])
+                res = '[' + hex(self._variable_value_map[arg]) + ']'
         elif ' ptr ' in arg:
             arg_split = arg.split(' ptr ', 1)
             ptr_rep = arg_split[0] + ' ptr '
@@ -298,7 +300,7 @@ class Disasm_IDAPro(Disasm):
             if ':' in mem_addr:
                 mem_addr_split = mem_addr.split(':', 1)
                 res = prefix + ' ' + mem_addr_split[0] + ':[' + mem_addr_split[1] + ']'
-        return res
+        return res.strip()
 
 
     def _exec_eval(self, arg):
@@ -324,14 +326,23 @@ class Disasm_IDAPro(Disasm):
         return res
         
 
-    def _remove_unused_seg_reg(self, arg):
+    def _remove_unused_seg_reg(self, address, arg):
         res = arg
         if 's:' in arg and not arg.endswith(']'):
             arg_split = arg.strip().split(':', 1)
             prefix = arg_split[0].strip()
             remaining = arg_split[1].strip()
             if ida_immediate_pat.match(remaining):
-                res = prefix + ':' + utils.convert_imm_endh_to_hex(remaining)
+                if prefix.startswith('large '):
+                    if ' ptr' in prefix:
+                        prefix = prefix.split(' ', 1)[1].strip()
+                        ptr_rep, seg_name = prefix.rsplit(' ', 1)
+                        res = ptr_rep.strip() + ' [' + seg_name + ':' + utils.convert_imm_endh_to_hex(remaining) + ']'
+                    else:
+                        prefix = prefix.split(' ', 1)[1].strip()
+                        res = '[' + prefix + ':' + utils.convert_imm_endh_to_hex(remaining) + ']'
+                else:
+                    res = prefix + ':' + utils.convert_imm_endh_to_hex(remaining)
             else:
                 if ' ptr ' in prefix:
                     prefix_split = prefix.rsplit(' ', 1)
@@ -339,6 +350,9 @@ class Disasm_IDAPro(Disasm):
                     res = ptr_rep + ' [' + remaining + ']'
                 else:
                     res = '[' + remaining + ']'
+        else:
+            if arg.startswith('large ') and ' ptr ' in arg:
+                res = arg.split(' ', 1)[1].strip()
         return res
 
 
@@ -352,6 +366,18 @@ class Disasm_IDAPro(Disasm):
         return res
 
 
+    def _rewrite_spec_jump_instr(self, inst_name, address, arg):
+        res = arg.strip()
+        if utils.check_jmp_with_address(inst_name):
+            if res.startswith('$'):
+                res = res.split('$', 1)[1].strip()
+                res = address + int(res)
+                res = hex(res)
+        return res
+                
+
+
+
     def _postprocess_format_inst(self, address, inst, inst_name, inst_args):
         length = None
         for idx, arg in enumerate(inst_args):
@@ -363,20 +389,17 @@ class Disasm_IDAPro(Disasm):
                 self._handle_ida_ptr_rep(address, inst, length, inst_name, inst_args, idx, arg)
         inst = inst_name + ' ' + ','.join(inst_args)
         inst = inst.strip()
-        if inst in ('retn', 'retf') or inst.endswith((' retn', ' retf')):
-            inst = inst[:-1]
         inst = self._replace_remaining_hex_w_suffix_h(inst)
         return inst
 
 
-    def _format_arg(self, address, inst_name, arg, rip):
-        res = arg.replace('large ', '')
-        res = self._remove_unused_seg_reg(res)
+    def _format_arg(self, address, inst_name, arg):
+        res = self._remove_unused_seg_reg(address, arg)
+        res = self._rewrite_spec_jump_instr(inst_name, address, res)
         res = self._replace_symbol_with_value(address, inst_name, res, 2)
         res = res.replace('+-', '-')
         res = self._move_segment_rep(res)
         res = self._exec_eval(res)
-        res = helper.rewrite_absolute_address_to_relative(res, rip)
         res = self._remove_lea_ptr_rep(inst_name, res)
         res = res.lower()
         res = helper.convert_to_hex_rep(res)
@@ -475,7 +498,7 @@ class Disasm_IDAPro(Disasm):
         if 'offset ' in content:
             original = None
             new_var = None
-            content_split = re.split(r'[^a-zA-Z0-9_.]+', content)
+            content_split = re.split(r'[^a-zA-Z0-9_.@?$]+', content)
             for idx, ci in enumerate(content_split):
                 if ci == 'offset':
                     if len(content_split) > idx + 1:
@@ -483,12 +506,12 @@ class Disasm_IDAPro(Disasm):
                         original = 'offset ' + variable
                         if variable in self._variable_offset_map:
                             new_var = hex(self._variable_offset_map[variable])
+                        elif '.' in variable:
+                            new_var = self._replace_ida_struct_item_symbol(variable)
                         elif variable.startswith(offset_spec_prefix):
                             v = variable.split('_', 1)[1]
                             if utils.imm_start_pat.match(v):
                                 new_var = hex(int(v, 16))
-                        elif '.' in variable:
-                            new_var = self._replace_ida_struct_item_symbol(variable)
                     break
             if new_var:
                 content = content.replace(original, new_var)

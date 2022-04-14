@@ -71,14 +71,13 @@ def close_logger():
         utils.close_logger(log_name)
 
 
-def write_results(disasm_asm, cfg):
-    num_of_paths, _, num_of_negatives = cfg.cmc_exec_info[0:3]
+def write_results(cfg):
+    num_of_paths, num_of_negatives, num_of_unresolved_indirects = cfg.cmc_exec_info[0:3]
     reachable_address_num = cfg.reachable_addresses_num()
-    utils.output_logger.info('# of instructions: ' + str(disasm_asm.valid_address_no))
     utils.output_logger.info('# of reached instructions: ' + str(reachable_address_num))
     utils.output_logger.info('# of paths: ' + str(num_of_paths))
-    utils.output_logger.info('# of unsound paths: ' + str(num_of_negatives))
-    utils.output_logger.info('# of unresolved indirects: ' + str(cfg.num_of_unresolved_indirects))
+    utils.output_logger.info('# of (possibly) negative paths: ' + str(num_of_negatives))
+    utils.output_logger.info('# of unresolved indirects: ' + str(num_of_unresolved_indirects))
     
 
 def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
@@ -92,7 +91,7 @@ def cmc_main(exec_path, disasm_path, disasm_type, verbose=False):
     start_time = time.time()
     cfg = construct_cfg(disasm_asm)
     exec_time = time.time() - start_time
-    write_results(disasm_asm, cfg)
+    write_results(cfg)
     utils.output_logger.info('Execution time (s): ' + str(exec_time))
     close_logger()
 

@@ -35,7 +35,7 @@ MAX_INST_ADDR_GAP = 25
 INIT_STACK_FRAME_POINTER = 2**48-9
 MAX_DEVIATION = 5
 SEGMENT_REG_INIT_VAL = 0
-CMC_EXEC_RES_COUNT = 8
+CMC_EXEC_RES_COUNT = 3
 
 MAX_ARGC_NUM = 10
 REBUILD_BRANCHES_NUM = 2
@@ -52,7 +52,7 @@ ADDR_SIZE_SP_MAP = {
 }
 INIT_STACK_FRAME_POINTER = {
     16: 2**12-3,
-    32: 2**24-5,
+    32: 2**24-1,
     64: 2**48-9
 }
 
@@ -507,7 +507,7 @@ def generate_sym_expr(num):
 
 def check_branch_inst(inst):
     inst_name = inst.strip().split(' ', 1)[0]
-    return inst_name in lib.JMP_INST or inst.endswith(' ret') or inst.startswith('ret ')
+    return inst_name in lib.JMP_INST or inst.endswith(' ret') or inst.startswith('ret')
 
 def check_branch_inst_wo_call(inst):
     inst_name = inst.strip().split(' ', 1)[0]
