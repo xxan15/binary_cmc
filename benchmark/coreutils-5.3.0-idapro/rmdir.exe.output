@@ -1,6 +1,48 @@
-# of instructions: 3554
-# of reached instructions: 1995
-# of paths: 477
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 21.02013635635376
+0x40532f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+Error: 0x4046e2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4046e2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x401983	cmp dword ptr [eax],0x29
+	Uninitialized content at address 0xffffffff
+
+Error: 0x4046e2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4046e2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+Error: 0x404ef6	mov dword ptr [eax],ebx
+	Buffer overflow at address 0x2
+
+0x40532f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+# of reached instructions: 1873
+# of paths: 686
+# of (possibly) negative paths: 11
+# of uninitialized content: 3
+# of unresolved indirects: 4
+Execution time (s): 17.776889085769653

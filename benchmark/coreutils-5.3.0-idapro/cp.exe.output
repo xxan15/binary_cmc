@@ -1,14 +1,138 @@
-Error: Null pointer dereference at address 0xffedc0
-Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffedc0
-Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffedc0
-Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffedc0
-Terminate path with pointer-related error at 0x41d733: or dword ptr [ecx],0x0
-# of instructions: 25108
-# of reached instructions: 3643
-# of paths: 769
-# of unsound paths: 4
-# of unresolved indirects: 9
-Execution time (s): 58.08478879928589
+0x41d73f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffda0
+
+0x4144d1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd4c
+
+0x4188fe	mov ecx,dword ptr [ebx]
+	Uninitialized content at address 0xfffffcac
+
+0x40b147	mov ebp,dword ptr [esp+0x48]
+	Uninitialized content at address 0xfffffd24
+
+0x40b163	mov edx,dword ptr [esp+0x4c]
+	Uninitialized content at address 0xfffffd28
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b441	mov edi,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b441	mov edi,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b441	mov edi,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b441	mov edi,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b441	mov edi,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+Error: 0x40b4fc	mov edx,dword ptr [ebp+0x0]
+	Null pointer dereference at address 0x0
+
+0x40b321	mov edi,dword ptr [esp+0x50]
+	Uninitialized content at address 0xfffffd2c
+
+0x40b321	mov edi,dword ptr [esp+0x50]
+	Uninitialized content at address 0xfffffd2c
+
+0x417552	mov ebx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffff7ec
+
+0x4188fe	mov ecx,dword ptr [ebx]
+	Uninitialized content at address 0xfffffcac
+
+0x4144d1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd4c
+
+0x4144d1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd4c
+
+0x4144d1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd4c
+
+0x4144d1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd4c
+
+0x40cfc3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffc20
+
+0x40cfcb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffc04
+
+0x40cfd3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffc08
+
+0x40cfdf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffc18
+
+0x40cfe3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffc0c
+
+0x40cfeb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffc1c
+
+0x40cfef	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffc10
+
+0x40cff7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffc14
+
+Error: 0x40d472	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x405a2e	cmp dword ptr [eax],0x16
+	Uninitialized content at address 0xffffffff
+
+0x405a2e	cmp dword ptr [eax],0x16
+	Uninitialized content at address 0xffffffff
+
+0x405a2e	cmp dword ptr [eax],0x16
+	Uninitialized content at address 0xffffffff
+
+0x404d27	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x404d27	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x409e18	mov ecx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x41d733	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffecc0
+
+# of reached instructions: 8929
+# of paths: 2875
+# of (possibly) negative paths: 16
+# of uninitialized content: 28
+# of unresolved indirects: 5
+Execution time (s): 118.72794032096863

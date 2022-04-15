@@ -1,6 +1,12 @@
-# of instructions: 10742
-# of reached instructions: 2990
-# of paths: 699
-# of unsound paths: 0
-# of unresolved indirects: 17
-Execution time (s): 39.588188886642456
+0x40cd8f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffde0
+
+0x40cd8f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffde0
+
+# of reached instructions: 4600
+# of paths: 1328
+# of (possibly) negative paths: 0
+# of uninitialized content: 2
+# of unresolved indirects: 4
+Execution time (s): 55.43445563316345

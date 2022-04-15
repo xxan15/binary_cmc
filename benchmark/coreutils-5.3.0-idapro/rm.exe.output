@@ -1,6 +1,66 @@
-# of instructions: 21575
-# of reached instructions: 4083
-# of paths: 1254
-# of unsound paths: 0
-# of unresolved indirects: 5
-Execution time (s): 122.57507681846619
+0x41866f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe50
+
+0x410051	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffddc
+
+0x410057	mov ebx,dword ptr [esp+0x38]
+	Uninitialized content at address 0xfffffde0
+
+0x41064e	mov ecx,dword ptr [ebx]
+	Uninitialized content at address 0xfffffd3c
+
+0x407182	mov ebx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffdb4
+
+0x402418	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x4035a4	mov esi,dword ptr [edi+eax*4-0x4]
+	Uninitialized content at address 0x26b48d8c
+
+0x4035ae	mov ebp,dword ptr [ecx+0x4]
+	Uninitialized content at address 0xd0102430
+
+0x4035e8	mov eax,dword ptr [ecx-0x18]
+	Uninitialized content at address 0xd010242c
+
+0x4035a4	mov esi,dword ptr [edi+eax*4-0x4]
+	Uninitialized content at address 0x26b48d88
+
+0x4035e8	mov eax,dword ptr [ecx-0x18]
+	Uninitialized content at address 0xd0102414
+
+0x4037f7	cmp dword ptr [edi+0x4],0x2
+	Uninitialized content at address 0xd0102400
+
+0x416e43	mov eax,dword ptr [edx+0x4]
+	Uninitialized content at address 0xc6892408
+
+0x416f70	mov esi,dword ptr [edx+0x4]
+	Uninitialized content at address 0x6f632f32
+
+0x402418	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x402418	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x402505	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x402505	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x4071db	mov ebx,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffd94
+
+0x41866f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe50
+
+# of reached instructions: 7016
+# of paths: 2192
+# of (possibly) negative paths: 0
+# of uninitialized content: 20
+# of unresolved indirects: 4
+Execution time (s): 103.30096530914307

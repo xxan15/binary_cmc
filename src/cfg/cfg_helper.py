@@ -548,9 +548,6 @@ def retrieve_source_for_memaddr(inst, common):
                 break
     else:
         sym_names = ['rdi']
-    if sym_names: pass
-    else:
-        print(inst)
     return sym_names
 
 

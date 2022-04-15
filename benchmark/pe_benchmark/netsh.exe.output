@@ -1,35 +1,38 @@
 0x1809cfb	and dword ptr [ebp-0xc],0x0
-	Uninitialized content at address 0xffffe3
+	Uninitialized content at address 0xfffffee4
 
 0x1809cff	and dword ptr [ebp-0x8],0x0
-	Uninitialized content at address 0xffffe7
+	Uninitialized content at address 0xfffffee8
 
 0x1809d65	mov eax,dword ptr [ebp-0x10]
-	Uninitialized content at address 0xffffdf
+	Uninitialized content at address 0xfffffee0
 
 0x1809d68	xor eax,dword ptr [ebp-0x14]
-	Uninitialized content at address 0xffffdb
+	Uninitialized content at address 0xfffffedc
 
 0x18096fb	cmp dword ptr [0x1813fc8],esi
 	Uninitialized content at address 0x1813fc8
+
+0x1809775	xchg eax,dword ptr [ecx]
+	Uninitialized content at address 0x1813fc4
 
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
 
 0x1809f47	test dword ptr [eax],eax
-	Uninitialized content at address 0xffe000
+	Uninitialized content at address 0xffffe000
 
 0x1809f47	test dword ptr [eax],eax
-	Uninitialized content at address 0xffd000
+	Uninitialized content at address 0xffffd000
 
 0x1809f47	test dword ptr [eax],eax
-	Uninitialized content at address 0xffc000
+	Uninitialized content at address 0xffffc000
 
 0x1809f47	test dword ptr [eax],eax
-	Uninitialized content at address 0xffb000
+	Uninitialized content at address 0xffffb000
 
 0x1809931	mov eax,dword ptr [ebp-0x324]
-	Uninitialized content at address 0xff77e3
+	Uninitialized content at address 0xffff76e4
 
 0x1803a3a	mov esi,dword ptr [0x1818b0c]
 	Uninitialized content at address 0x1818b0c
@@ -328,6 +331,9 @@
 0x1809cd6	mov ecx,dword ptr [eax+0x3c]
 	Uninitialized content at address 0x180003c
 
+0x1809775	xchg eax,dword ptr [ecx]
+	Uninitialized content at address 0x1813fc4
+
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
 
@@ -361,14 +367,8 @@
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
 
-0x1809777	cmp dword ptr [0x1813fcc],0x0
-	Uninitialized content at address 0x1813fcc
-
-0x180985b	mov ecx,dword ptr [ebp-0x4]
-	Uninitialized content at address 0xfffffffc
-
-0x1809777	cmp dword ptr [0x1813fcc],0x0
-	Uninitialized content at address 0x1813fcc
+0x1809775	xchg eax,dword ptr [ecx]
+	Uninitialized content at address 0x1813fc4
 
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
@@ -378,6 +378,21 @@
 
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
+
+0x1809775	xchg eax,dword ptr [ecx]
+	Uninitialized content at address 0x1813fc4
+
+0x1809777	cmp dword ptr [0x1813fcc],0x0
+	Uninitialized content at address 0x1813fcc
+
+0x180985b	mov ecx,dword ptr [ebp-0x4]
+	Uninitialized content at address 0xfffffffc
+
+0x1809777	cmp dword ptr [0x1813fcc],0x0
+	Uninitialized content at address 0x1813fcc
+
+0x1809775	xchg eax,dword ptr [ecx]
+	Uninitialized content at address 0x1813fc4
 
 0x1809777	cmp dword ptr [0x1813fcc],0x0
 	Uninitialized content at address 0x1813fcc
@@ -604,6 +619,6 @@
 # of reached instructions: 5028
 # of paths: 1701
 # of (possibly) negative paths: 0
-# of uninitialized content: 201
+# of uninitialized content: 206
 # of unresolved indirects: 5
-Execution time (s): 79.71837377548218
+Execution time (s): 68.94815015792847

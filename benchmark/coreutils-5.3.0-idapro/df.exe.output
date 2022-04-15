@@ -1,6 +1,24 @@
-# of instructions: 14970
-# of reached instructions: 3211
-# of paths: 1338
-# of unsound paths: 0
-# of unresolved indirects: 2
-Execution time (s): 53.20296001434326
+0x4119ef	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe60
+
+0x404c73	mov ebp,dword ptr [eax]
+	Uninitialized content at address 0x89000003
+
+0x404c75	mov ebx,dword ptr [eax+0x1c]
+	Uninitialized content at address 0x8900001f
+
+0x404c84	mov ecx,dword ptr [edx+0x4]
+	Uninitialized content at address 0x89000007
+
+0x404c93	test byte ptr [eax+0x18],0x4
+	Uninitialized content at address 0x8900001b
+
+0x404cad	mov edi,dword ptr [eax+0x8]
+	Uninitialized content at address 0x8900000b
+
+# of reached instructions: 8448
+# of paths: 2896
+# of (possibly) negative paths: 0
+# of uninitialized content: 6
+# of unresolved indirects: 4
+Execution time (s): 112.17033076286316

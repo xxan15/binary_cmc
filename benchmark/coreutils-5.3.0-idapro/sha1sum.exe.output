@@ -1,6 +1,18 @@
-# of instructions: 7572
-# of reached instructions: 1726
-# of paths: 506
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 19.292728900909424
+0x40947f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe40
+
+Error: 0x408a62	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x408a62	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x40947f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe40
+
+# of reached instructions: 2032
+# of paths: 611
+# of (possibly) negative paths: 2
+# of uninitialized content: 2
+# of unresolved indirects: 5
+Execution time (s): 16.65888237953186

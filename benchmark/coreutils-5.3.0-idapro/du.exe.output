@@ -1,6 +1,30 @@
-# of instructions: 21566
-# of reached instructions: 2335
-# of paths: 1012
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 41.516799211502075
+0x417cff	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffda0
+
+0x40eb01	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd3c
+
+0x40eb07	mov ebx,dword ptr [esp+0x38]
+	Uninitialized content at address 0xfffffd40
+
+0x404a17	mov esi,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x404a17	mov esi,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x404a17	mov esi,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40f341	mov ecx,dword ptr [esp+0xb4]
+	Uninitialized content at address 0xfffffcb4
+
+0x417cff	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffda0
+
+# of reached instructions: 9204
+# of paths: 3023
+# of (possibly) negative paths: 0
+# of uninitialized content: 8
+# of unresolved indirects: 4
+Execution time (s): 127.51519346237183

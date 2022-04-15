@@ -1,16 +1,21 @@
-Error: Null pointer dereference at address 0xffef5c
-Terminate path with pointer-related error at 0x4052c3: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef5c
-Terminate path with pointer-related error at 0x4052c3: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef5c
-Terminate path with pointer-related error at 0x4052c3: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef5c
-Terminate path with pointer-related error at 0x4052c3: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef5c
-Terminate path with pointer-related error at 0x4052c3: or dword ptr [ecx],0x0
-# of instructions: 3630
-# of reached instructions: 1175
-# of paths: 330
-# of unsound paths: 5
-# of unresolved indirects: 0
-Execution time (s): 11.02986764907837
+0x4052cf	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+0x4052c3	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffee5c
+
+0x4052c3	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffde5c
+
+0x4052c3	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffce5c
+
+0x40185c	cmp byte ptr [ebp-0xd],0x0
+	Uninitialized content at address 0xfffffff4
+
+# of reached instructions: 1637
+# of paths: 637
+# of (possibly) negative paths: 0
+# of uninitialized content: 5
+# of unresolved indirects: 4
+Execution time (s): 15.296482563018799

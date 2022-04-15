@@ -1,16 +1,12 @@
-Error: Null pointer dereference at address 0xffef1c
-Terminate path with pointer-related error at 0x416733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef1c
-Terminate path with pointer-related error at 0x416733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef1c
-Terminate path with pointer-related error at 0x416733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef1c
-Terminate path with pointer-related error at 0x416733: or dword ptr [ecx],0x0
-Error: Null pointer dereference at address 0xffef1c
-Terminate path with pointer-related error at 0x416733: or dword ptr [ecx],0x0
-# of instructions: 10702
-# of reached instructions: 2567
-# of paths: 620
-# of unsound paths: 5
-# of unresolved indirects: 0
-Execution time (s): 234.55864214897156
+0x41673f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe30
+
+0x406411	mov ecx,dword ptr [esp+0xb4]
+	Uninitialized content at address 0xfffffd64
+
+# of reached instructions: 4519
+# of paths: 1231
+# of (possibly) negative paths: 0
+# of uninitialized content: 2
+# of unresolved indirects: 4
+Execution time (s): 47.7221405506134

@@ -1,6 +1,39 @@
-# of instructions: 10152
-# of reached instructions: 1084
-# of paths: 139
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 10.561641931533813
+0x40c49f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+0x40343c	mov esi,dword ptr [esp+0x68]
+	Uninitialized content at address 0xfffffe73
+
+0x403440	mov ebp,dword ptr [esp+0x7c]
+	Uninitialized content at address 0xfffffe87
+
+0x403457	mov ecx,dword ptr [esp+0x60]
+	Uninitialized content at address 0xfffffe6b
+
+Error: 0x4030d2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4030d2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x401bc1	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x401bc1	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x401c48	mov ebp,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40348a	mov ecx,dword ptr [esp+0x78]
+	Uninitialized content at address 0xfffffe83
+
+0x40c49f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+# of reached instructions: 3810
+# of paths: 1263
+# of (possibly) negative paths: 2
+# of uninitialized content: 9
+# of unresolved indirects: 5
+Execution time (s): 35.97804570198059

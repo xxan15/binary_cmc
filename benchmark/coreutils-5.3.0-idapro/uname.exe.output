@@ -1,8 +1,75 @@
-Error: Null pointer dereference at address 0xffef9f
-Terminate path with pointer-related error at 0x407083: or dword ptr [ecx],0x0
-# of instructions: 4921
-# of reached instructions: 93
-# of paths: 1
-# of unsound paths: 1
-# of unresolved indirects: 0
-Execution time (s): 0.22987651824951172
+0x407083	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffeea4
+
+0x40708f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffea78
+
+0x40708f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xffffea70
+
+0x406bef	mov ebx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xffffe45c
+
+0x406ae8	mov ebx,dword ptr [esp+0x1a8]
+	Uninitialized content at address 0xffffe608
+
+0x40570b	mov edx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xffffe5c4
+
+0x40570f	movzx ecx,word ptr [esp+0x40]
+	Uninitialized content at address 0xffffe5e4
+
+0x4055e5	cmp dword ptr [eax],0x28
+	Uninitialized content at address 0xffffffff
+
+0x402d7e	cmp byte ptr [eax],0x2d
+	Uninitialized content at address 0x90900040
+
+0x402dc8	cmp byte ptr [eax+0x1],0x0
+	Uninitialized content at address 0x90900041
+
+0x402da5	cmp byte ptr [edx],0x2d
+	Uninitialized content at address 0xa2c025ff
+
+0x402db0	cmp byte ptr [edx+0x1],0x0
+	Uninitialized content at address 0xa2c02600
+
+0x402d7e	cmp byte ptr [eax],0x2d
+	Uninitialized content at address 0x44891c24
+
+0x402dc8	cmp byte ptr [eax+0x1],0x0
+	Uninitialized content at address 0x44891c25
+
+0x40249a	movzx eax,byte ptr [ecx]
+	Uninitialized content at address 0x90900042
+
+0x4027f2	cmp byte ptr [ecx],0x0
+	Uninitialized content at address 0x90900042
+
+0x4027f2	cmp byte ptr [ecx],0x0
+	Uninitialized content at address 0x90900042
+
+0x4067b1	mov ecx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xffffe428
+
+0x4067bb	mov edx,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xffffe42c
+
+0x4067c5	mov ecx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xffffe430
+
+0x406ae8	mov ebx,dword ptr [esp+0x1a8]
+	Uninitialized content at address 0xffffe630
+
+Error: 0x404ac2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x404ac2	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+# of reached instructions: 2868
+# of paths: 1087
+# of (possibly) negative paths: 2
+# of uninitialized content: 21
+# of unresolved indirects: 4
+Execution time (s): 45.066638469696045

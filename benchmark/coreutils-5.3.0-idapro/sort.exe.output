@@ -1,6 +1,72 @@
-# of instructions: 17955
-# of reached instructions: 315
-# of paths: 69
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 1.9155089855194092
+0x414e2f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffd40
+
+0x406f56	mov edx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x406f56	mov edx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x406f56	mov edx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x406f56	mov edx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x406f56	mov edx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40a54e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40a54e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40a54e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40a54e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40b65e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x40b65e	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x407f17	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x407f17	mov ebx,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x4130ac	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x4130ac	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x40a6a0	imul esp,dword ptr [ebp+0x72],0x6e
+	Uninitialized content at address 0xffffff22
+
+Error: 0x4022e4	mov esi,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4022e4	mov esi,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4022e4	mov esi,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x4022e4	mov esi,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x414e2f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffd40
+
+# of reached instructions: 9722
+# of paths: 3847
+# of (possibly) negative paths: 4
+# of uninitialized content: 18
+# of unresolved indirects: 4
+Execution time (s): 135.8568651676178

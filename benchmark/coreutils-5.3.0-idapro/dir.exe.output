@@ -1,6 +1,36 @@
-# of instructions: 27886
-# of reached instructions: 4677
-# of paths: 1495
-# of unsound paths: 0
-# of unresolved indirects: 2
-Execution time (s): 198.68577980995178
+0x42905f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe30
+
+Error: 0x40d600	mov esi,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x404bc9	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+0x40a6ad	mov edx,dword ptr [ebx+esi*4+0x8]
+	Uninitialized content at address 0xaaaaab2
+
+0x40a6ad	mov edx,dword ptr [ebx+esi*4+0x8]
+	Uninitialized content at address 0xaaaaabe
+
+0x40a6ad	mov edx,dword ptr [ebx+esi*4+0x8]
+	Uninitialized content at address 0xaaaaab2
+
+0x40a6ad	mov edx,dword ptr [ebx+esi*4+0x8]
+	Uninitialized content at address 0xaaaaab2
+
+0x40a6ad	mov edx,dword ptr [ebx+esi*4+0x8]
+	Uninitialized content at address 0xaaaaab2
+
+0x404a1e	mov edx,dword ptr [ebx+0x70]
+	Uninitialized content at address 0x8000006f
+
+0x404bc9	cmp dword ptr [eax],0x2
+	Uninitialized content at address 0xffffffff
+
+# of reached instructions: 10236
+# of paths: 3654
+# of (possibly) negative paths: 1
+# of uninitialized content: 9
+# of unresolved indirects: 4
+Execution time (s): 157.37564945220947

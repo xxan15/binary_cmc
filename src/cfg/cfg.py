@@ -75,9 +75,6 @@ class CFG(object):
         while self.block_stack:
             curr = self.block_stack.pop()
             utils.logger.debug('%s: %s' % (hex(curr.address), curr.inst))
-            # utils.logger.debug(smt_helper.get_sym_rsp(sym_store.store, sym_store.rip))
-            # if curr.address == 0x401473 or curr.address == 0x401476:
-            #     utils.logger.debug(curr.sym_store.pp_store())
             address, inst, sym_store, constraint = curr.address, curr.inst, curr.sym_store, curr.constraint
             if inst and inst.startswith('bnd '):
                 inst = inst.strip().split(' ', 1)[1]

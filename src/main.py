@@ -102,7 +102,6 @@ def cmc_batch(exec_dir, disasm_dir, disasm_type, verbose=False):
     exec_files.sort()
     for exec_path in exec_files:
         file_name = utils.get_file_name(exec_path)
-        # if file_name not in ['[.exe', 'basename.exe', 'cat.exe', 'chgrp.exe', 'chmod.exe', 'chown.exe', 'chroot.exe', 'cksum.exe', 'comm.exe']:
         print(file_name)
         disasm_path = os.path.join(disasm_dir, file_name + '.' + disasm_type)
         try:

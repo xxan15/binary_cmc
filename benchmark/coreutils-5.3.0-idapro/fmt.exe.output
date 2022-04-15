@@ -1,6 +1,30 @@
-# of instructions: 5128
-# of reached instructions: 1910
-# of paths: 556
-# of unsound paths: 0
-# of unresolved indirects: 12
-Execution time (s): 27.686950206756592
+0x40681f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+Error: 0x405f82	mov ebx,dword ptr [eax]
+	Null pointer dereference at address 0x0
+
+0x40681f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+# of reached instructions: 2703
+# of paths: 992
+# of (possibly) negative paths: 6
+# of uninitialized content: 2
+# of unresolved indirects: 9
+Execution time (s): 25.33709478378296

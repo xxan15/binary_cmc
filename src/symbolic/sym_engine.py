@@ -107,7 +107,6 @@ def set_sym(store, rip, dest, sym, block_id):
             val = get_sym(store, rip, dest_rest, block_id, rest_len)
         address = simplify(val)
         store[seg_reg][address] = sym
-        # sym_memory.set_mem_sym(store, address, sym, dest_len)
     elif dest.endswith(']'):
         length = utils.get_sym_length(dest)
         address = sym_memory.get_effective_address(store, rip, dest)

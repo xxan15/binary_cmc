@@ -1,14 +1,636 @@
-Error: Null pointer dereference at address 0xff81ed
-Terminate path with pointer-related error at 0x4081f9: add byte ptr [ebx+0x6c],ah
-Error: Null pointer dereference at address 0xff81ed
-Terminate path with pointer-related error at 0x4081f9: add byte ptr [ebx+0x6c],ah
-Error: Null pointer dereference at address 0xff81ed
-Terminate path with pointer-related error at 0x4081f9: add byte ptr [ebx+0x6c],ah
-Error: Null pointer dereference at address 0xff81ed
-Terminate path with pointer-related error at 0x4081f9: add byte ptr [ebx+0x6c],ah
-# of instructions: 16080
-# of reached instructions: 5182
-# of paths: 1566
-# of unsound paths: 4
-# of unresolved indirects: 3
-Execution time (s): 114.47796034812927
+0x412e9f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffdb0
+
+0x409cc1	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd1c
+
+0x409cc7	mov ebx,dword ptr [esp+0x38]
+	Uninitialized content at address 0xfffffd20
+
+0x408201	add byte ptr [ebp+0xb6],cl
+	Uninitialized content at address 0xffff6a66
+
+0x408208	add byte ptr [ebp+0x27bc],cl
+	Uninitialized content at address 0xffff916c
+
+0x408687	mov ebp,dword ptr [esp+0x50]
+	Uninitialized content at address 0xfffffcfc
+
+0x403a55	mov edi,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x404997	mov esi,dword ptr [eax]
+	Uninitialized content at address 0xffffffff
+
+0x4029b9	movzx eax,byte ptr [esp+0x2b]
+	Uninitialized content at address 0xfffffd23
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffb98
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffb7c
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffb80
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffb90
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffb84
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffb94
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffb88
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffb8c
+
+0x4029b9	movzx eax,byte ptr [esp+0x2b]
+	Uninitialized content at address 0xfffffd23
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffb98
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffb7c
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffb80
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffb90
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffb84
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffb94
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffb88
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffb8c
+
+0x40e017	mov ebx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffc48
+
+0x40e04d	mov esi,dword ptr [esp+0x10]
+	Uninitialized content at address 0xfffffc2c
+
+0x40e051	mov edi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffc30
+
+0x40bb88	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffc58
+
+0x40d9ac	mov edx,dword ptr [ebx+0x4]
+	Uninitialized content at address 0x3824448d
+
+0x40d9ac	mov edx,dword ptr [ebx+0x4]
+	Uninitialized content at address 0x3824448d
+
+0x408201	add byte ptr [ebp+0xb6],cl
+	Uninitialized content at address 0xffff00b6
+
+0x408208	add byte ptr [ebp+0x27bc],cl
+	Uninitialized content at address 0xffff27bc
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x40514d	mov ebx,dword ptr [esp+0xa8]
+	Uninitialized content at address 0xfffffd5c
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x40503e	mov edx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffd38
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x405042	mov ecx,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffd3c
+
+0x40504b	mov edx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd40
+
+0x40504f	mov ecx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd44
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x406fd7	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffce4
+
+0x407027	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffcc8
+
+0x40702f	mov edi,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffccc
+
+0x40703b	mov ebx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffcd0
+
+0x402394	mov ecx,dword ptr [ebp-0x8c]
+	Uninitialized content at address 0xfffffe24
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x40239a	mov esi,dword ptr [ebp-0x88]
+	Uninitialized content at address 0xfffffe28
+
+0x4107ff	mov ebx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffd20
+
+0x4107ff	mov ebx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffd20
+
+0x40fba4	mov ecx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd44
+
+0x40fbab	mov ebx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffd3c
+
+0x40fba4	mov ecx,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd44
+
+0x40fbab	mov ebx,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffd3c
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fdf	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffd00
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x408fb3	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffd10
+
+0x408fbb	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffcf4
+
+0x408fc3	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffcf8
+
+0x408fcf	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffd08
+
+0x408fd3	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffcfc
+
+0x408fdb	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffd0c
+
+0x408fe7	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffd04
+
+0x412e9f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffdb0
+
+# of reached instructions: 8239
+# of paths: 2658
+# of (possibly) negative paths: 0
+# of uninitialized content: 210
+# of unresolved indirects: 4
+Execution time (s): 99.46387004852295

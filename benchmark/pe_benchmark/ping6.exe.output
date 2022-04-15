@@ -1,5 +1,5 @@
 0x1003dbe	test dword ptr [eax],eax
-	Uninitialized content at address 0xffff2b
+	Uninitialized content at address 0xfffffe2c
 
 0x1002daa	cmp dword ptr [0x1009b4c],0x2
 	Uninitialized content at address 0x1009b4c
@@ -295,9 +295,6 @@
 0x1005534	or byte ptr [0x100ad81+eax],dl
 	Uninitialized content at address 0x100ae22
 
-Error: 0x1003770	mov cl,byte ptr [eax]
-	Null pointer dereference at address 0x0
-
 0x1005599	or byte ptr [0x100ad81+eax],0x8
 	Uninitialized content at address 0x100ad82
 
@@ -407,22 +404,22 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 	Uninitialized content at address 0x100b0f0
 
 0x1003421	and byte ptr [ebp-0x8],0x0
-	Uninitialized content at address 0xfffeff
+	Uninitialized content at address 0xfffffe00
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfb
+	Uninitialized content at address 0xfffffcfc
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfc
+	Uninitialized content at address 0xfffffcfd
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfd
+	Uninitialized content at address 0xfffffcfe
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfe
+	Uninitialized content at address 0xfffffcff
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdff
+	Uninitialized content at address 0xfffffd00
 
 0x1004fc8	cmp dword ptr [0x1009cbc],ebx
 	Uninitialized content at address 0x1009cbc
@@ -437,22 +434,22 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 	Uninitialized content at address 0x1009cc4
 
 0x1005074	or byte ptr [ebp+0x12],0x20
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100507e	or byte ptr [ebp+0x12],0x4
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x1005061	test eax,eax
 	Uninitialized content at address 0x1009ccc
 
 0x1005065	test byte ptr [ebp-0x8],0x1
-	Uninitialized content at address 0xfffdc7
+	Uninitialized content at address 0xfffffcc8
 
 0x1005074	or byte ptr [ebp+0x12],0x20
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100507e	or byte ptr [ebp+0x12],0x4
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x1005084	mov eax,dword ptr [0x1009cc0]
 	Uninitialized content at address 0x1009cc0
@@ -461,19 +458,19 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 	Uninitialized content at address 0x1009cc4
 
 0x1005074	or byte ptr [ebp+0x12],0x20
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100507e	or byte ptr [ebp+0x12],0x4
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100352b	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde4
+	Uninitialized content at address 0xfffffce5
 
 0x100352b	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde5
+	Uninitialized content at address 0xfffffce6
 
 0x100352b	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde6
+	Uninitialized content at address 0xfffffce7
 
 0x1004fc8	cmp dword ptr [0x1009cbc],ebx
 	Uninitialized content at address 0x1009cbc
@@ -488,22 +485,22 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 	Uninitialized content at address 0x1009cc4
 
 0x1005074	or byte ptr [ebp+0x12],0x20
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100507e	or byte ptr [ebp+0x12],0x4
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x1005061	test eax,eax
 	Uninitialized content at address 0x1009ccc
 
 0x1005065	test byte ptr [ebp-0x8],0x1
-	Uninitialized content at address 0xfffdc7
+	Uninitialized content at address 0xfffffcc8
 
 0x1005074	or byte ptr [ebp+0x12],0x20
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x100507e	or byte ptr [ebp+0x12],0x4
-	Uninitialized content at address 0xfffde1
+	Uninitialized content at address 0xfffffce2
 
 0x1005084	mov eax,dword ptr [0x1009cc0]
 	Uninitialized content at address 0x1009cc0
@@ -527,43 +524,43 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 	Uninitialized content at address 0x1009ccc
 
 0x1005065	test byte ptr [ebp-0x8],0x1
-	Uninitialized content at address 0xfffdc7
+	Uninitialized content at address 0xfffffcc8
 
 0x1005084	mov eax,dword ptr [0x1009cc0]
 	Uninitialized content at address 0x1009cc0
 
 0x10034eb	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde4
+	Uninitialized content at address 0xfffffce5
 
 0x10034eb	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde5
+	Uninitialized content at address 0xfffffce6
 
 0x10034eb	mov cl,byte ptr [edi+0x1]
-	Uninitialized content at address 0xfffde6
+	Uninitialized content at address 0xfffffce7
 
 0x100349c	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdc3
+	Uninitialized content at address 0xfffffcc4
 
 0x100349c	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdc2
+	Uninitialized content at address 0xfffffcc3
 
 0x100349c	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdc1
+	Uninitialized content at address 0xfffffcc2
 
 0x100349c	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdc0
+	Uninitialized content at address 0xfffffcc1
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfb
+	Uninitialized content at address 0xfffffcfc
 
 0x1003421	and byte ptr [ebp-0x8],0x0
-	Uninitialized content at address 0xfffeff
+	Uninitialized content at address 0xfffffe00
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfb
+	Uninitialized content at address 0xfffffcfc
 
 0x100345f	mov cl,byte ptr [eax]
-	Uninitialized content at address 0xfffdfb
+	Uninitialized content at address 0xfffffcfc
 
 0x1003e29	and dword ptr [0x100afa0],0x0
 	Uninitialized content at address 0x100afa0
@@ -585,7 +582,7 @@ Error: 0x1003770	mov cl,byte ptr [eax]
 
 # of reached instructions: 3002
 # of paths: 1443
-# of (possibly) negative paths: 1
+# of (possibly) negative paths: 0
 # of uninitialized content: 194
 # of unresolved indirects: 2
-Execution time (s): 36.89326190948486
+Execution time (s): 36.8735134601593

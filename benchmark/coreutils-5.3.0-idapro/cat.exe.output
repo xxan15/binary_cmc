@@ -1,6 +1,132 @@
-# of instructions: 10478
-# of reached instructions: 2323
-# of paths: 571
-# of unsound paths: 0
-# of unresolved indirects: 0
-Execution time (s): 27.543557167053223
+0x40d19f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffda0
+
+0x405951	mov edi,dword ptr [esp+0x34]
+	Uninitialized content at address 0xfffffd84
+
+0x401d02	mov edi,dword ptr [esi+ebx*4]
+	Uninitialized content at address 0x65206d69
+
+0x401d02	mov edi,dword ptr [esi+ebx*4]
+	Uninitialized content at address 0x65206d6d
+
+0x401d02	mov edi,dword ptr [esi+ebx*4]
+	Uninitialized content at address 0x65206d71
+
+0x401d02	mov edi,dword ptr [esi+ebx*4]
+	Uninitialized content at address 0x65206d75
+
+0x401d02	mov edi,dword ptr [esi+ebx*4]
+	Uninitialized content at address 0x65206d79
+
+0x401c5c	mov ebx,dword ptr [ebp-0x38]
+	Uninitialized content at address 0x7473793b
+
+0x401c7b	mov edi,dword ptr [ebp-0x88]
+	Uninitialized content at address 0x747378eb
+
+0x402294	mov ebx,dword ptr [ebp-0x78]
+	Uninitialized content at address 0x747378fb
+
+0x402297	mov ecx,dword ptr [ebp-0x74]
+	Uninitialized content at address 0x747378ff
+
+0x40229a	mov esi,dword ptr [ebp-0x80]
+	Uninitialized content at address 0x747378f3
+
+0x4022a3	mov eax,dword ptr [ebp-0x7c]
+	Uninitialized content at address 0x747378f7
+
+0x401c9a	cmp byte ptr [ebp-0xb9],0x0
+	Uninitialized content at address 0x747378ba
+
+0x401cf2	mov ebx,dword ptr [ebp+0x8]
+	Uninitialized content at address 0x7473797b
+
+0x401c5c	mov ebx,dword ptr [ebp-0x38]
+	Uninitialized content at address 0x7473793b
+
+0x401c7b	mov edi,dword ptr [ebp-0x88]
+	Uninitialized content at address 0x747378eb
+
+0x402294	mov ebx,dword ptr [ebp-0x78]
+	Uninitialized content at address 0x747378fb
+
+0x402297	mov ecx,dword ptr [ebp-0x74]
+	Uninitialized content at address 0x747378ff
+
+0x40229a	mov esi,dword ptr [ebp-0x80]
+	Uninitialized content at address 0x747378f3
+
+0x4022a3	mov eax,dword ptr [ebp-0x7c]
+	Uninitialized content at address 0x747378f7
+
+0x401c9a	cmp byte ptr [ebp-0xb9],0x0
+	Uninitialized content at address 0x747378ba
+
+0x401c5c	mov ebx,dword ptr [ebp-0x38]
+	Uninitialized content at address 0x7473793b
+
+0x401c7b	mov edi,dword ptr [ebp-0x88]
+	Uninitialized content at address 0x747378eb
+
+0x402048	mov ecx,dword ptr [ebp-0x90]
+	Uninitialized content at address 0xffffff71
+
+0x402054	movzx edi,byte ptr [ebp-0xb6]
+	Uninitialized content at address 0xffffff4b
+
+0x402067	mov eax,dword ptr [ebp-0x94]
+	Uninitialized content at address 0xffffff6d
+
+0x402071	movzx edi,byte ptr [ebp-0xb3]
+	Uninitialized content at address 0xffffff4e
+
+0x402087	mov edi,dword ptr [ebp-0x8c]
+	Uninitialized content at address 0xffffff75
+
+0x4020ab	mov eax,dword ptr [ebp-0xc4]
+	Uninitialized content at address 0xffffff3d
+
+0x4020b7	movzx edx,byte ptr [ebp-0xb4]
+	Uninitialized content at address 0xffffff4d
+
+0x4020c5	mov edx,dword ptr [ebp-0xc8]
+	Uninitialized content at address 0xffffff39
+
+0x402048	mov ecx,dword ptr [ebp-0x90]
+	Uninitialized content at address 0xffffff71
+
+0x402054	movzx edi,byte ptr [ebp-0xb6]
+	Uninitialized content at address 0xffffff4b
+
+0x402067	mov eax,dword ptr [ebp-0x94]
+	Uninitialized content at address 0xffffff6d
+
+0x402071	movzx edi,byte ptr [ebp-0xb3]
+	Uninitialized content at address 0xffffff4e
+
+0x402087	mov edi,dword ptr [ebp-0x8c]
+	Uninitialized content at address 0xffffff75
+
+0x4020ab	mov eax,dword ptr [ebp-0xc4]
+	Uninitialized content at address 0xffffff3d
+
+0x4020b7	movzx edx,byte ptr [ebp-0xb4]
+	Uninitialized content at address 0xffffff4d
+
+0x4020c5	mov edx,dword ptr [ebp-0xc8]
+	Uninitialized content at address 0xffffff39
+
+0x406191	mov ecx,dword ptr [esp+0xb4]
+	Uninitialized content at address 0xfffffcfc
+
+0x40d19f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffda0
+
+# of reached instructions: 3023
+# of paths: 1292
+# of (possibly) negative paths: 0
+# of uninitialized content: 42
+# of unresolved indirects: 4
+Execution time (s): 37.88351058959961

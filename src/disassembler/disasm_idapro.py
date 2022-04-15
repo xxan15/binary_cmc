@@ -94,7 +94,11 @@ class Disasm_IDAPro(Disasm):
                 rip = -1
             inst = self.address_inst_map[address]
             line = self._address_line_map[address]
-            inst = self._format_inst(address, inst)
+            if inst.startswith('lock '):
+                inst_rem = inst.split(' ', 1)[1].strip()
+                inst = 'lock ' + self._format_inst(address, inst_rem)
+            else:
+                inst = self._format_inst(address, inst)
             self.address_inst_map[address] = inst
             self.address_next_map[address] = rip
 

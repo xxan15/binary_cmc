@@ -1,6 +1,66 @@
-# of instructions: 3906
-# of reached instructions: 1398
-# of paths: 347
-# of unsound paths: 0
-# of unresolved indirects: 7
-Execution time (s): 15.014937400817871
+0x40541f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+0x403c13	mov eax,dword ptr [esp+0x30]
+	Uninitialized content at address 0xfffffdd0
+
+0x403c1b	mov esi,dword ptr [esp+0x14]
+	Uninitialized content at address 0xfffffdb4
+
+0x403c23	mov ebp,dword ptr [esp+0x18]
+	Uninitialized content at address 0xfffffdb8
+
+0x403c2f	mov ecx,dword ptr [esp+0x28]
+	Uninitialized content at address 0xfffffdc8
+
+0x403c33	mov edi,dword ptr [esp+0x1c]
+	Uninitialized content at address 0xfffffdbc
+
+0x403c3b	mov edx,dword ptr [esp+0x2c]
+	Uninitialized content at address 0xfffffdcc
+
+0x403c3f	mov esi,dword ptr [esp+0x20]
+	Uninitialized content at address 0xfffffdc0
+
+0x403c47	mov ebx,dword ptr [esp+0x24]
+	Uninitialized content at address 0xfffffdc4
+
+0x401595	mov ecx,dword ptr [eax+0xc]
+	Uninitialized content at address 0x90900c
+
+0x4015ab	mov ecx,dword ptr [eax+0x8]
+	Uninitialized content at address 0x909008
+
+0x401595	mov ecx,dword ptr [eax+0xc]
+	Uninitialized content at address 0x90900c
+
+0x4015ab	mov ecx,dword ptr [eax+0x8]
+	Uninitialized content at address 0x909008
+
+0x401595	mov ecx,dword ptr [eax+0xc]
+	Uninitialized content at address 0x90900c
+
+0x4015ab	mov ecx,dword ptr [eax+0x8]
+	Uninitialized content at address 0x909008
+
+0x401595	mov ecx,dword ptr [eax+0xc]
+	Uninitialized content at address 0x90900c
+
+0x4015ab	mov ecx,dword ptr [eax+0x8]
+	Uninitialized content at address 0x909008
+
+0x401595	mov ecx,dword ptr [eax+0xc]
+	Uninitialized content at address 0x90900c
+
+0x4015ab	mov ecx,dword ptr [eax+0x8]
+	Uninitialized content at address 0x909008
+
+0x40541f	or dword ptr [ecx],0x0
+	Uninitialized content at address 0xfffffe70
+
+# of reached instructions: 2336
+# of paths: 878
+# of (possibly) negative paths: 0
+# of uninitialized content: 20
+# of unresolved indirects: 4
+Execution time (s): 22.94003462791443
